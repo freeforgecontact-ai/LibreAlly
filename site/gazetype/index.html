@@ -2191,72 +2191,61 @@ function htDetectionLoop() {
 }
 
 /* Load MediaPipe library + model (local vendor/ if present, else CDN) */
-async function htLoadMediaPipe() {
-  htSetStatus('Verification des fichiers locaux...', 'dot-warn');
-  setChip(els.chipModel, 'Modele : chargement...', 'loading');
-  const hasLocal = await localFileExists(LOCAL_TASK);
-
-  let libUrl, wasmPath, modelPath;
-  if (hasLocal) {
-    libUrl    = LOCAL_LIB;
-    wasmPath  = LOCAL_WASM;
-    modelPath = LOCAL_TASK;
-    HT.modelSource = 'local (./vendor/)';
-  } else {
-    libUrl    = CDN_LIB;
-    wasmPath  = CDN_WASM;
-    modelPath = CDN_TASK;
-    HT.modelSource = 'CDN (jsdelivr.net / storage.googleapis.com)';
-  }
-
-  htSetStatus('Chargement de la bibliotheque MediaPipe...', 'dot-warn');
-  let FilesetResolver, FaceLandmarker;
-  try {
-    const mod = await import(libUrl);
-    FilesetResolver = mod.FilesetResolver;
-    FaceLandmarker  = mod.FaceLandmarker;
-  } catch (e) {
-    setChip(els.chipModel, 'Modele : erreur', 'chip-error');
-    throw new Error('Impossible de charger MediaPipe : ' + e.message);
-  }
-
-  htSetStatus('Initialisation WASM...', 'dot-warn');
-  let vision;
-  try {
-    vision = await FilesetResolver.forVisionTasks(wasmPath);
-  } catch (e) {
-    setChip(els.chipModel, 'Modele : erreur WASM', 'chip-error');
-    throw new Error('Erreur WASM MediaPipe : ' + e.message);
-  }
-
-  htSetStatus('Chargement du modele FaceLandmarker (~3-9 Mo)...', 'dot-warn');
-  try {
-    HT.faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
-      baseOptions: { modelAssetPath: modelPath, delegate: 'GPU' },
+async function htCreateLandmarker(libUrl, wasmPath, modelPath) {
+  const mod = await import(libUrl);
+  const FilesetResolver = mod.FilesetResolver;
+  const FaceLandmarker  = mod.FaceLandmarker;
+  const vision = await FilesetResolver.forVisionTasks(wasmPath);
+  const opts = function (delegate) {
+    return {
+      baseOptions: { modelAssetPath: modelPath, delegate: delegate },
       runningMode: 'VIDEO',
       numFaces: 1,
       outputFaceBlendshapes: false,
       outputFacialTransformationMatrixes: false,
-    });
+    };
+  };
+  try {
+    return await FaceLandmarker.createFromOptions(vision, opts('GPU'));
   } catch (_) {
-    /* GPU delegate failed; retry with CPU */
-    try {
-      HT.faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
-        baseOptions: { modelAssetPath: modelPath, delegate: 'CPU' },
-        runningMode: 'VIDEO',
-        numFaces: 1,
-        outputFaceBlendshapes: false,
-        outputFacialTransformationMatrixes: false,
-      });
-    } catch (e2) {
-      setChip(els.chipModel, 'Modele : erreur', 'chip-error');
-      throw new Error('Impossible de charger le modele : ' + e2.message);
-    }
+    /* GPU delegate indisponible -> repli CPU */
+    return await FaceLandmarker.createFromOptions(vision, opts('CPU'));
   }
-  setChip(els.chipModel, 'Modele : OK (' + (hasLocal ? 'local' : 'CDN') + ')', 'active');
-  htDom.modelSource.textContent = 'Modele charge depuis : ' + HT.modelSource;
 }
 
+/*
+  Chargement robuste, HORS-LIGNE D'ABORD.
+  Essaie les fichiers vendored locaux (./vendor/), puis bascule sur le CDN
+  si Internet est disponible. Ne depend PAS d'une requete HEAD (non garantie
+  par le protocole d'assets Tauri) : on tente directement l'import local et on
+  ne retombe sur le CDN qu'en cas d'echec reel.
+*/
+async function htLoadMediaPipe() {
+  setChip(els.chipModel, 'Modele : chargement...', 'loading');
+
+  /* 1) Local (hors-ligne) */
+  htSetStatus('Chargement de MediaPipe (fichiers locaux)...', 'dot-warn');
+  try {
+    HT.faceLandmarker = await htCreateLandmarker(LOCAL_LIB, LOCAL_WASM, LOCAL_TASK);
+    HT.modelSource = 'local (./vendor/)';
+    setChip(els.chipModel, 'Modele : OK (local)', 'active');
+    htDom.modelSource.textContent = 'Modele charge depuis : ' + HT.modelSource;
+    return;
+  } catch (eLocal) {
+    /* 2) Repli CDN (necessite Internet) */
+    htSetStatus('Fichiers locaux indisponibles -- essai via Internet (CDN)...', 'dot-warn');
+    try {
+      HT.faceLandmarker = await htCreateLandmarker(CDN_LIB, CDN_WASM, CDN_TASK);
+      HT.modelSource = 'CDN (jsdelivr.net / storage.googleapis.com)';
+      setChip(els.chipModel, 'Modele : OK (CDN)', 'active');
+      htDom.modelSource.textContent = 'Modele charge depuis : ' + HT.modelSource;
+      return;
+    } catch (eCdn) {
+      setChip(els.chipModel, 'Modele : erreur', 'chip-error');
+      throw new Error('Impossible de charger MediaPipe (local: ' + eLocal.message + ' ; CDN: ' + eCdn.message + ')');
+    }
+  }
+}
 /* Request webcam stream */
 async function htStartCamera() {
   htSetStatus('Demande acces camera...', 'dot-warn');

@@ -12,9 +12,34 @@ permissions:
 
 jobs:
   # ============================================================
+  # JOB VERIFY -- garde anti-regression : les assets hors-ligne
+  # vendored (MediaPipe pour gazetype, Tesseract pour voxread)
+  # DOIVENT etre presents, sinon le build echoue avant packaging.
+  # ============================================================
+  verify:
+    name: Verify offline assets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check vendored offline assets exist and are non-trivial
+        run: |
+          set -e
+          req() { test -f "$1" || { echo "MISSING: $1"; exit 1; }; sz=$(stat -c%s "$1"); test "$sz" -ge "$2" || { echo "TOO SMALL ($sz < $2): $1"; exit 1; }; echo "OK ($sz): $1"; }
+          echo "--- gazetype (MediaPipe FaceLandmarker) ---"
+          req site/gazetype/vendor/vision_bundle.mjs 50000
+          req site/gazetype/vendor/face_landmarker.task 1000000
+          req site/gazetype/vendor/wasm/vision_wasm_internal.js 50000
+          req site/gazetype/vendor/wasm/vision_wasm_internal.wasm 1000000
+          echo "--- voxread (Tesseract OCR) ---"
+          req site/voxread/vendor/fra.traineddata.gz 1000000
+          req site/voxread/vendor/tesseract.min.js 10000
+          echo "Tous les assets hors-ligne sont presents."
+
+  # ============================================================
   # JOB ANDROID — APK debug non signé via Capacitor
   # ============================================================
   android:
+    needs: verify
     name: Android APK (debug)
     runs-on: ubuntu-latest
 
@@ -113,6 +138,7 @@ jobs:
   # JOB DESKTOP — Tauri v2 (Windows / macOS / Linux)
   # ============================================================
   desktop:
+    needs: verify
     name: Desktop — ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:

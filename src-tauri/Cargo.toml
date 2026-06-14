@@ -17,6 +17,16 @@ tauri-build = { version = "2.0", features = [] }
 tauri = { version = "2.0", features = [] }
 tauri-plugin-shell = "2.0"
 
+# ── Contournement (2026-06-14) — NE PAS retirer sans vérifier le build ──────
+# brotli-decompressor 5.0.2 (publié le 14/06/2026) a élargi sa plage à
+# alloc-no-stdlib ">=2.0.4, <4", ce qui tire alloc-no-stdlib 3.x, alors que
+# brotli 8.0.3 (exigé par Tauri) épingle alloc-no-stdlib "^2.0" (2.x).
+# Deux versions d'alloc-no-stdlib dans le graphe → erreur de compilation E0277
+# (trait `Allocator` non satisfait). On fige brotli-decompressor à 5.0.1
+# (dernière version cohérente, alloc-no-stdlib 2.x) ; brotli 8.0.3 l'accepte (~5.0).
+# À retirer quand l'incompatibilité brotli / brotli-decompressor sera corrigée en amont.
+brotli-decompressor = "=5.0.1"
+
 [profile.release]
 panic = "abort"
 codegen-units = 1

@@ -2,9 +2,9 @@ blank_issues_enabled: true
 
 contact_links:
   - name: 💬 Discussions — questions & idées générales
-    url: https://github.com/freeforgecontact-ai/LibreAlly/discussions
+    url: https://github.com/freeforgecontact-ai/LibreAll/discussions
     about: Pour discuter du projet, poser une question ou partager une idée sans ouvrir d'issue formelle.
 
   - name: 📖 Guide de contribution (CONTRIBUTING.md)
-    url: https://github.com/freeforgecontact-ai/LibreAlly/blob/main/CONTRIBUTING.md
+    url: https://github.com/freeforgecontact-ai/LibreAll/blob/main/CONTRIBUTING.md
     about: Avant d'ouvrir une issue ou une PR, consultez notre guide de contribution.

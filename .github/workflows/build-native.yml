@@ -6,6 +6,10 @@ on:
       - "v*"
   workflow_dispatch:
 
+# Nécessaire pour que softprops/action-gh-release puisse créer la Release sur un tag.
+permissions:
+  contents: write
+
 jobs:
   # ============================================================
   # JOB ANDROID — APK debug non signé via Capacitor

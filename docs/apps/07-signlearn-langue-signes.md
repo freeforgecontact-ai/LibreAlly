@@ -47,7 +47,7 @@ S'appuyer sur des corpus et projets ouverts (**SignBank**, datasets de pose de m
 
 ## Licence & confidentialité
 
-- **Code GPL-3.0** ; **contenus vidéo en CC BY-SA** (réutilisables). Reconnaissance par webcam **en local** (l'image n'est pas envoyée).
+- **Code MIT** ; **contenus vidéo en CC BY-SA** (réutilisables). Reconnaissance par webcam **en local** (l'image n'est pas envoyée).
 
 ## Plateformes
 

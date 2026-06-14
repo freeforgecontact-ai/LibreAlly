@@ -46,7 +46,7 @@ S'inspirer des recherches **SoundWatch** (Université de Washington, open source
 
 ## Licence & confidentialité
 
-- **GPL-3.0**. L'audio est analysé **en local** et **non enregistré** par défaut (un micro toujours actif impose une garantie de vie privée forte et transparente).
+- **MIT**. L'audio est analysé **en local** et **non enregistré** par défaut (un micro toujours actif impose une garantie de vie privée forte et transparente).
 
 ## Plateformes
 

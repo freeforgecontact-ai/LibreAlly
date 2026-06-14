@@ -51,7 +51,7 @@ S'inspirer des bonnes pratiques en aide cognitive et des apps de rappel, en se d
 
 ## Licence & confidentialité
 
-- **GPL-3.0**. Données de santé/personnelles **locales** par défaut ; tout partage aidant est **explicite et transparent** pour la personne.
+- **MIT**. Données de santé/personnelles **locales** par défaut ; tout partage aidant est **explicite et transparent** pour la personne.
 
 ## Plateformes
 

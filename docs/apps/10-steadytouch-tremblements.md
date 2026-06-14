@@ -45,7 +45,7 @@ S'appuyer sur des algorithmes publiés de filtrage de tremblement et sur les fon
 
 ## Licence & confidentialité
 
-- **GPL-3.0** (app), filtres dans `a11y-core` (MIT/Apache). Aucun envoi de données.
+- **MIT** (app), filtres dans `a11y-core` (MIT/Apache). Aucun envoi de données.
 
 ## Plateformes
 

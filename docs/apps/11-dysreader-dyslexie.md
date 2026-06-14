@@ -48,7 +48,7 @@ S'appuyer sur la police libre **OpenDyslexic**, sur les recherches en lisibilit�
 
 ## Licence & confidentialité
 
-- **GPL-3.0**. Données et statistiques **locales** ; rien n'est envoyé (on protège des enfants).
+- **MIT**. Données et statistiques **locales** ; rien n'est envoyé (on protège des enfants).
 
 ## Plateformes
 

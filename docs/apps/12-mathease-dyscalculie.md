@@ -47,7 +47,7 @@ S'inspirer de la recherche sur la dyscalculie (sens du nombre, représentations 
 
 ## Licence & confidentialité
 
-- **Code GPL-3.0**, **contenus pédagogiques CC BY-SA**. Suivi **local** ; aucune donnée d'enfant envoyée.
+- **Code MIT**, **contenus pédagogiques CC BY-SA**. Suivi **local** ; aucune donnée d'enfant envoyée.
 
 ## Plateformes
 

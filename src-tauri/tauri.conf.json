@@ -33,7 +33,7 @@
     "category": "Utility",
     "shortDescription": "Suite d'accessibilite numerique libre et hors-ligne",
     "longDescription": "15 applications d'accessibilite numerique gratuites, open source et fonctionnant hors-ligne. Pour les personnes sourdes, aveugles, dyslexiques, avec des troubles moteurs ou cognitifs.",
-    "copyright": "PGRG IA — Licence GPL-3.0",
+    "copyright": "PGRG IA — Licence MIT",
     "linux": {
       "deb": {
         "depends": []

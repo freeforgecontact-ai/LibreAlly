@@ -48,7 +48,7 @@ S'inspirer de **Live Captions** (appli GNOME libre, GPL, utilise des modèles lo
 
 ## Licence & confidentialité
 
-- **GPL-3.0**. **Aucune** captation audio envoyée ailleurs (les conversations restent privées, enjeu majeur).
+- **MIT**. **Aucune** captation audio envoyée ailleurs (les conversations restent privées, enjeu majeur).
 
 ## Plateformes
 

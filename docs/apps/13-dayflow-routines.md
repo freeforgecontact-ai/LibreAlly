@@ -51,7 +51,7 @@ S'inspirer des séquenceurs/agendas visuels existants (souvent propriétaires) e
 
 ## Licence & confidentialité
 
-- **GPL-3.0**. Photos et routines **locales** (données d'enfant/de personne vulnérable : zéro envoi).
+- **MIT**. Photos et routines **locales** (données d'enfant/de personne vulnérable : zéro envoi).
 
 ## Plateformes
 

@@ -44,7 +44,7 @@ S'inspirer de **Color Oracle** (simulateur libre), des algorithmes de daltonisat
 
 ## Licence & confidentialité
 
-- **GPL-3.0** (app) ; les **palettes sûres** et la base de noms en **CC BY**. Aucun envoi d'image.
+- **MIT** (app) ; les **palettes sûres** et la base de noms en **CC BY**. Aucun envoi d'image.
 
 ## Plateformes
 

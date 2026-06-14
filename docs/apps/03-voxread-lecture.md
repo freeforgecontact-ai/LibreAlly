@@ -49,7 +49,7 @@ S'appuyer sur **Tesseract** (OCR), les TTS de `a11y-core`, et s'inspirer d'initi
 
 ## Licence & confidentialité
 
-- **GPL-3.0**. Les images capturées **ne quittent jamais l'appareil** (enjeu fort : on photographie des documents privés, médicaux, financiers).
+- **MIT**. Les images capturées **ne quittent jamais l'appareil** (enjeu fort : on photographie des documents privés, médicaux, financiers).
 
 ## Plateformes
 

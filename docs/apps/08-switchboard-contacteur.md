@@ -47,7 +47,7 @@ S'inspirer du **AsTeRICS Framework** (UE, libre, construction de solutions d'acc
 
 ## Licence & confidentialité
 
-- **GPL-3.0**. Aucun envoi de données. Le moteur de balayage est dans `a11y-core` (MIT/Apache) pour profiter à tout l'écosystème.
+- **MIT**. Aucun envoi de données. Le moteur de balayage est dans `a11y-core` (MIT/Apache) pour profiter à tout l'écosystème.
 
 ## Plateformes
 

@@ -82,7 +82,7 @@ Grants (NLnet/NGI Zero, Sovereign Tech Fund…), donations (OpenCollective, Libe
 
 ## License
 
-Apps: GPL-3.0 (strong copyleft). Libraries (`a11y-core`, formats, symbols): MIT / Apache-2.0 (maximum adoption). → [`LICENSE.md`](LICENSE.md)
+Apps: MIT (permissive). Libraries (`a11y-core`, formats, symbols): MIT / Apache-2.0. → [`LICENSE.md`](LICENSE.md)
 
 ---
 

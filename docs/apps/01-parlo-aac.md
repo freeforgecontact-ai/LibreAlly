@@ -67,7 +67,7 @@ S'inspirer de / contribuer à : **[Cboard](https://www.cboard.io/)** (CAA web op
 
 ## Licence & confidentialité
 
-- **GPL-3.0**. Aucune donnée ne quitte l'appareil. Pas de compte. Convient aux enfants (zéro collecte).
+- **MIT**. Aucune donnée ne quitte l'appareil. Pas de compte. Convient aux enfants (zéro collecte).
 
 ## Plateformes
 

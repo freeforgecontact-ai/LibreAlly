@@ -51,7 +51,7 @@ S'inspirer des approches reconnues (échelles de régulation type *Zones of Regu
 
 ## Licence & confidentialité
 
-- **Code GPL-3.0**, **contenus CC BY-SA**. Journal et profil **strictement locaux** (données émotionnelles sensibles : aucun envoi).
+- **Code MIT**, **contenus CC BY-SA**. Journal et profil **strictement locaux** (données émotionnelles sensibles : aucun envoi).
 
 ## Plateformes
 

@@ -32,7 +32,7 @@ Une **association/fondation à but non lucratif** (loi 1901 en France, ou struct
 
 ## 4. Garde-fous anti-dérive (« promesse de gratuité »)
 
-- **Licences** GPL + MIT/Apache (voir [`../LICENSE.md`](../LICENSE.md)) : le code ne peut pas être rendu propriétaire.
+- **Licence** MIT (voir [`../LICENSE.md`](../LICENSE.md)) : code libre et réutilisable.
 - **Pas de CLA de cession** : personne ne peut relicencier unilatéralement le projet.
 - **Statuts** de l'entité inscrivant la gratuité et l'interdiction de pub/revente de données dans l'objet social.
 - **Engagement public** : charte « 100 % gratuit pour toujours » signée par les mainteneur·ses.

@@ -47,7 +47,7 @@ S'inspirer de **Virtual Magnifying Glass** (libre, multiplateforme), des loupes 
 
 ## Licence & confidentialité
 
-- **GPL-3.0**. Aucun traitement distant ; la caméra ne stocke/n'envoie rien.
+- **MIT**. Aucun traitement distant ; la caméra ne stocke/n'envoie rien.
 
 ## Plateformes
 

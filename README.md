@@ -92,7 +92,7 @@ Subventions (NLnet/NGI Zero, Sovereign Tech Fund…), dons (OpenCollective, Libe
 
 ## Licence
 
-- **Applications** : GPL-3.0 (copyleft fort — l'outil reste libre pour toujours).
+- **Applications** : MIT (licence libre permissive).
 - **Bibliothèques (`a11y-core`, formats, symboles)** : MIT / Apache-2.0 (adoption maximale, y compris par des tiers).
 
 Détails et justification : [`LICENSE.md`](LICENSE.md).

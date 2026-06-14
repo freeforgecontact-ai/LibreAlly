@@ -48,7 +48,7 @@ S'inspirer de **OptiKey** (clavier oculaire open source, référence) et **Enabl
 
 ## Licence & confidentialité
 
-- **GPL-3.0**. Le flux caméra est traité **en local**, **jamais enregistré ni envoyé** (on filme en continu le visage d'une personne très vulnérable : garantie absolue).
+- **MIT**. Le flux caméra est traité **en local**, **jamais enregistré ni envoyé** (on filme en continu le visage d'une personne très vulnérable : garantie absolue).
 
 ## Plateformes
 

@@ -1283,7 +1283,7 @@ function htMovePointer(screenX, screenY) {
   /* hide dot briefly so it does not block elementFromPoint */
   htDom.pointer.style.display = 'none';
   const el = document.elementFromPoint(screenX, screenY);
-  htDom.pointer.style.display = '';
+  htDom.pointer.style.display = 'block';
 
   if (el !== _lastHoveredEl) {
     if (_lastHoveredEl) {

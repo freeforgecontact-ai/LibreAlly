@@ -327,8 +327,8 @@
       border-color: var(--c-primary);
     }
 
-    /* Lien démo de chaque carte */
-    .app-demo-link {
+    /* Lien d'ouverture de chaque carte */
+    .app-open-link {
       display: inline-flex;
       align-items: center;
       font-size: .88rem;
@@ -344,8 +344,8 @@
       border: 2px solid transparent;
       transition: background .15s ease, border-color .15s ease;
     }
-    .app-demo-link:hover,
-    .app-demo-link:focus-visible {
+    .app-open-link:hover,
+    .app-open-link:focus-visible {
       background: #FFD45E;
       border-color: #0A3A63;
       outline: 2px solid #0A3A63;
@@ -360,26 +360,26 @@
       margin-top: auto;
     }
 
-    /* Thème sombre — bouton démo */
-    [data-theme="dark"] .app-demo-link {
+    /* Thème sombre — bouton ouvrir */
+    [data-theme="dark"] .app-open-link {
       background: #F4B81C;
       color: #16202E;
     }
-    [data-theme="dark"] .app-demo-link:hover,
-    [data-theme="dark"] .app-demo-link:focus-visible {
+    [data-theme="dark"] .app-open-link:hover,
+    [data-theme="dark"] .app-open-link:focus-visible {
       background: #FFD45E;
       border-color: #16202E;
       outline-color: #FFD45E;
     }
 
     /* Thème fort contraste */
-    [data-theme="contrast"] .app-demo-link {
+    [data-theme="contrast"] .app-open-link {
       background: #F4B81C;
       color: #000;
       border-color: #000;
     }
-    [data-theme="contrast"] .app-demo-link:hover,
-    [data-theme="contrast"] .app-demo-link:focus-visible {
+    [data-theme="contrast"] .app-open-link:hover,
+    [data-theme="contrast"] .app-open-link:focus-visible {
       background: #FFD45E;
       outline-color: #000;
     }
@@ -658,8 +658,8 @@
           <a class="btn btn-accent" href="#apps" data-fr="Voir les apps" data-en="Explore the apps">
             Voir les apps
           </a>
-          <a class="btn btn-ghost" style="color:#fff;border-color:rgba(255,255,255,.6);" href="./parlo/" data-fr="Démo Parlo" data-en="Parlo Demo">
-            Démo Parlo
+          <a class="btn btn-ghost" style="color:#fff;border-color:rgba(255,255,255,.6);" href="./parlo/" data-fr="Ouvrir Parlo" data-en="Open Parlo">
+            Ouvrir Parlo
           </a>
         </div>
       </div>
@@ -710,7 +710,7 @@
     <div class="section-wrap">
       <div class="apps-section" id="apps">
         <h2 data-fr="Les 15 applications" data-en="The 15 applications">Les 15 applications</h2>
-        <p style="text-align:center;margin:-1.5rem 0 2rem;font-size:1.05rem;color:var(--c-muted);font-weight:600;" data-fr="15 démos fonctionnelles, gratuites et hors-ligne" data-en="15 functional demos, free and offline">15 démos fonctionnelles, gratuites et hors-ligne</p>
+        <p style="text-align:center;margin:-1.5rem 0 2rem;font-size:1.05rem;color:var(--c-muted);font-weight:600;" data-fr="15 applications, gratuites et hors-ligne" data-en="15 applications, free and offline">15 applications, gratuites et hors-ligne</p>
 
         <!-- === COMMUNICATION === -->
         <section class="domain-section" aria-labelledby="domain-communication">
@@ -736,11 +736,11 @@
               </p>
               <div class="app-card-actions">
                 <a
-                  class="app-demo-link"
+                  class="app-open-link"
                   href="./parlo/"
-                  data-fr="▶ Démo" data-en="▶ Demo"
-                  aria-label="Ouvrir la démo de Parlo"
-                >▶ Démo</a>
+                  data-fr="▶ Ouvrir" data-en="▶ Open"
+                  aria-label="Ouvrir Parlo"
+                >▶ Ouvrir</a>
                 <a
                   class="app-spec-link"
                   href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/01-parlo-aac.md"
@@ -779,11 +779,11 @@
               </p>
               <div class="app-card-actions">
                 <a
-                  class="app-demo-link"
+                  class="app-open-link"
                   href="./lumen/"
-                  data-fr="▶ Démo" data-en="▶ Demo"
-                  aria-label="Ouvrir la démo de Lumen"
-                >▶ Démo</a>
+                  data-fr="▶ Ouvrir" data-en="▶ Open"
+                  aria-label="Ouvrir Lumen"
+                >▶ Ouvrir</a>
                 <a
                   class="app-spec-link"
                   href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/02-lumen-malvoyance.md"
@@ -811,11 +811,11 @@
               </p>
               <div class="app-card-actions">
                 <a
-                  class="app-demo-link"
+                  class="app-open-link"
                   href="./voxread/"
-                  data-fr="▶ Démo" data-en="▶ Demo"
-                  aria-label="Ouvrir la démo de VoxRead"
-                >▶ Démo</a>
+                  data-fr="▶ Ouvrir" data-en="▶ Open"
+                  aria-label="Ouvrir VoxRead"
+                >▶ Ouvrir</a>
                 <a
                   class="app-spec-link"
                   href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/03-voxread-lecture.md"
@@ -843,11 +843,11 @@
               </p>
               <div class="app-card-actions">
                 <a
-                  class="app-demo-link"
+                  class="app-open-link"
                   href="./coloraide/"
-                  data-fr="▶ Démo" data-en="▶ Demo"
-                  aria-label="Ouvrir la démo de ColorAide"
-                >▶ Démo</a>
+                  data-fr="▶ Ouvrir" data-en="▶ Open"
+                  aria-label="Ouvrir ColorAide"
+                >▶ Ouvrir</a>
                 <a
                   class="app-spec-link"
                   href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/04-coloraide-daltonisme.md"
@@ -886,11 +886,11 @@
               </p>
               <div class="app-card-actions">
                 <a
-                  class="app-demo-link"
+                  class="app-open-link"
                   href="./captilive/"
-                  data-fr="▶ Démo" data-en="▶ Demo"
-                  aria-label="Ouvrir la démo de CaptiLive"
-                >▶ Démo</a>
+                  data-fr="▶ Ouvrir" data-en="▶ Open"
+                  aria-label="Ouvrir CaptiLive"
+                >▶ Ouvrir</a>
                 <a
                   class="app-spec-link"
                   href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/05-captilive-soustitres.md"
@@ -918,11 +918,11 @@
               </p>
               <div class="app-card-actions">
                 <a
-                  class="app-demo-link"
+                  class="app-open-link"
                   href="./soundwatch/"
-                  data-fr="▶ Démo" data-en="▶ Demo"
-                  aria-label="Ouvrir la démo de SoundWatch"
-                >▶ Démo</a>
+                  data-fr="▶ Ouvrir" data-en="▶ Open"
+                  aria-label="Ouvrir SoundWatch"
+                >▶ Ouvrir</a>
                 <a
                   class="app-spec-link"
                   href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/06-soundwatch-alertes.md"
@@ -950,11 +950,11 @@
               </p>
               <div class="app-card-actions">
                 <a
-                  class="app-demo-link"
+                  class="app-open-link"
                   href="./signlearn/"
-                  data-fr="▶ Démo" data-en="▶ Demo"
-                  aria-label="Ouvrir la démo de SignLearn"
-                >▶ Démo</a>
+                  data-fr="▶ Ouvrir" data-en="▶ Open"
+                  aria-label="Ouvrir SignLearn"
+                >▶ Ouvrir</a>
                 <a
                   class="app-spec-link"
                   href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/07-signlearn-langue-signes.md"
@@ -993,11 +993,11 @@
               </p>
               <div class="app-card-actions">
                 <a
-                  class="app-demo-link"
+                  class="app-open-link"
                   href="./switchboard/"
-                  data-fr="▶ Démo" data-en="▶ Demo"
-                  aria-label="Ouvrir la démo de SwitchBoard"
-                >▶ Démo</a>
+                  data-fr="▶ Ouvrir" data-en="▶ Open"
+                  aria-label="Ouvrir SwitchBoard"
+                >▶ Ouvrir</a>
                 <a
                   class="app-spec-link"
                   href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/08-switchboard-contacteur.md"
@@ -1025,11 +1025,11 @@
               </p>
               <div class="app-card-actions">
                 <a
-                  class="app-demo-link"
+                  class="app-open-link"
                   href="./gazetype/"
-                  data-fr="▶ Démo" data-en="▶ Demo"
-                  aria-label="Ouvrir la démo de GazeType"
-                >▶ Démo</a>
+                  data-fr="▶ Ouvrir" data-en="▶ Open"
+                  aria-label="Ouvrir GazeType"
+                >▶ Ouvrir</a>
                 <a
                   class="app-spec-link"
                   href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/09-gazetype-occulaire.md"
@@ -1057,11 +1057,11 @@
               </p>
               <div class="app-card-actions">
                 <a
-                  class="app-demo-link"
+                  class="app-open-link"
                   href="./steadytouch/"
-                  data-fr="▶ Démo" data-en="▶ Demo"
-                  aria-label="Ouvrir la démo de SteadyTouch"
-                >▶ Démo</a>
+                  data-fr="▶ Ouvrir" data-en="▶ Open"
+                  aria-label="Ouvrir SteadyTouch"
+                >▶ Ouvrir</a>
                 <a
                   class="app-spec-link"
                   href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/10-steadytouch-tremblements.md"
@@ -1100,11 +1100,11 @@
               </p>
               <div class="app-card-actions">
                 <a
-                  class="app-demo-link"
+                  class="app-open-link"
                   href="./dysreader/"
-                  data-fr="▶ Démo" data-en="▶ Demo"
-                  aria-label="Ouvrir la démo de DysReader"
-                >▶ Démo</a>
+                  data-fr="▶ Ouvrir" data-en="▶ Open"
+                  aria-label="Ouvrir DysReader"
+                >▶ Ouvrir</a>
                 <a
                   class="app-spec-link"
                   href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/11-dysreader-dyslexie.md"
@@ -1132,11 +1132,11 @@
               </p>
               <div class="app-card-actions">
                 <a
-                  class="app-demo-link"
+                  class="app-open-link"
                   href="./mathease/"
-                  data-fr="▶ Démo" data-en="▶ Demo"
-                  aria-label="Ouvrir la démo de MathEase"
-                >▶ Démo</a>
+                  data-fr="▶ Ouvrir" data-en="▶ Open"
+                  aria-label="Ouvrir MathEase"
+                >▶ Ouvrir</a>
                 <a
                   class="app-spec-link"
                   href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/12-mathease-dyscalculie.md"
@@ -1164,11 +1164,11 @@
               </p>
               <div class="app-card-actions">
                 <a
-                  class="app-demo-link"
+                  class="app-open-link"
                   href="./dayflow/"
-                  data-fr="▶ Démo" data-en="▶ Demo"
-                  aria-label="Ouvrir la démo de DayFlow"
-                >▶ Démo</a>
+                  data-fr="▶ Ouvrir" data-en="▶ Open"
+                  aria-label="Ouvrir DayFlow"
+                >▶ Ouvrir</a>
                 <a
                   class="app-spec-link"
                   href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/13-dayflow-routines.md"
@@ -1196,11 +1196,11 @@
               </p>
               <div class="app-card-actions">
                 <a
-                  class="app-demo-link"
+                  class="app-open-link"
                   href="./calmspace/"
-                  data-fr="▶ Démo" data-en="▶ Demo"
-                  aria-label="Ouvrir la démo de CalmSpace"
-                >▶ Démo</a>
+                  data-fr="▶ Ouvrir" data-en="▶ Open"
+                  aria-label="Ouvrir CalmSpace"
+                >▶ Ouvrir</a>
                 <a
                   class="app-spec-link"
                   href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/14-calmspace-sensoriel.md"
@@ -1239,11 +1239,11 @@
               </p>
               <div class="app-card-actions">
                 <a
-                  class="app-demo-link"
+                  class="app-open-link"
                   href="./remindwell/"
-                  data-fr="▶ Démo" data-en="▶ Demo"
-                  aria-label="Ouvrir la démo de RemindWell"
-                >▶ Démo</a>
+                  data-fr="▶ Ouvrir" data-en="▶ Open"
+                  aria-label="Ouvrir RemindWell"
+                >▶ Ouvrir</a>
                 <a
                   class="app-spec-link"
                   href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/15-remindwell-memoire.md"

@@ -362,7 +362,7 @@ input[type="range"]:focus-visible { outline: 3px solid var(--focus-ring); outlin
 
 /* ===== TARGETS SECTION ===== */
 #targets-wrap { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; margin-top: 12px; }
-#targets-demo {
+#targets-zone {
   flex: 1; min-width: 260px; background: var(--fond); border: 2px solid var(--border);
   border-radius: var(--radius); padding: 20px; display: flex; gap: 12px; flex-wrap: wrap;
   align-items: center; justify-content: center; min-height: 180px; position: relative;
@@ -783,7 +783,7 @@ input[type="range"]:focus-visible { outline: 3px solid var(--focus-ring); outlin
         <button class="action-btn danger small-btn" id="reset-target-stats">R&eacute;init. stats</button>
       </div>
       <div id="targets-wrap">
-        <div id="targets-demo" aria-label="Zone de cibles interactives"></div>
+        <div id="targets-zone" aria-label="Zone de cibles interactives"></div>
         <div id="targets-stats" aria-live="polite">
           <div class="targets-stat-row">Clics r&eacute;ussis&nbsp;: <strong id="t-hits">0</strong></div>
           <div class="targets-stat-row">Clics manqu&eacute;s&nbsp;: <strong id="t-miss">0</strong></div>

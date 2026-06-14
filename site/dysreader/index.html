@@ -718,7 +718,7 @@ footer a { color: var(--marine); }
         <input type="file" id="file-input" accept=".txt,text/plain" style="display:none;" aria-label="Importer un fichier texte">
       </label>
       <button class="btn btn-ghost btn-sm" id="btn-clear-text" type="button">&#128465; Vider</button>
-      <button class="btn btn-ghost btn-sm" id="btn-reset-default" type="button">&#8635; Texte démo</button>
+      <button class="btn btn-ghost btn-sm" id="btn-reset-default" type="button">&#8635; Texte d'exemple</button>
     </div>
 
     <!-- Zone texte -->
@@ -792,7 +792,7 @@ function ls_set(key, val) {
 /* ---- Footer année ---- */
 eid('footer-year').textContent = new Date().getFullYear();
 
-/* ---- Texte démo ---- */
+/* ---- Texte d'exemple ---- */
 var DEFAULT_TEXT = [
   'La dyslexie est une particularité neurologique qui affecte la façon dont le cerveau traite les mots écrits.',
   'Elle concerne environ 10 % de la population mondiale, indépendamment de l\'intelligence ou de la motivation.',
@@ -1685,8 +1685,8 @@ eid('btn-clear-text').addEventListener('click', function() {
 eid('btn-reset-default').addEventListener('click', function() {
   editArea.value = DEFAULT_TEXT;
   buildPages(DEFAULT_TEXT); saveText(); renderText();
-  announce('Texte de démonstration restauré');
-  showToast('Texte démo restauré');
+  announce('Texte d'exemple restauré');
+  showToast('Texte d'exemple restauré');
 });
 
 editArea.addEventListener('input', function() {

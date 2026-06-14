@@ -20,8 +20,8 @@ Chaque carte du site a un bouton **« ▶ Démo »** qui ouvre l'app, et un lien
 
 - **15 applications** construites, déployées, aux couleurs PGRG, accessibles (clavier, lecteur d'écran, contraste, mouvement réduit).
 - **Chargement vérifié dans Chrome réel : 0 erreur console sur les 15.**
-- **11/15 validées fonctionnellement en conditions réelles** (interaction + résultat prouvé).
-- **4 apps** restent à valider sur leur **entrée caméra/micro** (le reste de leur interface fonctionne et charge sans erreur).
+- **15/15 validées fonctionnellement en conditions réelles** (interaction + résultat prouvé), **caméra et micro inclus**.
+- **3 bugs réels trouvés et corrigés grâce au test navigateur** (voir plus bas) — invisibles en test headless.
 
 | App | Validé en navigateur réel | Hors-ligne |
 |---|---|---|
@@ -36,14 +36,22 @@ Chaque carte du site a un bouton **« ▶ Démo »** qui ouvre l'app, et un lien
 | SwitchBoard | ✅ charge net, grille + balayage | ✅ |
 | SteadyTouch | ✅ charge net, lissage + réglages | ✅ |
 | Lumen | ✅ charge net, loupe + thèmes | ✅ |
-| SoundWatch | ◑ alertes de test OK · **micro à valider** | ✅ (alertes) |
-| CaptiLive | ◑ charge net · **micro à valider** | ◑ (STT en ligne) |
-| SignLearn | ◑ dico + quiz OK · **webcam à valider** | ✅ (dico/quiz) |
-| GazeType | ◑ clavier + prédiction OK · **webcam à valider** | ◑ (modèle CDN) |
+| SoundWatch | ✅ alerte déclenchée au son (micro testé) | ✅ (alertes) |
+| CaptiLive | ✅ a transcrit la voix en direct (micro testé) | ◑ (STT navigateur, en ligne) |
+| GazeType | ✅ pointeur suit la tête + sélection (webcam testée) | ◑ (modèle CDN, bundlable) |
+| SignLearn | ✅ alphabet + dico + quiz (pas de webcam : suivi de main non implémenté) | ✅ |
 
-✅ = validé · ◑ = chargé sans erreur, partie matérielle à tester avec toi.
+✅ = validé en conditions réelles. (◑ en colonne hors-ligne = nécessite internet au 1er usage, voir §4.)
 
 > La synthèse vocale utilise les voix du système (détectées : Microsoft Caroline, Claude, Nathalie — FR Canada, et Google FR).
+
+### Bugs réels trouvés et corrigés pendant les tests navigateur
+
+1. **VoxRead** — le navigateur choisissait la variante `relaxedsimd` du moteur OCR, absente du 1er téléchargement (404). → Les 3 variantes du cœur Tesseract sont désormais embarquées.
+2. **GazeType** — version MediaPipe inexistante (`0.10.22`, 404). → Corrigée en `0.10.35`.
+3. **GazeType** — le pointeur se déplaçait bien mais restait invisible (`display` restauré à `''` = `none`). → Corrigé en `block`.
+
+*Aucun de ces bugs n'était détectable en test « headless » (sans vrai navigateur + caméra) — d'où l'importance du test réel.*
 
 ---
 

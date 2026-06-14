@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GazeType — Démo clavier regard/tête | LibreA11y</title>
-<meta name="description" content="Clavier visuel piloté par maintien du regard ou de la tête. Démo hors-ligne, aucune donnée envoyée.">
+<meta name="description" content="Clavier visuel piloté par maintien du regard ou de la tête. Suivi de tête par webcam via MediaPipe. Démo hors-ligne partielle, aucune donnée envoyée.">
 <style>
 /* ===== VARIABLES & RESET ===== */
 :root {
@@ -138,6 +138,152 @@ body {
 #honest-banner summary::before { content: "▶"; font-size: 0.75rem; transition: transform 0.2s; }
 #honest-banner[open] summary::before { transform: rotate(90deg); }
 #honest-banner .banner-body { margin-top: 10px; }
+
+/* ===== HEAD TRACKING PANEL ===== */
+#head-tracking-section {
+  background: var(--or);
+  border: 2px solid var(--marine);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  color: var(--encre);
+}
+#head-tracking-section h2 {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--marine);
+  margin-bottom: 10px;
+}
+#ht-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+#btn-head-toggle {
+  height: 56px;
+  min-width: 200px;
+  padding: 0 18px;
+  border: 2px solid var(--marine);
+  border-radius: var(--radius-sm);
+  background: var(--marine);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  transition: background var(--tr), box-shadow var(--tr);
+}
+#btn-head-toggle:hover { background: var(--marine-dk); box-shadow: var(--shadow-hv); }
+#btn-head-toggle.ht-active {
+  background: #1A6E35;
+  border-color: #145629;
+}
+#btn-head-toggle.ht-active:hover { background: #145629; }
+#btn-head-center {
+  height: 56px;
+  min-width: 120px;
+  padding: 0 16px;
+  border: 2px solid var(--marine);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--marine);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  transition: background var(--tr), box-shadow var(--tr);
+}
+#btn-head-center:hover { background: #EEF3FA; box-shadow: var(--shadow); }
+#btn-head-center:disabled { opacity: 0.45; cursor: not-allowed; }
+#ht-sensitivity-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+#ht-sensitivity-row label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--marine);
+  min-width: 140px;
+}
+#ht-sensitivity-row input[type="range"] {
+  flex: 1;
+  min-width: 100px;
+  accent-color: var(--marine);
+  height: 6px;
+  cursor: pointer;
+}
+#ht-sens-val {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--marine);
+  min-width: 32px;
+}
+#ht-status {
+  font-size: 0.82rem;
+  color: var(--marine);
+  font-weight: 600;
+  margin-top: 8px;
+  min-height: 1.4em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#ht-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #9AABB8;
+  display: inline-block;
+  flex-shrink: 0;
+}
+#ht-status-dot.dot-ok { background: #1A6E35; }
+#ht-status-dot.dot-warn { background: var(--or); border: 1px solid var(--marine); }
+#ht-status-dot.dot-err { background: #C0392B; }
+#ht-model-source {
+  font-size: 0.75rem;
+  color: var(--marine-dk);
+  margin-top: 4px;
+  font-style: italic;
+}
+/* video hidden but present for MediaPipe */
+#ht-video {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border: 0;
+}
+/* Head pointer overlay */
+#head-pointer {
+  position: fixed;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(244, 184, 28, 0.85);
+  border: 3px solid var(--marine);
+  box-shadow: 0 0 0 4px rgba(15,76,129,0.25);
+  pointer-events: none;
+  z-index: 9998;
+  display: none;
+  transform: translate(-50%, -50%);
+  transition: left 0.04s linear, top 0.04s linear;
+}
+@media (prefers-reduced-motion: reduce) {
+  #head-pointer { transition: none; }
+}
 
 /* ===== TEXT AREA ===== */
 #output-section {
@@ -405,7 +551,6 @@ body {
   transition: background var(--tr), border-color var(--tr), box-shadow var(--tr), transform var(--tr);
   font-family: inherit;
   flex-shrink: 0;
-  /* size controlled by JS var --key-size */
   width: var(--key-size, 52px);
   height: var(--key-size, 52px);
   min-width: 36px;
@@ -553,8 +698,14 @@ footer a:hover { text-decoration: underline; }
     <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y">← LibreA11y</a>
     <h1 id="app-title">👁️ GazeType — démo</h1>
   </div>
-  <div id="header-notice" aria-hidden="true">démo · 100% hors-ligne · aucune donnée envoyée</div>
+  <div id="header-notice" aria-hidden="true">démo · aucune donnée envoyée</div>
 </header>
+
+<!-- Hidden video element for MediaPipe webcam feed -->
+<video id="ht-video" playsinline muted autoplay aria-hidden="true" tabindex="-1"></video>
+
+<!-- Head pointer overlay -->
+<div id="head-pointer" aria-hidden="true" role="presentation"></div>
 
 <!-- MAIN -->
 <main id="main-content" tabindex="-1" aria-label="Application GazeType">
@@ -564,10 +715,38 @@ footer a:hover { text-decoration: underline; }
   <details id="honest-banner" role="note" aria-label="Limite technique importante">
     <summary>⚠️ Limite honnête — comment ça marche vraiment</summary>
     <div class="banner-body">
-      <p><strong>Le suivi réel du regard ou de la tête exige une webcam + un modèle de vision par ordinateur</strong> (ex. MediaPipe FaceMesh, Eye-tracking via WebGazer) — non inclus dans cette démo hors-ligne en un seul fichier.</p>
-      <p style="margin-top:8px">Cette démo reproduit <strong>l'expérience de saisie par maintien (dwell click)</strong> : survoler une touche pendant un temps réglable la sélectionne — anneau de progression visible. <strong>En production</strong>, c'est le déplacement des yeux ou de la tête qui déplace le pointeur, sans les mains.</p>
+      <p><strong>Le suivi de tête par webcam</strong> utilise <strong>MediaPipe FaceLandmarker</strong> pour détecter la position du nez et déplacer le pointeur sans les mains. Le maintien (dwell) existant sélectionne la touche survolée.</p>
+      <p style="margin-top:8px"><strong>Ce mode nécessite une webcam et un modèle (~3–9 Mo)</strong> chargé au 1er usage depuis un CDN (ou hors-ligne si les fichiers <code>./vendor/</code> sont présents). Sans webcam ou si le modèle ne charge pas, le clavier reste pleinement utilisable à la souris et au toucher.</p>
+      <p style="margin-top:8px">Sans suivi de tête actif, cette démo reproduit <strong>l'expérience de saisie par maintien (dwell click)</strong> : survoler une touche pendant un temps réglable la sélectionne — anneau de progression visible.</p>
     </div>
   </details>
+
+  <!-- HEAD TRACKING PANEL -->
+  <section id="head-tracking-section" aria-labelledby="ht-heading">
+    <h2 id="ht-heading">Suivi de tête (webcam)</h2>
+    <div id="ht-controls">
+      <button id="btn-head-toggle" class="dwell-target" aria-pressed="false"
+              aria-label="Activer le suivi de tête par webcam" type="button">
+        🎥 Suivi de tête (webcam)
+        <span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span>
+      </button>
+      <button id="btn-head-center" type="button" disabled
+              aria-label="Centrer : la position actuelle de la tête devient le centre">
+        🎯 Centrer
+      </button>
+    </div>
+    <div id="ht-sensitivity-row">
+      <label for="ht-sens-slider">Sensibilité du suivi</label>
+      <input type="range" id="ht-sens-slider" min="1" max="10" step="1" value="5"
+             aria-label="Sensibilité du suivi de tête" aria-valuemin="1" aria-valuemax="10" aria-valuenow="5">
+      <span id="ht-sens-val" aria-live="polite">5</span>
+    </div>
+    <div id="ht-status" role="status" aria-live="polite" aria-atomic="true">
+      <span id="ht-status-dot"></span>
+      <span id="ht-status-text">Suivi de tête inactif. Cliquez le bouton pour démarrer.</span>
+    </div>
+    <div id="ht-model-source" aria-live="polite"></div>
+  </section>
 
   <!-- TEXT OUTPUT -->
   <section id="output-section" aria-labelledby="output-label">
@@ -660,12 +839,14 @@ footer a:hover { text-decoration: underline; }
 </main>
 
 <footer role="contentinfo">
-  <a href="../index.html">LibreA11y</a> — GazeType est un logiciel libre, démo hors-ligne. Aucune donnée collectée. Aucun cookie.
+  <a href="../index.html">LibreA11y</a> — GazeType est un logiciel libre. Aucune donnée collectée. Aucun cookie.
+  Le suivi de tête utilise MediaPipe (CDN ou local), aucune autre donnée réseau.
 </footer>
 
 <script>
 /* =============================================
    GAZETYPE — Clavier piloté au maintien (dwell)
+   + Suivi de tête par webcam (MediaPipe FaceLandmarker)
    ============================================= */
 
 'use strict';
@@ -854,6 +1035,7 @@ function cancelDwell(el) {
   el.classList.remove('dwell-active');
 }
 
+
 /* -------- KEYBOARD BUILD -------- */
 function buildKeyboard() {
   const grid = els.kbGrid;
@@ -869,7 +1051,7 @@ function buildKeyboard() {
       const btn = document.createElement('button');
       btn.className = 'key-btn dwell-target';
       btn.textContent = char;
-      btn.setAttribute('aria-label', `Touche ${char}`);
+      btn.setAttribute('aria-label', 'Touche ' + char);
       btn.type = 'button';
       const ring = buildRing();
       btn.appendChild(ring);
@@ -879,9 +1061,6 @@ function buildKeyboard() {
     });
     grid.appendChild(rowEl);
   });
-
-  // Accents row (second keyboard style additions)
-  // Already included in layouts above
 }
 
 function typeChar(c) {
@@ -894,7 +1073,7 @@ function typeChar(c) {
 /* -------- ACTION BUTTONS -------- */
 function setupActions() {
   const btnSpace = document.getElementById('btn-space');
-  const btnBack = document.getElementById('btn-back');
+  const btnBack  = document.getElementById('btn-back');
   const btnSpeak = document.getElementById('btn-speak');
   const btnClear = document.getElementById('btn-clear');
 
@@ -915,16 +1094,16 @@ function doSpace() { state.text += ' '; renderOutput(); updatePredictions(); ann
 function doBack() {
   if (state.text.length > 0) {
     state.text = state.text.slice(0, -1);
-    renderOutput(); updatePredictions(); announceStatus('effacé');
+    renderOutput(); updatePredictions(); announceStatus('efface');
   }
 }
 function doSpeak() {
-  if (!state.text.trim()) { announceStatus('Rien à lire'); return; }
+  if (!state.text.trim()) { announceStatus('Rien a lire'); return; }
   speak(state.text, false);
 }
 function doClear() {
   state.text = '';
-  renderOutput(); updatePredictions(); announceStatus('Texte effacé');
+  renderOutput(); updatePredictions(); announceStatus('Texte efface');
 }
 
 /* -------- QUICK PHRASES -------- */
@@ -955,7 +1134,7 @@ function initSynth() {
 }
 function speak(text, quiet) {
   if (!state.synth) return;
-  if (quiet && state.dwellMs < 600) return; // skip letter-by-letter at fast dwell
+  if (quiet && state.dwellMs < 600) return;
   state.synth.cancel();
   const utt = new SpeechSynthesisUtterance(text);
   utt.lang = 'fr-FR';
@@ -1006,6 +1185,337 @@ function setupSettings() {
   });
 }
 
+/* =============================================
+   HEAD TRACKING -- MediaPipe FaceLandmarker
+   ============================================= */
+
+const HT = {
+  active:        false,
+  loading:       false,
+  faceLandmarker: null,
+  stream:        null,
+  animFrameId:   null,
+  calibX:        null,
+  calibY:        null,
+  smoothBuf:     [],
+  SMOOTH_N:      6,
+  sensitivity:   5,
+  ptrX:          0,
+  ptrY:          0,
+  modelSource:   '',
+};
+
+/* URLs -- OPTION 3: local first, CDN fallback */
+const CDN_BASE   = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22';
+const CDN_WASM   = CDN_BASE + '/wasm';
+const CDN_LIB    = CDN_BASE + '/vision_bundle.mjs';
+const LOCAL_TASK = './vendor/face_landmarker.task';
+const CDN_TASK   = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task';
+const LOCAL_LIB  = './vendor/vision_bundle.mjs';
+const LOCAL_WASM = './vendor/wasm';
+
+/* DOM refs for head tracking */
+const htDom = {
+  btnToggle:   document.getElementById('btn-head-toggle'),
+  btnCenter:   document.getElementById('btn-head-center'),
+  sensSlider:  document.getElementById('ht-sens-slider'),
+  sensVal:     document.getElementById('ht-sens-val'),
+  statusDot:   document.getElementById('ht-status-dot'),
+  statusText:  document.getElementById('ht-status-text'),
+  modelSource: document.getElementById('ht-model-source'),
+  video:       document.getElementById('ht-video'),
+  pointer:     document.getElementById('head-pointer'),
+};
+
+/* Utility: check if a local file exists and has meaningful content */
+async function localFileExists(url) {
+  try {
+    const r = await fetch(url, { method: 'HEAD' });
+    if (!r.ok) return false;
+    const cl = r.headers.get('content-length');
+    return cl === null || parseInt(cl) > 1000;
+  } catch (_) {
+    return false;
+  }
+}
+
+/* Set HT status UI */
+function htSetStatus(text, dotClass) {
+  htDom.statusText.textContent = text;
+  htDom.statusDot.className = '';
+  if (dotClass) htDom.statusDot.classList.add(dotClass);
+}
+
+/* Smooth pointer position with moving average */
+function htSmooth(x, y) {
+  HT.smoothBuf.push({ x, y });
+  if (HT.smoothBuf.length > HT.SMOOTH_N) HT.smoothBuf.shift();
+  const avg = HT.smoothBuf.reduce((a, p) => ({ x: a.x + p.x, y: a.y + p.y }), { x: 0, y: 0 });
+  return { x: avg.x / HT.smoothBuf.length, y: avg.y / HT.smoothBuf.length };
+}
+
+/* Map raw nose coords [0..1] to screen coords with calibration + sensitivity */
+function htMapToScreen(rawX, rawY) {
+  const cx = HT.calibX !== null ? HT.calibX : 0.5;
+  const cy = HT.calibY !== null ? HT.calibY : 0.5;
+  /* sensitivity 1-10 -> scale 1.5 .. 4.65 */
+  const scale = 1.5 + (HT.sensitivity - 1) * 0.35;
+  /* mirror X so turning head left moves pointer left (natural) */
+  const dx = (cx - rawX) * scale;
+  const dy = (rawY - cy) * scale;
+  const sx = window.innerWidth  * (0.5 + dx * 0.5);
+  const sy = window.innerHeight * (0.5 + dy * 0.5);
+  return {
+    x: Math.max(0, Math.min(window.innerWidth,  sx)),
+    y: Math.max(0, Math.min(window.innerHeight, sy)),
+  };
+}
+
+/* Move the visual pointer and fire pointer events on the hovered element */
+let _lastHoveredEl = null;
+
+function htMovePointer(screenX, screenY) {
+  HT.ptrX = screenX;
+  HT.ptrY = screenY;
+  htDom.pointer.style.left = screenX + 'px';
+  htDom.pointer.style.top  = screenY + 'px';
+
+  /* hide dot briefly so it does not block elementFromPoint */
+  htDom.pointer.style.display = 'none';
+  const el = document.elementFromPoint(screenX, screenY);
+  htDom.pointer.style.display = '';
+
+  if (el !== _lastHoveredEl) {
+    if (_lastHoveredEl) {
+      _lastHoveredEl.dispatchEvent(
+        new PointerEvent('pointerleave', { bubbles: false, cancelable: true })
+      );
+    }
+    if (el) {
+      el.dispatchEvent(
+        new PointerEvent('pointerenter', { bubbles: false, cancelable: true })
+      );
+    }
+    _lastHoveredEl = el;
+  }
+}
+
+/* MediaPipe detection loop (rAF-based) */
+function htDetectionLoop() {
+  if (!HT.active || !HT.faceLandmarker) return;
+  const video = htDom.video;
+  if (video.readyState >= 2 && video.videoWidth > 0) {
+    let results;
+    try {
+      results = HT.faceLandmarker.detectForVideo(video, performance.now());
+    } catch (_) {
+      results = null;
+    }
+    if (results && results.faceLandmarks && results.faceLandmarks.length > 0) {
+      /* Landmark index 1 = nose tip in MediaPipe 478-point FaceLandmarker */
+      const nose = results.faceLandmarks[0][1];
+      if (nose) {
+        const smooth = htSmooth(nose.x, nose.y);
+        const screen = htMapToScreen(smooth.x, smooth.y);
+        htMovePointer(screen.x, screen.y);
+      }
+    }
+  }
+  HT.animFrameId = requestAnimationFrame(htDetectionLoop);
+}
+
+/* Load MediaPipe library + model (local vendor/ if present, else CDN) */
+async function htLoadMediaPipe() {
+  htSetStatus('Verification des fichiers locaux...', 'dot-warn');
+  const hasLocal = await localFileExists(LOCAL_TASK);
+
+  let libUrl, wasmPath, modelPath;
+  if (hasLocal) {
+    libUrl    = LOCAL_LIB;
+    wasmPath  = LOCAL_WASM;
+    modelPath = LOCAL_TASK;
+    HT.modelSource = 'local (./vendor/)';
+  } else {
+    libUrl    = CDN_LIB;
+    wasmPath  = CDN_WASM;
+    modelPath = CDN_TASK;
+    HT.modelSource = 'CDN (jsdelivr.net / storage.googleapis.com)';
+  }
+
+  htSetStatus('Chargement de la bibliotheque MediaPipe...', 'dot-warn');
+  let FilesetResolver, FaceLandmarker;
+  try {
+    const mod = await import(libUrl);
+    FilesetResolver = mod.FilesetResolver;
+    FaceLandmarker  = mod.FaceLandmarker;
+  } catch (e) {
+    throw new Error('Impossible de charger MediaPipe : ' + e.message);
+  }
+
+  htSetStatus('Initialisation WASM...', 'dot-warn');
+  let vision;
+  try {
+    vision = await FilesetResolver.forVisionTasks(wasmPath);
+  } catch (e) {
+    throw new Error('Erreur WASM MediaPipe : ' + e.message);
+  }
+
+  htSetStatus('Chargement du modele FaceLandmarker (~3-9 Mo)...', 'dot-warn');
+  try {
+    HT.faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
+      baseOptions: { modelAssetPath: modelPath, delegate: 'GPU' },
+      runningMode: 'VIDEO',
+      numFaces: 1,
+      outputFaceBlendshapes: false,
+      outputFacialTransformationMatrixes: false,
+    });
+  } catch (_) {
+    /* GPU delegate failed; retry with CPU */
+    try {
+      HT.faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
+        baseOptions: { modelAssetPath: modelPath, delegate: 'CPU' },
+        runningMode: 'VIDEO',
+        numFaces: 1,
+        outputFaceBlendshapes: false,
+        outputFacialTransformationMatrixes: false,
+      });
+    } catch (e2) {
+      throw new Error('Impossible de charger le modele : ' + e2.message);
+    }
+  }
+  htDom.modelSource.textContent = 'Modele charge depuis : ' + HT.modelSource;
+}
+
+/* Request webcam stream */
+async function htStartCamera() {
+  htSetStatus('Demande acces camera...', 'dot-warn');
+  try {
+    HT.stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+      audio: false,
+    });
+  } catch (e) {
+    const msg = e.name === 'NotAllowedError'
+      ? 'Acces camera refuse -- autorisez la camera dans les reglages du navigateur.'
+      : 'Camera indisponible : ' + e.message;
+    throw new Error(msg);
+  }
+  htDom.video.srcObject = HT.stream;
+  await new Promise((resolve, reject) => {
+    htDom.video.onloadedmetadata = resolve;
+    setTimeout(() => reject(new Error('Delai camera depasse')), 10000);
+  });
+  await htDom.video.play().catch(() => {});
+}
+
+/* Stop webcam and release resources */
+function htStopCamera() {
+  if (HT.animFrameId) { cancelAnimationFrame(HT.animFrameId); HT.animFrameId = null; }
+  if (HT.stream) { HT.stream.getTracks().forEach(t => t.stop()); HT.stream = null; }
+  htDom.video.srcObject = null;
+  if (_lastHoveredEl) {
+    _lastHoveredEl.dispatchEvent(
+      new PointerEvent('pointerleave', { bubbles: false, cancelable: true })
+    );
+    _lastHoveredEl = null;
+  }
+}
+
+/* Safely rebuild toggle button label + dwell ring */
+function htSetBtnText(text) {
+  while (htDom.btnToggle.firstChild) htDom.btnToggle.removeChild(htDom.btnToggle.firstChild);
+  htDom.btnToggle.appendChild(document.createTextNode(text));
+  htDom.btnToggle.appendChild(buildRing());
+}
+
+/* Toggle head tracking ON / OFF */
+async function htToggle() {
+  if (HT.loading) return;
+
+  if (HT.active) {
+    /* --- STOP --- */
+    HT.active = false;
+    htStopCamera();
+    HT.smoothBuf = [];
+    htDom.pointer.style.display = 'none';
+    htDom.btnToggle.classList.remove('ht-active');
+    htDom.btnToggle.setAttribute('aria-pressed', 'false');
+    htSetBtnText('Suivi de tete (webcam)');
+    htDom.btnCenter.disabled = true;
+    htSetStatus('Suivi de tete arrete. Clavier utilisable normalement.', '');
+    htDom.modelSource.textContent = '';
+    return;
+  }
+
+  /* --- START --- */
+  HT.loading = true;
+  htDom.btnToggle.disabled = true;
+  htSetStatus('Demarrage...', 'dot-warn');
+
+  try {
+    if (!HT.faceLandmarker) await htLoadMediaPipe();
+    await htStartCamera();
+
+    HT.active = true;
+    HT.loading = false;
+    HT.smoothBuf = [];
+    HT.calibX = 0.5;
+    HT.calibY = 0.5;
+
+    htDom.pointer.style.left = (window.innerWidth / 2) + 'px';
+    htDom.pointer.style.top  = (window.innerHeight / 2) + 'px';
+    htDom.pointer.style.display = '';
+    htDom.btnToggle.classList.add('ht-active');
+    htDom.btnToggle.setAttribute('aria-pressed', 'true');
+    htSetBtnText('Arreter le suivi');
+    htDom.btnCenter.disabled = false;
+    htDom.btnToggle.disabled = false;
+    htSetStatus('Suivi actif -- bougez la tete pour deplacer le pointeur dore.', 'dot-ok');
+    htDom.modelSource.textContent = 'Modele charge depuis : ' + HT.modelSource;
+    htDetectionLoop();
+
+  } catch (err) {
+    HT.active  = false;
+    HT.loading = false;
+    htStopCamera();
+    htDom.pointer.style.display = 'none';
+    htDom.btnToggle.disabled = false;
+    htDom.btnToggle.classList.remove('ht-active');
+    htDom.btnToggle.setAttribute('aria-pressed', 'false');
+    htSetBtnText('Suivi de tete (webcam)');
+    htDom.btnCenter.disabled = true;
+    htSetStatus('Erreur : ' + err.message + ' -- Clavier reste utilisable.', 'dot-err');
+    htDom.modelSource.textContent = '';
+    console.error('[GazeType] Head tracking error:', err);
+  }
+}
+
+/* Calibration: freeze current nose position as neutral center */
+function htCalibrate() {
+  if (!HT.active || HT.smoothBuf.length === 0) return;
+  const last = HT.smoothBuf[HT.smoothBuf.length - 1];
+  HT.calibX = last.x;
+  HT.calibY = last.y;
+  htSetStatus('Centre ! Gardez cette position de tete comme point neutre.', 'dot-ok');
+}
+
+/* Wire up head tracking controls */
+function setupHeadTracking() {
+  HT.ptrX = window.innerWidth  / 2;
+  HT.ptrY = window.innerHeight / 2;
+
+  htDom.sensSlider.addEventListener('input', () => {
+    HT.sensitivity = parseInt(htDom.sensSlider.value);
+    htDom.sensVal.textContent = HT.sensitivity;
+    htDom.sensSlider.setAttribute('aria-valuenow', HT.sensitivity);
+  });
+
+  htDom.btnToggle.addEventListener('click', htToggle);
+  attachDwell(htDom.btnToggle, htToggle);
+
+  htDom.btnCenter.addEventListener('click', htCalibrate);
+}
+
 /* -------- INIT -------- */
 function init() {
   initSynth();
@@ -1013,9 +1523,9 @@ function init() {
   setupActions();
   setupQuick();
   setupSettings();
+  setupHeadTracking();
   renderOutput();
   updatePredictions();
-  // Open honest banner by default
   document.getElementById('honest-banner').open = true;
 }
 

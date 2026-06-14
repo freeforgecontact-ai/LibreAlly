@@ -162,9 +162,11 @@ jobs:
       - name: Build Tauri app
         run: npx @tauri-apps/cli@^2 build
         env:
-          # Désactive la signature de code (pas de secrets configurés)
+          # Pas de certificat Apple : signature ad-hoc macOS ("-") — évite l'échec
+          # codesign « item could not be found in the keychain » causé par une identité
+          # vide. L'app n'est pas notarisée (clic droit > Ouvrir au 1er lancement).
           TAURI_SIGNING_PRIVATE_KEY: ""
-          APPLE_SIGNING_IDENTITY: ""
+          APPLE_SIGNING_IDENTITY: "-"
 
       # Collecter tous les bundles produits (msi, exe, dmg, pkg, deb, rpm, AppImage)
       - name: Upload desktop bundles

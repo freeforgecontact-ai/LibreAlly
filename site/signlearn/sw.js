@@ -1,10 +1,36 @@
 'use strict';
 
-const CACHE_NAME = 'signlearn-v2';
+const CACHE_NAME = 'signlearn-v3';
 const ASSETS = [
   './index.html',
   './manifest.webmanifest',
-  './sw.js'
+  './sw.js',
+  './letters/A.png',
+  './letters/B.png',
+  './letters/C.png',
+  './letters/D.png',
+  './letters/E.png',
+  './letters/F.png',
+  './letters/G.png',
+  './letters/H.png',
+  './letters/I.png',
+  './letters/J.png',
+  './letters/K.png',
+  './letters/L.png',
+  './letters/M.png',
+  './letters/N.png',
+  './letters/O.png',
+  './letters/P.png',
+  './letters/Q.png',
+  './letters/R.png',
+  './letters/S.png',
+  './letters/T.png',
+  './letters/U.png',
+  './letters/V.png',
+  './letters/W.png',
+  './letters/X.png',
+  './letters/Y.png',
+  './letters/Z.png'
 ];
 
 self.addEventListener('install', e => {

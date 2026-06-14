@@ -56,7 +56,7 @@ html,body{min-height:100%;font-family:system-ui,-apple-system,'Segoe UI',Roboto,
 #alpha-filter:focus{outline:3px solid var(--focus-ring);outline-offset:2px;border-color:var(--marine)}
 #alpha-stats{font-size:.85rem;color:var(--marine);font-weight:600}
 #alphabet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px}
-.alpha-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:12px 6px;text-align:center;cursor:pointer;transition:border-color var(--tr),box-shadow var(--tr),transform var(--tr);display:flex;flex-direction:column;align-items:center;gap:5px;min-height:100px;justify-content:center;width:100%;position:relative}
+.alpha-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:12px 6px;text-align:center;cursor:pointer;transition:border-color var(--tr),box-shadow var(--tr),transform var(--tr);display:flex;flex-direction:column;align-items:center;gap:5px;min-height:180px;justify-content:center;width:100%;position:relative}
 .alpha-card:hover{border-color:var(--marine);box-shadow:var(--shadow-hv);transform:translateY(-2px)}
 .alpha-card[aria-pressed="true"]{border-color:var(--marine);background:#e8f0fb;box-shadow:0 0 0 3px rgba(15,76,129,.2)}
 .alpha-card.learned{border-color:#16a34a}
@@ -189,6 +189,10 @@ html,body{min-height:100%;font-family:system-ui,-apple-system,'Segoe UI',Roboto,
 .activite-card p{font-size:.85rem;line-height:1.65;color:#334155}
 .resource-box{background:var(--fond);border:2px dashed var(--border);border-radius:var(--radius);padding:16px 18px;margin-top:16px;font-size:.9rem;color:#4a5568;line-height:1.65}
 .resource-box strong{color:var(--marine)}
+/* ===== LETTER IMAGES ===== */
+.alpha-card-img{width:120px;height:auto;max-height:178px;object-fit:contain;background:#fff;border:1.5px solid var(--marine);border-radius:var(--radius-sm);display:block;margin:0 auto 4px;flex-shrink:0}
+.alpha-detail-img{width:120px;height:auto;max-height:178px;object-fit:contain;background:#fff;border:2px solid var(--marine);border-radius:var(--radius);display:block;margin:0 auto 14px}
+.spell-letter-img{width:52px;height:auto;max-height:76px;object-fit:contain;background:#fff;border:1.5px solid var(--marine);border-radius:var(--radius-sm);display:block;margin:0 auto 2px}
 /* UTILITY */
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 /* FOOTER */
@@ -226,6 +230,7 @@ html,body{min-height:100%;font-family:system-ui,-apple-system,'Segoe UI',Roboto,
 <aside id="limit-banner" role="note" aria-label="Limite importante">
   <p><strong>Transparence :</strong> une vraie application de langue des signes nécessite des <strong>vidéos filmées par des locuteur·rices natif·ves sourd·es</strong>, co-construites avec la communauté sourde. Ce n'est pas possible à générer automatiquement.</p>
   <p>Cette application propose uniquement des <strong>descriptions textuelles</strong> des configurations de main. Les vidéos seront intégrées ultérieurement avec la communauté sourde. <strong>La LSF est une langue à part entière</strong>, avec sa propre grammaire et sa culture.</p>
+  <p><strong>Illustrations :</strong> les images de l'alphabet sont <strong>générées par IA, génériques — à confirmer pour la LSF avec la communauté sourde.</strong> Elles servent de repère visuel indicatif uniquement et ne remplacent pas l'enseignement par un·e locuteur·rice natif·ve sourd·e.</p>
 </aside>
 
 <div id="info-strip" role="status">
@@ -739,6 +744,7 @@ ALPHABET.forEach(item => {
   btn.dataset.letter = item.l;
   btn.innerHTML = `
     <span class="learned-dot" aria-hidden="true"></span>
+    <img class="alpha-card-img" src="letters/${item.l}.png" alt="Configuration de la main pour la lettre ${item.l} (illustration)" loading="lazy">
     <span class="alpha-letter" aria-hidden="true">${item.l}</span>
     <span class="alpha-sub">${state.learnedSet.includes(item.l) ? 'appris &#10003;' : 'voir le signe'}</span>
   `;
@@ -764,6 +770,17 @@ function openAlpha(item, btn) {
   detailTitle.textContent  = '— Lettre ' + item.l;
   detailDesc.textContent   = item.desc;
   detailMnemonic.textContent = item.tip ? item.tip : '';
+  // Insert / update the letter illustration in the detail panel
+  let detailImg = document.getElementById('alpha-detail-img');
+  if (!detailImg) {
+    detailImg = document.createElement('img');
+    detailImg.id = 'alpha-detail-img';
+    detailImg.className = 'alpha-detail-img';
+    detailImg.loading = 'lazy';
+    alphaDetail.insertBefore(detailImg, alphaDetail.querySelector('#alpha-detail-header').nextSibling);
+  }
+  detailImg.src = `letters/${item.l}.png`;
+  detailImg.alt = `Configuration de la main pour la lettre ${item.l} (illustration)`;
   updateLearnBtn();
   alphaDetail.classList.add('visible');
   alphaDetail.removeAttribute('aria-hidden');
@@ -1146,7 +1163,7 @@ function doSpell() {
     btn.className = 'spell-letter-btn';
     btn.setAttribute('type', 'button');
     btn.setAttribute('aria-label', `Lettre ${ch}${alphaItem ? ' — cliquer pour écouter la description' : ''}`);
-    btn.innerHTML = `${ch}<span class="spell-letter-sub">${alphaItem ? 'clic = desc.' : '?'}</span>`;
+    btn.innerHTML = `<img class="spell-letter-img" src="letters/${ch}.png" alt="Configuration de la main pour la lettre ${ch} (illustration)" loading="lazy">${ch}<span class="spell-letter-sub">${alphaItem ? 'clic = desc.' : '?'}</span>`;
     if (alphaItem) {
       btn.addEventListener('click', () => {
         speak(`Lettre ${ch}. ${alphaItem.desc}`);

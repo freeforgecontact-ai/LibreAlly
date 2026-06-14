@@ -1,0 +1,184 @@
+name: Build Native (APK + Desktop)
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  # ============================================================
+  # JOB ANDROID — APK debug non signé via Capacitor
+  # ============================================================
+  android:
+    name: Android APK (debug)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Set up Java 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Install npm dependencies
+        run: npm install
+
+      # Capacitor crée le dossier android/ uniquement s'il n'existe pas
+      - name: Add Android platform
+        run: npx cap add android
+        # Ignore l'erreur si la plateforme est déjà présente
+        continue-on-error: true
+
+      # Patch AndroidManifest.xml : ajouter CAMERA + RECORD_AUDIO
+      # (nécessaires pour VoxRead OCR caméra et CaptiLive microphone)
+      - name: Patch AndroidManifest — CAMERA + RECORD_AUDIO
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          # Ajouter les permissions avant </manifest> si elles n'existent pas encore
+          if ! grep -q "CAMERA" "$MANIFEST"; then
+            sed -i 's|</manifest>|    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />\n</manifest>|' "$MANIFEST"
+          fi
+          echo "=== AndroidManifest.xml (extrait) ==="
+          grep -A2 "permission" "$MANIFEST" || true
+
+      - name: Copy web assets to Android
+        run: npx cap copy android
+
+      - name: Build APK debug
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: librea11y-android-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+
+      # Si déclenché par un tag vX.Y.Z → attacher l'APK à la release GitHub
+      - name: Attach APK to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: android/app/build/outputs/apk/debug/app-debug.apk
+          name: "LibreA11y ${{ github.ref_name }}"
+          body: |
+            ## LibreA11y ${{ github.ref_name }}
+
+            ### APK Android (NON SIGNÉ — debug)
+            Pour installer sur Android :
+            1. Activez « Sources inconnues » dans Paramètres > Sécurité (ou Installer des apps inconnues).
+            2. Transférez l'APK sur votre appareil et ouvrez-le.
+
+            Les installeurs bureau (Windows .msi, macOS .dmg, Linux .AppImage/.deb) se trouvent dans les artefacts du job **desktop**.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================================
+  # JOB DESKTOP — Tauri v2 (Windows / macOS / Linux)
+  # ============================================================
+  desktop:
+    name: Desktop — ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Set up Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+
+      # Dépendances système Linux requises par WebKit2GTK (Tauri v2)
+      - name: Install Linux system dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            librsvg2-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            libgtk-3-dev \
+            libglib2.0-dev \
+            patchelf
+
+      - name: Install npm dependencies
+        run: npm install
+
+      # Générer les icônes PNG multi-résolutions depuis le SVG source
+      # (tauri icon prend un PNG 1024×1024 ou SVG et produit toutes les tailles)
+      - name: Generate icons from SVG
+        run: |
+          # Installe @tauri-apps/cli localement s'il n'est pas déjà présent
+          npx --yes @tauri-apps/cli@^2 icon src-tauri/icons/icon.svg
+        continue-on-error: true
+        # Si l'icône SVG ne peut pas être traitée (ex. manque de sharp natif),
+        # le build continuera mais les icônes seront absentes — voir BUILD.md.
+
+      - name: Build Tauri app
+        run: npx @tauri-apps/cli@^2 build --no-bundle false
+        env:
+          # Désactive la signature de code (pas de secrets configurés)
+          TAURI_SIGNING_PRIVATE_KEY: ""
+          APPLE_SIGNING_IDENTITY: ""
+
+      # Collecter tous les bundles produits (msi, exe, dmg, pkg, deb, rpm, AppImage)
+      - name: Upload desktop bundles
+        uses: actions/upload-artifact@v4
+        with:
+          name: librea11y-desktop-${{ matrix.os }}
+          path: |
+            src-tauri/target/release/bundle/**/*.msi
+            src-tauri/target/release/bundle/**/*.exe
+            src-tauri/target/release/bundle/**/*.dmg
+            src-tauri/target/release/bundle/**/*.pkg
+            src-tauri/target/release/bundle/**/*.deb
+            src-tauri/target/release/bundle/**/*.rpm
+            src-tauri/target/release/bundle/**/*.AppImage
+          retention-days: 30
+          if-no-files-found: warn
+
+      # Attacher les bundles bureau à la release GitHub (si tag)
+      - name: Attach desktop bundles to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            src-tauri/target/release/bundle/**/*.msi
+            src-tauri/target/release/bundle/**/*.exe
+            src-tauri/target/release/bundle/**/*.dmg
+            src-tauri/target/release/bundle/**/*.pkg
+            src-tauri/target/release/bundle/**/*.deb
+            src-tauri/target/release/bundle/**/*.rpm
+            src-tauri/target/release/bundle/**/*.AppImage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

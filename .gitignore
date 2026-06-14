@@ -47,3 +47,16 @@ temp/
 
 # Fichiers temporaires FUSE (montage)
 .fuse_hidden*
+
+# ── Capacitor / Android (généré automatiquement) ──────
+/android/
+/ios/
+*.apk
+*.aab
+
+# ── Gradle ────────────────────────────────────────────
+.gradle/
+local.properties
+
+# ── Tauri / Rust ──────────────────────────────────────
+src-tauri/target/

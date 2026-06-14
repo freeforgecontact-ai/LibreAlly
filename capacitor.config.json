@@ -1,0 +1,12 @@
+{
+  "appId": "ca.pgrg.librea11y",
+  "appName": "LibreA11y",
+  "webDir": "site",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true,
+    "useLegacyBridge": false
+  }
+}

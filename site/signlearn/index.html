@@ -3,867 +3,672 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SignLearn — Démo LSF | LibreA11y</title>
-<meta name="description" content="Apprentissage et dictionnaire de langue des signes française (LSF). Démo hors-ligne, aucune donnée envoyée.">
+<title>SignLearn — LSF | LibreA11y</title>
+<meta name="description" content="Apprentissage de la langue des signes française (LSF). PWA hors-ligne, aucune donnée envoyée.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0F4C81">
 <style>
-/* ===== VARIABLES & RESET ===== */
-:root {
-  --marine:    #0F4C81;
-  --marine-dk: #0A3A63;
-  --or:        #F4B81C;
-  --or-lt:     #FFD45E;
-  --encre:     #16202E;
-  --fond:      #F7F9FC;
-  --surface:   #FFFFFF;
-  --border:    #D0D9E8;
-  --focus-ring:#F4B81C;
-  --radius:    12px;
-  --radius-sm: 8px;
-  --shadow:    0 2px 8px rgba(15,76,129,0.12);
-  --shadow-hv: 0 4px 16px rgba(15,76,129,0.22);
-  --tr:        0.15s ease;
+:root{
+  --marine:#0F4C81;--marine-dk:#0A3A63;--or:#F4B81C;--or-lt:#FFD45E;
+  --encre:#16202E;--fond:#F7F9FC;--surface:#FFFFFF;--border:#D0D9E8;
+  --focus-ring:#F4B81C;--radius:12px;--radius-sm:8px;
+  --shadow:0 2px 8px rgba(15,76,129,.12);--shadow-hv:0 4px 16px rgba(15,76,129,.22);
+  --tr:0.15s ease;
 }
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body {
-  min-height: 100%;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  background: var(--fond);
-  color: var(--encre);
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-/* ===== FOCUS ===== */
-:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 3px;
-}
-
-/* ===== SKIP LINK ===== */
-#skip-link {
-  position: absolute;
-  top: -60px;
-  left: 12px;
-  background: var(--or);
-  color: var(--encre);
-  font-weight: 700;
-  padding: 10px 18px;
-  border-radius: var(--radius-sm);
-  z-index: 9999;
-  text-decoration: none;
-  transition: top 0.15s;
-}
-#skip-link:focus { top: 8px; }
-
-/* ===== HEADER ===== */
-#app-header {
-  background: var(--marine);
-  color: #fff;
-  padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  box-shadow: 0 2px 8px rgba(10,58,99,0.3);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-#header-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-#back-link {
-  color: var(--or-lt);
-  text-decoration: none;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-  min-height: 44px;
-  transition: background var(--tr);
-}
-#back-link:hover, #back-link:focus-visible {
-  background: rgba(255,255,255,0.15);
-  color: #fff;
-}
-#app-title {
-  font-size: 1.35rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  letter-spacing: -0.3px;
-}
-#header-notice {
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.65);
-  text-align: right;
-  line-height: 1.4;
-  flex-shrink: 0;
-}
-
-/* ===== HONEST LIMIT BANNER ===== */
-#limit-banner {
-  background: #1a3a5e;
-  border-left: 6px solid var(--or);
-  color: #e8edf5;
-  padding: 16px 22px;
-  font-size: 0.92rem;
-  line-height: 1.65;
-}
-#limit-banner strong { color: var(--or-lt); }
-#limit-banner p + p { margin-top: 8px; }
-
-/* ===== DEMO WARNING STRIP ===== */
-#demo-strip {
-  background: #fff3cd;
-  color: #6d4c00;
-  border-bottom: 2px solid var(--or);
-  padding: 9px 20px;
-  font-size: 0.83rem;
-  font-weight: 600;
-  text-align: center;
-  letter-spacing: 0.01em;
-}
-
-/* ===== MAIN NAV (tabs) ===== */
-#main-nav {
-  background: var(--surface);
-  border-bottom: 3px solid var(--marine);
-  padding: 0 12px;
-  display: flex;
-  gap: 4px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-#main-nav::-webkit-scrollbar { height: 4px; }
-#main-nav::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-.nav-tab {
-  background: none;
-  border: none;
-  border-bottom: 4px solid transparent;
-  padding: 14px 18px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--encre);
-  cursor: pointer;
-  white-space: nowrap;
-  min-height: 56px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  transition: color var(--tr), border-color var(--tr), background var(--tr);
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  margin-bottom: -3px;
-}
-.nav-tab:hover { background: var(--fond); color: var(--marine); }
-.nav-tab[aria-selected="true"] {
-  border-bottom-color: var(--marine);
-  color: var(--marine);
-  background: var(--fond);
-}
-
-/* ===== SECTION PANELS ===== */
-.panel { display: none; }
-.panel.active { display: block; }
-
-/* ===== MAIN CONTENT WRAPPER ===== */
-#main-content {
-  padding: 24px 20px;
-  max-width: 1100px;
-  margin: 0 auto;
-}
-
-/* ===== SECTION HEADINGS ===== */
-.section-intro { margin-bottom: 22px; }
-.section-intro h1,
-.section-intro h2 {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--marine);
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.section-intro p {
-  color: #4a5568;
-  font-size: 0.93rem;
-  max-width: 700px;
-  line-height: 1.65;
-}
-
-/* ===== ALPHABET GRID ===== */
-#alphabet-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 10px;
-}
-.alpha-card {
-  background: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 8px;
-  text-align: center;
-  cursor: pointer;
-  transition: border-color var(--tr), box-shadow var(--tr), transform var(--tr);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  min-height: 110px;
-  justify-content: center;
-  width: 100%;
-}
-.alpha-card:hover {
-  border-color: var(--marine);
-  box-shadow: var(--shadow-hv);
-  transform: translateY(-2px);
-}
-.alpha-card[aria-pressed="true"] {
-  border-color: var(--marine);
-  background: #e8f0fb;
-  box-shadow: 0 0 0 3px rgba(15,76,129,0.2);
-}
-@media (prefers-reduced-motion: reduce) {
-  .alpha-card { transition: none; transform: none !important; }
-}
-.alpha-letter {
-  font-size: 2rem;
-  font-weight: 900;
-  color: var(--marine);
-  line-height: 1;
-}
-.alpha-sub {
-  font-size: 0.7rem;
-  color: #7a8898;
-  line-height: 1.3;
-}
-
-/* ===== ALPHA DETAIL ===== */
-#alpha-detail {
-  background: var(--surface);
-  border: 3px solid var(--marine);
-  border-radius: var(--radius);
-  padding: 20px 22px;
-  margin-bottom: 22px;
-  display: none;
-}
-#alpha-detail.visible { display: block; }
-#alpha-detail-header {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-#alpha-detail-letter {
-  font-size: 3.2rem;
-  font-weight: 900;
-  color: var(--marine);
-  line-height: 1;
-}
-#alpha-detail-title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--marine-dk);
-}
-#alpha-detail-desc {
-  font-size: 0.97rem;
-  line-height: 1.75;
-  color: var(--encre);
-  background: var(--fond);
-  border-left: 4px solid var(--or);
-  padding: 12px 16px;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-}
-#alpha-detail-tip {
-  margin-top: 10px;
-  font-size: 0.85rem;
-  color: #5a6880;
-  font-style: italic;
-}
-
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--fond);color:var(--encre);font-size:16px;line-height:1.5}
+:focus-visible{outline:3px solid var(--focus-ring);outline-offset:3px}
+#skip-link{position:absolute;top:-60px;left:12px;background:var(--or);color:var(--encre);font-weight:700;padding:10px 18px;border-radius:var(--radius-sm);z-index:9999;text-decoration:none;transition:top .15s}
+#skip-link:focus{top:8px}
+/* HEADER */
+#app-header{background:var(--marine);color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 2px 8px rgba(10,58,99,.3);position:sticky;top:0;z-index:100}
+#header-left{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+#back-link{color:var(--or-lt);text-decoration:none;font-size:.9rem;display:flex;align-items:center;gap:4px;padding:8px 12px;border-radius:var(--radius-sm);white-space:nowrap;min-height:44px;transition:background var(--tr)}
+#back-link:hover,#back-link:focus-visible{background:rgba(255,255,255,.15);color:#fff}
+#app-title{font-size:1.35rem;font-weight:700;display:flex;align-items:center;gap:8px;letter-spacing:-.3px}
+#header-notice{font-size:.72rem;color:rgba(255,255,255,.65);text-align:right;line-height:1.4;flex-shrink:0}
+/* HONEST BANNER */
+#limit-banner{background:#1a3a5e;border-left:6px solid var(--or);color:#e8edf5;padding:16px 22px;font-size:.92rem;line-height:1.65}
+#limit-banner strong{color:var(--or-lt)}
+#limit-banner p+p{margin-top:8px}
+/* DEMO STRIP */
+#demo-strip{background:#fff3cd;color:#6d4c00;border-bottom:2px solid var(--or);padding:9px 20px;font-size:.83rem;font-weight:600;text-align:center}
+/* NAV */
+#main-nav{background:var(--surface);border-bottom:3px solid var(--marine);padding:0 12px;display:flex;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+#main-nav::-webkit-scrollbar{height:4px}
+#main-nav::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.nav-tab{background:none;border:none;border-bottom:4px solid transparent;padding:12px 14px;font-size:.9rem;font-weight:600;color:var(--encre);cursor:pointer;white-space:nowrap;min-height:52px;display:flex;align-items:center;gap:6px;transition:color var(--tr),border-color var(--tr),background var(--tr);border-radius:var(--radius-sm) var(--radius-sm) 0 0;margin-bottom:-3px}
+.nav-tab:hover{background:var(--fond);color:var(--marine)}
+.nav-tab[aria-selected="true"]{border-bottom-color:var(--marine);color:var(--marine);background:var(--fond)}
+/* PANELS */
+.panel{display:none}.panel.active{display:block}
+#main-content{padding:24px 20px;max-width:1100px;margin:0 auto}
+/* SECTION INTRO */
+.section-intro{margin-bottom:22px}
+.section-intro h1,.section-intro h2{font-size:1.3rem;font-weight:700;color:var(--marine);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.section-intro p{color:#4a5568;font-size:.93rem;max-width:700px;line-height:1.65}
+/* PROGRESS BAR GLOBAL */
+.prog-bar-wrap{height:8px;background:var(--border);border-radius:4px;margin:6px 0 14px;overflow:hidden}
+.prog-bar-fill{height:100%;background:var(--marine);border-radius:4px;transition:width .4s ease}
+/* ===== ALPHABET ===== */
+#alpha-controls{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+#alpha-filter{padding:9px 14px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:.93rem;background:var(--surface);color:var(--encre);min-height:44px}
+#alpha-filter:focus{outline:3px solid var(--focus-ring);outline-offset:2px;border-color:var(--marine)}
+#alpha-stats{font-size:.85rem;color:var(--marine);font-weight:600}
+#alphabet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px}
+.alpha-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:12px 6px;text-align:center;cursor:pointer;transition:border-color var(--tr),box-shadow var(--tr),transform var(--tr);display:flex;flex-direction:column;align-items:center;gap:5px;min-height:100px;justify-content:center;width:100%;position:relative}
+.alpha-card:hover{border-color:var(--marine);box-shadow:var(--shadow-hv);transform:translateY(-2px)}
+.alpha-card[aria-pressed="true"]{border-color:var(--marine);background:#e8f0fb;box-shadow:0 0 0 3px rgba(15,76,129,.2)}
+.alpha-card.learned{border-color:#16a34a}
+.alpha-letter{font-size:1.9rem;font-weight:900;color:var(--marine);line-height:1}
+.alpha-sub{font-size:.67rem;color:#7a8898;line-height:1.3}
+.learned-dot{position:absolute;top:6px;right:6px;width:10px;height:10px;border-radius:50%;background:#16a34a;display:none}
+.alpha-card.learned .learned-dot{display:block}
+#alpha-detail{background:var(--surface);border:3px solid var(--marine);border-radius:var(--radius);padding:20px 22px;margin-bottom:22px;display:none}
+#alpha-detail.visible{display:block}
+#alpha-detail-header{display:flex;align-items:baseline;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+#alpha-detail-letter{font-size:3rem;font-weight:900;color:var(--marine);line-height:1}
+#alpha-detail-title{font-size:1.1rem;font-weight:700;color:var(--marine-dk)}
+.alpha-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.btn-primary{background:var(--marine);color:#fff;border:none;border-radius:var(--radius-sm);padding:10px 18px;font-size:.93rem;font-weight:700;cursor:pointer;min-height:44px;transition:background var(--tr),box-shadow var(--tr);display:flex;align-items:center;gap:6px}
+.btn-primary:hover{background:var(--marine-dk);box-shadow:var(--shadow-hv)}
+.btn-secondary{background:var(--surface);color:var(--marine);border:2px solid var(--marine);border-radius:var(--radius-sm);padding:10px 18px;font-size:.93rem;font-weight:700;cursor:pointer;min-height:44px;transition:background var(--tr),box-shadow var(--tr);display:flex;align-items:center;gap:6px}
+.btn-secondary:hover{background:#e8f0fb}
+.btn-or{background:var(--or);color:var(--encre);border:none;border-radius:var(--radius-sm);padding:10px 18px;font-size:.93rem;font-weight:800;cursor:pointer;min-height:44px;transition:background var(--tr),box-shadow var(--tr)}
+.btn-or:hover{background:var(--or-lt);box-shadow:var(--shadow-hv)}
+#alpha-detail-desc{font-size:.95rem;line-height:1.75;color:var(--encre);background:var(--fond);border-left:4px solid var(--or);padding:12px 16px;border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+#alpha-detail-mnemonic{margin-top:10px;font-size:.85rem;color:#5a6880;font-style:italic;padding:8px 12px;background:#fffbf0;border-radius:var(--radius-sm);border:1px solid #ffe08a}
 /* ===== DICTIONARY ===== */
-#dict-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-}
-.dict-card {
-  background: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  padding: 18px 18px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  transition: box-shadow var(--tr), border-color var(--tr);
-}
-.dict-card:hover { border-color: var(--marine); box-shadow: var(--shadow-hv); }
-.dict-word {
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: var(--marine);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.dict-emoji { font-size: 1.35rem; }
-.dict-category {
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--surface);
-  background: var(--marine);
-  padding: 2px 8px;
-  border-radius: 20px;
-  display: inline-block;
-  width: fit-content;
-}
-.dict-desc {
-  font-size: 0.88rem;
-  line-height: 1.7;
-  color: #334155;
-  background: var(--fond);
-  border-left: 3px solid var(--or);
-  padding: 10px 12px;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-}
-.dict-note {
-  font-size: 0.78rem;
-  color: #7a8898;
-  font-style: italic;
-}
-
+#dict-controls{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+#dict-search{flex:1;min-width:180px;padding:10px 14px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:.95rem;background:var(--surface);color:var(--encre);min-height:44px}
+#dict-search:focus{outline:3px solid var(--focus-ring);outline-offset:2px;border-color:var(--marine)}
+#dict-cat-filter{padding:10px 14px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:.93rem;background:var(--surface);color:var(--encre);min-height:44px}
+#dict-cat-filter:focus{outline:3px solid var(--focus-ring);outline-offset:2px;border-color:var(--marine)}
+#dict-count{font-size:.85rem;color:#7a8898;align-self:center}
+#dict-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.dict-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:18px 18px 14px;display:flex;flex-direction:column;gap:10px;transition:box-shadow var(--tr),border-color var(--tr)}
+.dict-card:hover{border-color:var(--marine);box-shadow:var(--shadow-hv)}
+.dict-word{font-size:1.15rem;font-weight:800;color:var(--marine);display:flex;align-items:center;gap:8px}
+.dict-emoji{font-size:1.3rem}
+.dict-category{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--surface);background:var(--marine);padding:2px 8px;border-radius:20px;display:inline-block;width:fit-content}
+.dict-desc{font-size:.87rem;line-height:1.7;color:#334155;background:var(--fond);border-left:3px solid var(--or);padding:10px 12px;border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.dict-note{font-size:.78rem;color:#7a8898;font-style:italic}
+.dict-actions{display:flex;gap:8px;flex-wrap:wrap}
+.dict-speak-btn{background:none;border:2px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;font-size:.82rem;font-weight:600;cursor:pointer;color:var(--marine);min-height:40px;transition:border-color var(--tr),background var(--tr);display:flex;align-items:center;gap:5px}
+.dict-speak-btn:hover{border-color:var(--marine);background:#e8f0fb}
+#dict-no-result{display:none;text-align:center;padding:40px 20px;color:#7a8898;font-size:.97rem}
+/* ===== LESSONS ===== */
+#lessons-list{display:flex;flex-direction:column;gap:14px;max-width:760px}
+.lesson-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:box-shadow var(--tr),border-color var(--tr)}
+.lesson-card:hover{border-color:var(--marine);box-shadow:var(--shadow-hv)}
+.lesson-header{display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;width:100%;text-align:left;background:none;border:none;font-family:inherit}
+.lesson-num{width:36px;height:36px;border-radius:50%;background:var(--marine);color:#fff;font-weight:800;font-size:.95rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.lesson-num.done{background:#16a34a}
+.lesson-num.locked{background:#aab3c0}
+.lesson-title-wrap{flex:1;text-align:left}
+.lesson-title{font-size:1rem;font-weight:700;color:var(--marine);margin-bottom:3px}
+.lesson-subtitle{font-size:.8rem;color:#7a8898}
+.lesson-badge{font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:20px;flex-shrink:0}
+.badge-done{background:#dcfce7;color:#14532d}
+.badge-progress{background:#fef9c3;color:#713f12}
+.badge-locked{background:#f1f5f9;color:#94a3b8}
+.lesson-body{display:none;padding:0 20px 20px;border-top:1px solid var(--border)}
+.lesson-body.open{display:block}
+.lesson-body p{font-size:.9rem;line-height:1.7;color:#334155;margin-bottom:14px;margin-top:14px}
+.lesson-steps{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.lesson-step{display:flex;gap:10px;align-items:flex-start;font-size:.88rem;line-height:1.65;color:#334155;background:var(--fond);border-left:3px solid var(--or);padding:10px 12px;border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.lesson-step-num{font-weight:800;color:var(--marine);flex-shrink:0;min-width:20px}
+.lesson-complete-btn{background:var(--marine);color:#fff;border:none;border-radius:var(--radius-sm);padding:11px 20px;font-size:.93rem;font-weight:700;cursor:pointer;min-height:44px;transition:background var(--tr)}
+.lesson-complete-btn:hover{background:var(--marine-dk)}
+.lesson-complete-btn.done{background:#16a34a}
+.lesson-complete-btn[disabled]{background:#aab3c0;cursor:not-allowed}
 /* ===== QUIZ ===== */
-#quiz-area { max-width: 680px; margin: 0 auto; }
-
-#quiz-progress-bar {
-  height: 8px;
-  background: var(--border);
-  border-radius: 4px;
-  margin-bottom: 20px;
-  overflow: hidden;
-}
-#quiz-progress-fill {
-  height: 100%;
-  background: var(--marine);
-  border-radius: 4px;
-  transition: width 0.3s ease;
-}
-#quiz-score-display {
-  text-align: right;
-  font-size: 0.85rem;
-  color: var(--marine);
-  font-weight: 600;
-  margin-bottom: 14px;
-}
-#quiz-card {
-  background: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  padding: 26px 22px;
-  margin-bottom: 0;
-}
-#quiz-prompt-label {
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--marine);
-  margin-bottom: 10px;
-}
-#quiz-desc {
-  font-size: 0.97rem;
-  line-height: 1.75;
-  background: var(--fond);
-  border-left: 4px solid var(--or);
-  padding: 14px 16px;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  color: var(--encre);
-}
-#quiz-choices {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 18px;
-}
-.quiz-choice {
-  background: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  padding: 13px 14px;
-  font-size: 0.97rem;
-  font-weight: 600;
-  cursor: pointer;
-  min-height: 56px;
-  text-align: left;
-  transition: border-color var(--tr), background var(--tr), box-shadow var(--tr);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--encre);
-}
-.quiz-choice:hover:not(:disabled) {
-  border-color: var(--marine);
-  background: #e8f0fb;
-}
-.quiz-choice:disabled { cursor: not-allowed; }
-.quiz-choice.correct { background: #dcfce7; border-color: #16a34a; color: #14532d; }
-.quiz-choice.wrong   { background: #fee2e2; border-color: #dc2626; color: #7f1d1d; }
-
-#quiz-feedback {
-  padding: 13px 16px;
-  border-radius: var(--radius);
-  font-size: 0.93rem;
-  font-weight: 600;
-  text-align: center;
-  display: none;
-  margin-top: 14px;
-}
-#quiz-feedback.show { display: block; }
-#quiz-feedback.good { background: #dcfce7; color: #14532d; border: 2px solid #16a34a; }
-#quiz-feedback.bad  { background: #fee2e2; color: #7f1d1d; border: 2px solid #dc2626; }
-
-#quiz-next-btn {
-  display: none;
-  margin: 14px auto 0;
-  background: var(--marine);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius);
-  padding: 14px 28px;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  min-height: 52px;
-  transition: background var(--tr), box-shadow var(--tr);
-}
-#quiz-next-btn.show { display: block; }
-#quiz-next-btn:hover { background: var(--marine-dk); box-shadow: var(--shadow-hv); }
-
-#quiz-end-screen {
-  display: none;
-  text-align: center;
-  padding: 36px 20px;
-  background: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-}
-#quiz-end-screen.show { display: block; }
-#quiz-end-screen h3 {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--marine);
-  margin-bottom: 8px;
-}
-#quiz-final-score {
-  font-size: 2.8rem;
-  font-weight: 900;
-  color: var(--marine);
-  margin: 10px 0;
-}
-#quiz-end-message {
-  font-size: 0.97rem;
-  color: #4a5568;
-  margin-bottom: 22px;
-  line-height: 1.6;
-  max-width: 500px;
-  margin-left: auto;
-  margin-right: auto;
-}
-#quiz-restart-btn {
-  background: var(--or);
-  color: var(--encre);
-  border: none;
-  border-radius: var(--radius);
-  padding: 14px 28px;
-  font-size: 1rem;
-  font-weight: 800;
-  cursor: pointer;
-  min-height: 52px;
-  transition: background var(--tr), box-shadow var(--tr);
-}
-#quiz-restart-btn:hover { background: var(--or-lt); box-shadow: var(--shadow-hv); }
-
-/* Live region — invisible */
-#quiz-live {
-  position: absolute;
-  left: -9999px;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-}
-
+#quiz-area{max-width:700px;margin:0 auto}
+#quiz-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:.85rem;color:var(--marine);font-weight:600;flex-wrap:wrap;gap:6px}
+#quiz-streak{color:#d97706;font-weight:700}
+#quiz-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:24px 22px;margin-bottom:0}
+#quiz-box-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#7a8898;margin-bottom:6px}
+#quiz-prompt-label{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--marine);margin-bottom:10px}
+#quiz-desc{font-size:.95rem;line-height:1.75;background:var(--fond);border-left:4px solid var(--or);padding:14px 16px;border-radius:0 var(--radius-sm) var(--radius-sm) 0;color:var(--encre)}
+#quiz-choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.quiz-choice{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:13px 14px;font-size:.95rem;font-weight:600;cursor:pointer;min-height:52px;text-align:left;transition:border-color var(--tr),background var(--tr),box-shadow var(--tr);display:flex;align-items:center;gap:8px;color:var(--encre)}
+.quiz-choice:hover:not(:disabled){border-color:var(--marine);background:#e8f0fb}
+.quiz-choice:disabled{cursor:not-allowed}
+.quiz-choice.correct{background:#dcfce7;border-color:#16a34a;color:#14532d}
+.quiz-choice.wrong{background:#fee2e2;border-color:#dc2626;color:#7f1d1d}
+#quiz-feedback{padding:13px 16px;border-radius:var(--radius);font-size:.93rem;font-weight:600;text-align:center;display:none;margin-top:14px}
+#quiz-feedback.show{display:block}
+#quiz-feedback.good{background:#dcfce7;color:#14532d;border:2px solid #16a34a}
+#quiz-feedback.bad{background:#fee2e2;color:#7f1d1d;border:2px solid #dc2626}
+#quiz-next-btn{display:none;margin:14px auto 0;background:var(--marine);color:#fff;border:none;border-radius:var(--radius);padding:13px 28px;font-size:1rem;font-weight:700;cursor:pointer;min-height:52px;transition:background var(--tr)}
+#quiz-next-btn.show{display:block}
+#quiz-next-btn:hover{background:var(--marine-dk)}
+#quiz-end-screen{display:none;text-align:center;padding:36px 20px;background:var(--surface);border:2px solid var(--border);border-radius:var(--radius)}
+#quiz-end-screen.show{display:block}
+#quiz-end-screen h3{font-size:1.4rem;font-weight:800;color:var(--marine);margin-bottom:8px}
+#quiz-final-score{font-size:2.6rem;font-weight:900;color:var(--marine);margin:10px 0}
+#quiz-end-message{font-size:.95rem;color:#4a5568;margin-bottom:22px;line-height:1.6;max-width:500px;margin-left:auto;margin-right:auto}
+#quiz-leitner-info{font-size:.82rem;color:#7a8898;margin-bottom:16px;font-style:italic}
+#quiz-live{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+/* ===== SPELL ===== */
+#spell-area{max-width:620px}
+#spell-form{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+#spell-input{flex:1;min-width:160px;padding:12px 16px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:1rem;background:var(--surface);color:var(--encre);min-height:48px}
+#spell-input:focus{outline:3px solid var(--focus-ring);outline-offset:2px;border-color:var(--marine)}
+#spell-result{display:flex;flex-wrap:wrap;gap:10px;min-height:60px;align-items:flex-start}
+.spell-letter-btn{background:var(--surface);border:2px solid var(--marine);border-radius:var(--radius);padding:10px 8px;font-size:1.2rem;font-weight:900;color:var(--marine);cursor:pointer;min-width:52px;min-height:60px;display:flex;flex-direction:column;align-items:center;gap:4px;transition:background var(--tr),transform var(--tr)}
+.spell-letter-btn:hover{background:#e8f0fb;transform:scale(1.08)}
+.spell-letter-sub{font-size:.65rem;color:#7a8898;font-weight:400;text-transform:lowercase}
+#spell-hint{margin-top:14px;padding:12px 16px;background:var(--fond);border-left:4px solid var(--or);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:.88rem;line-height:1.65;color:#334155;display:none}
+#spell-hint.visible{display:block}
+/* ===== PROGRESS ===== */
+#progress-area{max-width:760px}
+.prog-section{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:16px}
+.prog-section h3{font-size:1rem;font-weight:700;color:var(--marine);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--fond);font-size:.92rem}
+.stat-row:last-child{border-bottom:none}
+.stat-label{color:#4a5568}
+.stat-val{font-weight:700;color:var(--marine)}
+#badges-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.badge-item{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--fond);border:2px solid var(--border);border-radius:var(--radius);padding:12px 10px;min-width:90px;text-align:center;font-size:.78rem;color:#4a5568;transition:border-color var(--tr)}
+.badge-item.earned{border-color:var(--or);background:#fffbf0}
+.badge-icon{font-size:1.8rem;filter:grayscale(1);opacity:.4}
+.badge-item.earned .badge-icon{filter:none;opacity:1}
+.badge-name{font-weight:600}
+#reset-btn{background:#fee2e2;color:#7f1d1d;border:2px solid #dc2626;border-radius:var(--radius-sm);padding:10px 18px;font-size:.9rem;font-weight:700;cursor:pointer;min-height:44px;margin-top:8px;transition:background var(--tr)}
+#reset-btn:hover{background:#fca5a5}
 /* ===== FAMILLE ===== */
-#famille-content { max-width: 760px; }
-.conseil-group {
-  background: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px 22px;
-  margin-bottom: 16px;
+#famille-content{max-width:760px}
+.conseil-group{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:16px}
+.conseil-group h3{font-size:1rem;font-weight:700;color:var(--marine);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.conseil-group ul{list-style:none;display:flex;flex-direction:column;gap:10px}
+.conseil-group li{font-size:.92rem;line-height:1.65;color:#334155;padding-left:22px;position:relative}
+.conseil-group li::before{content:"→";position:absolute;left:0;color:var(--or);font-weight:700}
+.activite-card{background:var(--fond);border:2px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin-top:12px}
+.activite-card h4{font-size:.9rem;font-weight:700;color:var(--marine);margin-bottom:8px}
+.activite-card p{font-size:.85rem;line-height:1.65;color:#334155}
+.resource-box{background:var(--fond);border:2px dashed var(--border);border-radius:var(--radius);padding:16px 18px;margin-top:16px;font-size:.9rem;color:#4a5568;line-height:1.65}
+.resource-box strong{color:var(--marine)}
+/* UTILITY */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* FOOTER */
+#app-footer{text-align:center;padding:18px 20px;font-size:.8rem;color:#8896aa;border-top:1px solid var(--border);margin-top:32px}
+#app-footer a{color:var(--marine)}
+/* RESPONSIVE */
+@media(max-width:600px){
+  #alphabet-grid{grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px}
+  #quiz-choices{grid-template-columns:1fr}
+  #main-content{padding:16px 14px}
+  .nav-tab{padding:10px 10px;font-size:.82rem}
+  #app-title{font-size:1.1rem}
+  .alpha-letter{font-size:1.6rem}
 }
-.conseil-group h3 {
-  font-size: 1.03rem;
-  font-weight: 700;
-  color: var(--marine);
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.conseil-group ul {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.conseil-group li {
-  font-size: 0.93rem;
-  line-height: 1.65;
-  color: #334155;
-  padding-left: 22px;
-  position: relative;
-}
-.conseil-group li::before {
-  content: "→";
-  position: absolute;
-  left: 0;
-  color: var(--or);
-  font-weight: 700;
-}
-.resource-box {
-  background: var(--fond);
-  border: 2px dashed var(--border);
-  border-radius: var(--radius);
-  padding: 16px 18px;
-  margin-top: 16px;
-  font-size: 0.9rem;
-  color: #4a5568;
-  line-height: 1.65;
-}
-.resource-box strong { color: var(--marine); }
-
-/* ===== UTILITY ===== */
-.sr-only {
-  position: absolute;
-  width: 1px; height: 1px;
-  padding: 0; margin: -1px;
-  overflow: hidden;
-  clip: rect(0,0,0,0);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* ===== FOOTER ===== */
-#app-footer {
-  text-align: center;
-  padding: 18px 20px;
-  font-size: 0.8rem;
-  color: #8896aa;
-  border-top: 1px solid var(--border);
-  margin-top: 32px;
-}
-#app-footer a { color: var(--marine); }
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 600px) {
-  #alphabet-grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
-  #quiz-choices   { grid-template-columns: 1fr; }
-  #main-content   { padding: 16px 14px; }
-  .nav-tab        { padding: 12px 11px; font-size: 0.87rem; }
-  #app-title      { font-size: 1.15rem; }
+@media(prefers-reduced-motion:reduce){
+  .alpha-card,.spell-letter-btn{transition:none;transform:none!important}
+  .prog-bar-fill{transition:none}
 }
 </style>
 </head>
 <body>
 
-<!-- LIEN D'EVITEMENT -->
 <a href="#main-content" id="skip-link">Aller au contenu principal</a>
 
-<!-- ===== EN-TETE ===== -->
 <header id="app-header" role="banner">
   <div id="header-left">
-    <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y">← LibreA11y</a>
-    <span id="app-title" role="heading" aria-level="1">🤟 SignLearn <span style="font-weight:400;font-size:0.95rem;opacity:0.75;">— démo</span></span>
+    <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y">&#8592; LibreA11y</a>
+    <span id="app-title" role="heading" aria-level="1">&#129311; SignLearn</span>
   </div>
-  <div id="header-notice" aria-label="Informations démo">
-    démo · 100% hors-ligne<br>aucune donnée envoyée
+  <div id="header-notice" aria-label="Statut de l'application">
+    100% hors-ligne<br>aucune donnée envoyée
   </div>
 </header>
 
-<!-- ===== LIMITE HONNETE (bien visible) ===== -->
-<aside id="limit-banner" role="note" aria-label="Limite importante de cette démo">
-  <p><strong>⚠️ Limite honnête de cette démo :</strong> une vraie application de langue des signes nécessite des <strong>vidéos filmées par des locuteurs et locutrices natif·ves sourd·es</strong>, co-construites avec la communauté sourde — ce qu'il est impossible de générer automatiquement.</p>
-  <p>Ce squelette pédagogique propose uniquement des <strong>descriptions textuelles</strong> des configurations de main. Les vraies vidéos seront intégrées ultérieurement, en collaboration avec la communauté sourde. <strong>La LSF est une langue à part entière</strong>, avec sa propre grammaire, sa culture et sa richesse — elle mérite un contenu à la hauteur.</p>
+<aside id="limit-banner" role="note" aria-label="Limite importante">
+  <p><strong>Transparence :</strong> une vraie application de langue des signes nécessite des <strong>vidéos filmées par des locuteur·rices natif·ves sourd·es</strong>, co-construites avec la communauté sourde. Ce n'est pas possible à générer automatiquement.</p>
+  <p>Cette application propose uniquement des <strong>descriptions textuelles</strong> des configurations de main. Les vidéos seront intégrées ultérieurement avec la communauté sourde. <strong>La LSF est une langue à part entière</strong>, avec sa propre grammaire et sa culture.</p>
 </aside>
 
-<!-- ===== BANDEAU DEMO ===== -->
 <div id="demo-strip" role="status">
-  📋 Contenu de démonstration — les vrais signes seront ajoutés en vidéo, avec la communauté sourde
+  Contenu de démonstration — les vrais signes seront ajoutés en vidéo, avec la communauté sourde
 </div>
 
-<!-- ===== NAVIGATION PAR ONGLETS ===== -->
 <nav id="main-nav" aria-label="Sections de l'application" role="tablist">
-  <button class="nav-tab" id="tab-alphabet" role="tab" aria-selected="true"  aria-controls="panel-alphabet">🔤 Alphabet</button>
-  <button class="nav-tab" id="tab-dict"     role="tab" aria-selected="false" aria-controls="panel-dict">📖 Dictionnaire</button>
-  <button class="nav-tab" id="tab-quiz"     role="tab" aria-selected="false" aria-controls="panel-quiz">🧠 Quiz</button>
-  <button class="nav-tab" id="tab-famille"  role="tab" aria-selected="false" aria-controls="panel-famille">👨‍👩‍👧 Mode famille</button>
+  <button class="nav-tab" id="tab-alphabet" role="tab" aria-selected="true"  aria-controls="panel-alphabet">&#128288; Alphabet</button>
+  <button class="nav-tab" id="tab-dict"     role="tab" aria-selected="false" aria-controls="panel-dict">&#128214; Dictionnaire</button>
+  <button class="nav-tab" id="tab-lessons"  role="tab" aria-selected="false" aria-controls="panel-lessons">&#127979; Leçons</button>
+  <button class="nav-tab" id="tab-quiz"     role="tab" aria-selected="false" aria-controls="panel-quiz">&#129504; Quiz</button>
+  <button class="nav-tab" id="tab-spell"    role="tab" aria-selected="false" aria-controls="panel-spell">&#9000;&#65039; Épellation</button>
+  <button class="nav-tab" id="tab-progress" role="tab" aria-selected="false" aria-controls="panel-progress">&#127942; Progression</button>
+  <button class="nav-tab" id="tab-famille"  role="tab" aria-selected="false" aria-controls="panel-famille">&#128106; Famille</button>
 </nav>
 
-<!-- ===== CONTENU PRINCIPAL ===== -->
 <main id="main-content" tabindex="-1">
 
-  <!-- ============ ALPHABET ============ -->
-  <section id="panel-alphabet" class="panel active" role="tabpanel" aria-labelledby="tab-alphabet">
-    <div class="section-intro">
-      <h1>Alphabet dactylologique (LSF)</h1>
-      <p>L'alphabet dactylologique permet d'épeler les mots lettre par lettre grâce à des configurations de la main. Cliquez sur une lettre pour voir la description détaillée du positionnement des doigts.</p>
+<!-- ====== ALPHABET ====== -->
+<section id="panel-alphabet" class="panel active" role="tabpanel" aria-labelledby="tab-alphabet">
+  <div class="section-intro">
+    <h1>&#128288; Alphabet dactylologique (LSF)</h1>
+    <p>Cliquez sur une lettre pour voir la description et la mnémotechnique. Utilisez "Écouter" pour la synthèse vocale. Cochez "Appris" pour suivre votre progression.</p>
+  </div>
+  <div id="alpha-controls">
+    <label for="alpha-filter" class="sr-only">Filtrer les lettres</label>
+    <input type="text" id="alpha-filter" placeholder="Filtrer A–Z…" aria-label="Filtrer les lettres de l'alphabet" maxlength="1">
+    <span id="alpha-stats" aria-live="polite"></span>
+  </div>
+  <div id="alpha-detail" aria-live="polite" aria-atomic="true" aria-label="Description de la lettre sélectionnée">
+    <div id="alpha-detail-header">
+      <span id="alpha-detail-letter" aria-hidden="true"></span>
+      <span id="alpha-detail-title"></span>
     </div>
-
-    <div id="alpha-detail" aria-live="polite" aria-atomic="true" aria-label="Description de la lettre sélectionnée">
-      <div id="alpha-detail-header">
-        <span id="alpha-detail-letter" aria-hidden="true"></span>
-        <span id="alpha-detail-title"></span>
-      </div>
-      <div id="alpha-detail-desc"></div>
-      <p id="alpha-detail-tip"></p>
+    <div id="alpha-detail-desc"></div>
+    <p id="alpha-detail-mnemonic"></p>
+    <div class="alpha-actions">
+      <button class="btn-primary" id="alpha-speak-btn" type="button">&#128266; Écouter</button>
+      <button class="btn-secondary" id="alpha-learn-btn" type="button">&#10003; Marquer appris</button>
     </div>
+  </div>
+  <div id="alphabet-grid" aria-label="Alphabet dactylologique LSF — 26 lettres"></div>
+</section>
 
-    <div id="alphabet-grid" aria-label="Alphabet dactylologique LSF — 26 lettres">
+<!-- ====== DICTIONNAIRE ====== -->
+<section id="panel-dict" class="panel" role="tabpanel" aria-labelledby="tab-dict">
+  <div class="section-intro">
+    <h2>&#128214; Dictionnaire LSF (40+ signes)</h2>
+    <p>Recherchez un signe ou filtrez par catégorie. Chaque fiche décrit le mouvement et la configuration de la main.</p>
+  </div>
+  <div id="dict-controls">
+    <label for="dict-search" class="sr-only">Rechercher un signe</label>
+    <input type="search" id="dict-search" placeholder="&#128269; Rechercher un signe…" aria-label="Rechercher un signe dans le dictionnaire">
+    <label for="dict-cat-filter" class="sr-only">Filtrer par catégorie</label>
+    <select id="dict-cat-filter" aria-label="Filtrer par catégorie">
+      <option value="">Toutes les catégories</option>
+    </select>
+    <span id="dict-count" aria-live="polite"></span>
+  </div>
+  <div id="dict-grid" aria-label="Dictionnaire de signes LSF"></div>
+  <p id="dict-no-result" role="status">Aucun signe trouvé pour cette recherche.</p>
+</section>
+
+<!-- ====== LECONS ====== -->
+<section id="panel-lessons" class="panel" role="tabpanel" aria-labelledby="tab-lessons">
+  <div class="section-intro">
+    <h2>&#127979; Leçons progressives</h2>
+    <p>6 leçons thématiques pour structurer votre apprentissage. Terminez une leçon pour débloquer la suivante.</p>
+  </div>
+  <div id="lessons-progress-wrap">
+    <div style="display:flex;justify-content:space-between;font-size:.85rem;color:var(--marine);font-weight:600;margin-bottom:4px">
+      <span>Progression globale</span>
+      <span id="lessons-pct-label" aria-live="polite">0 / 6</span>
     </div>
-  </section>
-
-  <!-- ============ DICTIONNAIRE ============ -->
-  <section id="panel-dict" class="panel" role="tabpanel" aria-labelledby="tab-dict">
-    <div class="section-intro">
-      <h2>Mini-dictionnaire LSF</h2>
-      <p>Descriptions textuelles de 12 signes courants en LSF. La description précise la forme des mains, leur position et le mouvement. Ces descriptions restent approximatives : regarder un·e locuteur·rice natif·ve reste indispensable pour apprendre les vraies nuances.</p>
+    <div class="prog-bar-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0" id="lessons-prog-bar" aria-label="Avancement des leçons">
+      <div class="prog-bar-fill" id="lessons-prog-fill" style="width:0%"></div>
     </div>
-    <div id="dict-grid" aria-label="Dictionnaire de signes LSF">
+  </div>
+  <div id="lessons-list" aria-label="Liste des leçons"></div>
+</section>
+
+<!-- ====== QUIZ ====== -->
+<section id="panel-quiz" class="panel" role="tabpanel" aria-labelledby="tab-quiz">
+  <div class="section-intro">
+    <h2>&#129504; Quiz — Répétition espacée (Leitner)</h2>
+    <p>Les signes ratés sont reproposés plus souvent. Votre progression Leitner est sauvegardée automatiquement.</p>
+  </div>
+  <div id="quiz-live" aria-live="assertive" aria-atomic="true"></div>
+  <div id="quiz-area">
+    <div id="quiz-meta">
+      <span id="quiz-score-display" aria-label="Score actuel"></span>
+      <span id="quiz-streak" aria-label="Série en cours"></span>
     </div>
-  </section>
-
-  <!-- ============ QUIZ ============ -->
-  <section id="panel-quiz" class="panel" role="tabpanel" aria-labelledby="tab-quiz">
-    <div class="section-intro">
-      <h2>Quiz — Reconnaître les signes</h2>
-      <p>Lisez la description du signe, puis choisissez le mot correspondant parmi 4 propositions. 8 questions par session.</p>
+    <div class="prog-bar-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="quiz-progress-bar" aria-label="Avancement du quiz">
+      <div class="prog-bar-fill" id="quiz-progress-fill" style="width:0%"></div>
     </div>
+    <div id="quiz-card">
+      <div id="quiz-box-label" aria-hidden="true"></div>
+      <div id="quiz-prompt-label" aria-hidden="true">Quel signe correspond à cette description ?</div>
+      <div id="quiz-desc" aria-label="Description du signe à identifier"></div>
+      <div id="quiz-choices" role="group" aria-label="Choisissez la bonne réponse"></div>
+      <div id="quiz-feedback" role="status" aria-live="polite"></div>
+      <button id="quiz-next-btn" type="button">Question suivante &#8594;</button>
+    </div>
+    <div id="quiz-end-screen" aria-live="polite">
+      <div style="font-size:2.4rem;margin-bottom:6px" aria-hidden="true">&#127942;</div>
+      <h3>Session terminée !</h3>
+      <div id="quiz-final-score" aria-label="Score final"></div>
+      <p id="quiz-end-message"></p>
+      <p id="quiz-leitner-info"></p>
+      <button id="quiz-restart-btn" class="btn-or" type="button">Nouvelle session</button>
+    </div>
+  </div>
+</section>
 
-    <div id="quiz-live" aria-live="assertive" aria-atomic="true"></div>
+<!-- ====== EPELLATION ====== -->
+<section id="panel-spell" class="panel" role="tabpanel" aria-labelledby="tab-spell">
+  <div class="section-intro">
+    <h2>&#9000;&#65039; Épellation dactylologique</h2>
+    <p>Tapez un mot pour obtenir la séquence de lettres dactylologiques. Cliquez sur chaque lettre pour écouter sa description.</p>
+  </div>
+  <div id="spell-area">
+    <form id="spell-form" role="search" aria-label="Épeler un mot">
+      <label for="spell-input" class="sr-only">Mot à épeler</label>
+      <input type="text" id="spell-input" placeholder="Tapez un mot…" aria-label="Mot à épeler en dactylologie" maxlength="30" autocomplete="off" autocorrect="off" spellcheck="false">
+      <button type="submit" class="btn-primary">Épeler</button>
+      <button type="button" id="spell-clear-btn" class="btn-secondary">Effacer</button>
+    </form>
+    <div id="spell-result" aria-label="Séquence dactylologique" aria-live="polite"></div>
+    <div id="spell-hint" aria-live="polite"></div>
+  </div>
+</section>
 
-    <div id="quiz-area">
-      <div id="quiz-score-display" aria-label="Progression du quiz"></div>
-      <div id="quiz-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Avancement du quiz">
-        <div id="quiz-progress-fill" style="width:0%"></div>
+<!-- ====== PROGRESSION ====== -->
+<section id="panel-progress" class="panel" role="tabpanel" aria-labelledby="tab-progress">
+  <div class="section-intro">
+    <h2>&#127942; Suivi de progression</h2>
+    <p>Vos statistiques d'apprentissage, vos badges débloqués et la réinitialisation des données.</p>
+  </div>
+  <div id="progress-area">
+    <div class="prog-section">
+      <h3>&#128202; Statistiques</h3>
+      <div id="stats-rows"></div>
+    </div>
+    <div class="prog-section">
+      <h3>&#127941; Badges</h3>
+      <div id="badges-grid" aria-label="Badges débloqués"></div>
+    </div>
+    <div class="prog-section">
+      <h3>&#9888;&#65039; Réinitialisation</h3>
+      <p style="font-size:.88rem;color:#4a5568;margin-bottom:12px">Efface toutes vos données locales (lettres apprises, leçons, quiz Leitner).</p>
+      <button id="reset-btn" type="button">&#128465;&#65039; Réinitialiser ma progression</button>
+    </div>
+  </div>
+</section>
+
+<!-- ====== FAMILLE ====== -->
+<section id="panel-famille" class="panel" role="tabpanel" aria-labelledby="tab-famille">
+  <div class="section-intro">
+    <h2>&#128106; Mode famille</h2>
+    <p>Conseils et activités ludiques pour apprendre la LSF en famille, avec ou sans enfant sourd.</p>
+  </div>
+  <div id="famille-content">
+    <div class="conseil-group">
+      <h3>&#127807; Pourquoi apprendre la LSF ensemble ?</h3>
+      <ul>
+        <li>La LSF est la <strong>langue naturelle</strong> des personnes sourdes signantes en France : l'apprendre, c'est ouvrir une porte à une communauté et à une culture.</li>
+        <li>Pour un enfant sourd, voir ses proches signer crée un environnement bilingue bienveillant qui <strong>favorise son développement langagier</strong> et son estime de soi.</li>
+        <li>Les expressions du visage sont <strong>grammaticales en LSF</strong> — elles changent le sens des phrases, elles ne sont pas optionnelles.</li>
+        <li>La LSF possède sa propre grammaire (ordre des mots différent du français) : ne la réduisez pas à du français signé mot à mot.</li>
+      </ul>
+    </div>
+    <div class="conseil-group">
+      <h3>&#127919; Par où commencer ?</h3>
+      <ul>
+        <li><strong>L'alphabet dactylologique</strong> est une porte d'entrée accessible : 5 minutes par jour, en épelant les prénoms de la famille.</li>
+        <li>Commencez par les signes du quotidien : bonjour, merci, manger, boire, maison — des mots qui reviennent naturellement.</li>
+        <li>Posez vos questions à l'<strong>enfant sourd lui-même ou elle-même</strong> : ce rôle de "professeur" est valorisant et renforce la confiance.</li>
+        <li>Rejoignez des cours animés par des personnes sourdes : c'est la seule façon d'apprendre la langue réelle, avec ses nuances.</li>
+      </ul>
+    </div>
+    <div class="conseil-group">
+      <h3>&#127968; Rituels familiaux pour pratiquer</h3>
+      <div class="activite-card">
+        <h4>&#127793; Le signe du jour</h4>
+        <p>Chaque matin, choisissez un signe dans l'application et essayez de l'utiliser au moins une fois dans la journée. Notez-le sur un post-it visible.</p>
       </div>
-
-      <div id="quiz-card">
-        <div id="quiz-prompt-label" aria-hidden="true">Quel signe correspond à cette description ?</div>
-        <div id="quiz-desc" aria-label="Description du signe à identifier"></div>
-        <div id="quiz-choices" role="group" aria-label="Choisissez la bonne réponse parmi 4 propositions"></div>
-        <div id="quiz-feedback" role="status" aria-live="polite"></div>
-        <button id="quiz-next-btn" type="button">Question suivante →</button>
+      <div class="activite-card">
+        <h4>&#127860; À table</h4>
+        <p>Nommez les plats en signe, demandez "encore ?" et "tu aimes ?" Utilisez l'onglet Dictionnaire pour trouver les mots. Rendez le repas bilingue !</p>
       </div>
-
-      <div id="quiz-end-screen" aria-live="polite" aria-label="Résultats du quiz">
-        <div style="font-size:2.6rem;margin-bottom:6px;" aria-hidden="true">🏆</div>
-        <h3>Quiz terminé !</h3>
-        <div id="quiz-final-score" aria-label="Score final"></div>
-        <p id="quiz-end-message"></p>
-        <button id="quiz-restart-btn" type="button">Recommencer le quiz</button>
+      <div class="activite-card">
+        <h4>&#129335; Jeu du pendu dactylologique</h4>
+        <p>Un joueur épèle un mot lettre par lettre avec ses mains, les autres devinent. Utilisez l'onglet Épellation pour vous entraîner avant de jouer.</p>
+      </div>
+      <div class="activite-card">
+        <h4>&#128218; Les histoires du soir</h4>
+        <p>Racontez une histoire simple en combinant mots et signes. Les enfants adorent le côté expressif et théâtral de la langue des signes.</p>
+      </div>
+      <div class="activite-card">
+        <h4>&#127942; Le défi de la semaine</h4>
+        <p>Choisissez une leçon de l'onglet Leçons, entraînez-vous toute la semaine, puis faites un mini-quiz familial le week-end pour consolider.</p>
       </div>
     </div>
-  </section>
-
-  <!-- ============ MODE FAMILLE ============ -->
-  <section id="panel-famille" class="panel" role="tabpanel" aria-labelledby="tab-famille">
-    <div class="section-intro">
-      <h2>Mode famille</h2>
-      <p>Conseils pour apprendre la LSF en famille, avec ou sans enfant sourd.</p>
+    <div class="conseil-group">
+      <h3>&#128161; Points importants</h3>
+      <ul>
+        <li>N'inventez pas vos propres signes : des signes incorrects peuvent créer de la confusion et isoler l'enfant de la communauté.</li>
+        <li>Célébrez les efforts : un signe maladroit tenté avec amour vaut mieux que la perfection silencieuse.</li>
+        <li>Contactez les <strong>associations de parents d'enfants sourds</strong> (ex. : 2LPE — Deux Langues Pour Une Éducation) pour un accompagnement humain.</li>
+        <li>Cette application est uniquement un point de départ : elle ne remplace pas un cours avec un·e enseignant·e sourd·e.</li>
+      </ul>
     </div>
-
-    <div id="famille-content">
-
-      <div class="conseil-group">
-        <h3>🌱 Pourquoi apprendre la LSF ensemble ?</h3>
-        <ul>
-          <li>La LSF est la <strong>langue naturelle</strong> des personnes sourdes signantes en France : l'apprendre, c'est ouvrir la porte à une communauté et à une culture.</li>
-          <li>Pour un enfant sourd, voir ses proches signer crée un environnement bilingue bienveillant qui <strong>favorise son développement langagier</strong> et son estime de soi.</li>
-          <li>Apprendre une langue des signes développe la mémoire visuelle, la motricité fine et la créativité chez tous les enfants.</li>
-          <li>La LSF possède sa propre grammaire (ordre des mots différent du français, expressions du visage grammaticales) : ne la réduisez pas à du français signé mot à mot.</li>
-        </ul>
-      </div>
-
-      <div class="conseil-group">
-        <h3>🎯 Par où commencer ?</h3>
-        <ul>
-          <li><strong>L'alphabet dactylologique</strong> est une porte d'entrée accessible : 5 minutes par jour, en épelant les prénoms de la famille.</li>
-          <li>Commencez par les signes du quotidien : bonjour, merci, manger, boire, maison — des mots qui reviennent naturellement.</li>
-          <li>Posez vos questions à l'<strong>enfant sourd lui-même</strong> : il ou elle est souvent le meilleur ou la meilleure professeure, et ce rôle est valorisant.</li>
-          <li>Rejoignez des cours animés par des personnes sourdes : c'est la seule façon d'apprendre la langue réelle, avec ses nuances et sa culture.</li>
-        </ul>
-      </div>
-
-      <div class="conseil-group">
-        <h3>🏠 Rituels familiaux pour pratiquer</h3>
-        <ul>
-          <li><strong>Le signe du jour :</strong> chaque matin, choisissez un signe et essayez de l'utiliser tout au long de la journée.</li>
-          <li><strong>À table :</strong> nommez les plats en signe, demandez « encore ? » et « tu aimes ? »</li>
-          <li><strong>Les histoires du soir :</strong> racontez une histoire simple en combinant mots et signes (pratique bimodale).</li>
-          <li><strong>Les jeux :</strong> le jeu du pendu avec l'alphabet dactylologique est amusant et pédagogique.</li>
-          <li><strong>Célébrez les efforts :</strong> un signe maladroit tenté avec amour vaut mieux que la perfection silencieuse.</li>
-        </ul>
-      </div>
-
-      <div class="conseil-group">
-        <h3>💡 Points importants</h3>
-        <ul>
-          <li>N'inventez pas vos propres signes : des signes incorrects peuvent créer de la confusion et isoler l'enfant.</li>
-          <li>Les expressions du visage (sourcils, joues, bouche) sont <strong>grammaticales en LSF</strong>, pas optionnelles — elles changent le sens des phrases.</li>
-          <li>Contactez les <strong>associations de parents d'enfants sourds</strong> (ex. : 2LPE – Deux Langues Pour Une Éducation) pour un accompagnement humain et bienveillant.</li>
-          <li>Cette démo est uniquement un point de départ : elle ne remplace pas un cours avec un·e enseignant·e sourd·e.</li>
-        </ul>
-      </div>
-
-      <div class="resource-box" role="note">
-        <strong>📚 Pistes à explorer (hors de cette application) :</strong><br>
-        Dictionnaire LSF de l'Université Paris 8 · LSF-Hub · Pisourd · Cours proposés par les associations et les centres spécialisés. Les meilleures références sont toujours les locuteur·rices natif·ves sourd·es.
-      </div>
-
+    <div class="resource-box" role="note">
+      <strong>&#128218; Pistes à explorer (hors de cette application) :</strong><br>
+      Dictionnaire LSF de l'Université Paris 8 · LSF-Hub · Pisourd · Cours proposés par les associations locales et les centres spécialisés. Les meilleures références sont toujours les locuteur·rices natif·ves sourd·es.
     </div>
-  </section>
+  </div>
+</section>
 
 </main>
 
-<!-- ===== PIED DE PAGE ===== -->
 <footer id="app-footer" role="contentinfo">
-  <p>SignLearn · Suite <a href="../index.html">LibreA11y</a> · Démo — contenu textuel uniquement — 100% hors-ligne — aucune donnée envoyée</p>
+  <p>SignLearn · Suite <a href="../index.html">LibreA11y</a> · PWA hors-ligne · Aucune donnée envoyée · Contenu textuel uniquement</p>
 </footer>
 
-<!-- ===== JAVASCRIPT ===== -->
 <script>
 'use strict';
 
 /* ============================================================
-   DONNEES
+   STORAGE HELPERS
    ============================================================ */
-
-/** Alphabet dactylologique LSF — descriptions textuelles **/
-const ALPHABET = [
-  { l:'A', desc:'Poing fermé, pouce posé sur le côté de l\'index replié. Main verticale, paume vers l\'interlocuteur.', tip:'En LSF classique, le pouce peut reposer légèrement contre la joue du poing.' },
-  { l:'B', desc:'Main ouverte, quatre doigts tendus et joints, pouce replié contre la paume. Main verticale.', tip:'Les quatre doigts sont bien parallèles. Le pouce ne dépasse pas sur le côté.' },
-  { l:'C', desc:'Main courbée en demi-cercle ample (comme si on tenait un verre), pouce et doigts se font face. Main de côté.', tip:'La courbure est ample — pas trop serrée.' },
-  { l:'D', desc:'Index pointé vers le haut, les trois autres doigts et le pouce forment un cercle fermé. Main verticale.', tip:'L\'index est bien droit, les autres doigts ferment le cercle contre lui.' },
-  { l:'E', desc:'Tous les doigts fléchis, le bout des doigts touche le bas de la paume. Pouce rentré sous les doigts. Main verticale.', tip:'La main ressemble à une griffe légèrement fermée.' },
-  { l:'F', desc:'Pouce et index forment un cercle fermé, les trois autres doigts tendus vers le haut et séparés. Main verticale.', tip:'Les trois doigts restent bien distincts et tendus.' },
-  { l:'G', desc:'Index pointé horizontalement sur le côté, pouce tendu parallèlement à l\'index. Autres doigts repliés.', tip:'La forme évoque une sorte de pistolet tenu de côté.' },
-  { l:'H', desc:'Index et majeur tendus et joints horizontalement sur le côté. Annulaire, auriculaire et pouce repliés.', tip:'Les deux doigts sont bien à l\'horizontale et serrés l\'un contre l\'autre.' },
-  { l:'I', desc:'Auriculaire (petit doigt) tendu vers le haut. Tous les autres doigts et le pouce repliés. Main verticale.', tip:'Seul le petit doigt se lève.' },
-  { l:'J', desc:'On part du I (auriculaire tendu), puis on trace la forme d\'un J dans l\'air : descente puis crochet vers la gauche.', tip:'Le J est le I auquel on ajoute un mouvement dans l\'espace. La trajectoire dessine la lettre.' },
-  { l:'K', desc:'Index tendu vers le haut, majeur tendu en oblique vers l\'extérieur, pouce glissé entre les deux. Autres doigts repliés.', tip:'Le pouce est coincé entre index et majeur, légèrement écarté.' },
-  { l:'L', desc:'Index tendu vers le haut, pouce tendu horizontalement à 90°. Autres doigts repliés en poing.', tip:'Les deux doigts forment un L bien net et régulier.' },
-  { l:'M', desc:'Index, majeur et annulaire repliés par-dessus le pouce. Auriculaire également replié. La main forme une sorte de poing serré.', tip:'En LSF, les trois doigts couvrent le pouce pour former le M.' },
-  { l:'N', desc:'Index et majeur repliés par-dessus le pouce. Annulaire et auriculaire également repliés. Similaire au M mais avec deux doigts seulement.', tip:'N ressemble à M mais avec un doigt de moins.' },
-  { l:'O', desc:'Tous les doigts et le pouce se rejoignent bout à bout pour former un O bien rond. Main verticale.', tip:'Le cercle doit être bien fermé et régulier.' },
-  { l:'P', desc:'Index pointé vers le bas, majeur tendu parallèlement, pouce intercalé entre les deux — toute la main orientée vers le bas.', tip:'Le P est souvent décrit comme un K retourné vers le sol.' },
-  { l:'Q', desc:'Index et pouce pointés vers le bas, formant une figure similaire au G mais avec la main retournée vers le sol. Autres doigts repliés.', tip:'Q ressemble à un G dont on aurait retourné la main.' },
-  { l:'R', desc:'Index et majeur tendus et entrecroisés (l\'un par-dessus l\'autre), pointant vers le haut. Autres doigts repliés.', tip:'Le croisement des deux doigts est la marque du R.' },
-  { l:'S', desc:'Poing fermé, pouce posé en travers des ongles des doigts repliés. Main verticale.', tip:'Similaire au A mais le pouce passe devant les doigts plutôt que sur le côté.' },
-  { l:'T', desc:'Pouce inséré et coincé entre index et majeur repliés. Autres doigts repliés. Main verticale.', tip:'Le pouce "ressort" entre les deux premiers doigts fermés.' },
-  { l:'U', desc:'Index et majeur tendus et joints vers le haut. Autres doigts et pouce repliés. Main verticale.', tip:'Les deux doigts sont parallèles et serrés, comme les deux jambages du U.' },
-  { l:'V', desc:'Index et majeur tendus et bien écartés en V (signe de victoire). Autres doigts et pouce repliés. Main verticale.', tip:'L\'écartement des deux doigts doit être bien visible.' },
-  { l:'W', desc:'Index, majeur et annulaire tendus et écartés en éventail. Pouce et auriculaire repliés. Main verticale.', tip:'Trois doigts bien séparés et régulièrement espacés.' },
-  { l:'X', desc:'Index courbé en crochet (comme un hameçon). Autres doigts et pouce repliés. Main verticale.', tip:'Un seul doigt — l\'index — forme le crochet du X.' },
-  { l:'Y', desc:'Pouce et auriculaire (petit doigt) tendus et écartés. Index, majeur et annulaire repliés. La forme évoque une main levée pour un appel téléphonique.', tip:'Le Y ressemble au geste "appeler" ou au signe "shaka".' },
-  { l:'Z', desc:'Index tendu, on trace la lettre Z dans l\'air : un trait horizontal, une diagonale, un trait horizontal. Main mobile.', tip:'Mouvement dans l\'espace : l\'index "dessine" le Z dans l\'air devant soi.' },
-];
-
-/** Dictionnaire — 12 signes courants LSF **/
-const DICT = [
-  {
-    word: 'Bonjour', emoji: '👋', cat: 'Salutation',
-    desc: 'Main ouverte, doigts joints, paume vers l\'interlocuteur. On amène le bout des doigts au niveau du front puis on avance légèrement la main vers l\'avant, comme un salut stylisé.',
-    note: 'Ce signe peut varier selon les régions. Le contact du front ou de la tempe est courant.'
-  },
-  {
-    word: 'Merci', emoji: '🙏', cat: 'Politesse',
-    desc: 'Bout des doigts d\'une main ouverte posés sur les lèvres ou le menton, puis on avance la main vers l\'interlocuteur en la retournant paume vers le haut.',
-    note: 'L\'image est celle d\'un baiser de gratitude envoyé vers l\'autre personne.'
-  },
-  {
-    word: 'Oui', emoji: '✅', cat: 'Réponse',
-    desc: 'Poing fermé que l\'on hoche de haut en bas, une ou deux fois, imitant le hochement de tête affirmatif.',
-    note: 'L\'expression du visage (sourire, sourcils relevés) renforce l\'affirmation.'
-  },
-  {
-    word: 'Non', emoji: '❌', cat: 'Réponse',
-    desc: 'Index, majeur et pouce tendus ensemble, ils se ferment rapidement en pinceau 1 à 2 fois, comme un bec qui se referme.',
-    note: 'Une légère rotation du poignet peut accompagner le geste. L\'expression du visage exprime le refus.'
-  },
-  {
-    word: 'Manger', emoji: '🍽️', cat: 'Quotidien',
-    desc: 'Les cinq doigts rapprochés en bouquet (comme si on pinçait de la nourriture), on amène la main vers la bouche à plusieurs reprises.',
-    note: 'Mouvement répété 2 à 3 fois. Le geste mime naturellement le fait de porter de la nourriture à la bouche.'
-  },
-  {
-    word: 'Boire', emoji: '🥤', cat: 'Quotidien',
-    desc: 'Main courbée en C (comme si on tenait un verre). On lève la main vers la bouche en inclinant légèrement la tête vers l\'arrière, mimant l\'action de boire.',
-    note: 'Le mouvement est naturel et ressemble au geste réel de boire au verre.'
-  },
-  {
-    word: 'Maison', emoji: '🏠', cat: 'Lieu',
-    desc: 'Les deux mains forment un toit triangulaire en rejoignant les bouts des doigts en pointe (index et pouces se touchent), puis elles descendent des deux côtés pour dessiner les murs.',
-    note: 'Le geste trace la silhouette d\'une maison : toit pointu puis les deux façades.'
-  },
-  {
-    word: 'Aide', emoji: '🤝', cat: 'Action',
-    desc: 'Une main formant un poing (ou la lettre A) est posée sur la paume ouverte de l\'autre main. La main inférieure pousse vers le haut, symbolisant le soutien.',
-    note: 'Une main "soulève" l\'autre — image concrète du coup de main donné.'
-  },
-  {
-    word: 'Famille', emoji: '👨‍👩‍👧', cat: 'Personnes',
-    desc: 'Les deux mains font le signe F (pouce et index en cercle, trois autres doigts tendus), puis on les fait tourner l\'une autour de l\'autre en cercle horizontal, paumes orientées vers l\'intérieur.',
-    note: 'Le mouvement circulaire évoque le groupe, le cercle des proches.'
-  },
-  {
-    word: 'Content·e', emoji: '😊', cat: 'Émotion',
-    desc: 'Main ouverte posée sur la poitrine (sur le cœur), on effectue un mouvement circulaire dans le sens des aiguilles d\'une montre (depuis son propre point de vue).',
-    note: 'Le cercle sur la poitrine est le signe classique du bonheur. L\'expression du visage souriante est indispensable.'
-  },
-  {
-    word: 'Dormir', emoji: '😴', cat: 'Quotidien',
-    desc: 'La main ouverte descend lentement devant le visage, les doigts se ferment progressivement vers un poing, pendant que la tête s\'incline doucement sur le côté.',
-    note: 'Le mouvement devant les yeux évoque les paupières qui se ferment progressivement.'
-  },
-  {
-    word: 'Encore', emoji: '🔄', cat: 'Quantité',
-    desc: 'Une main à plat (paume vers le haut), l\'autre main formant un O ou un F, on touche la paume de la main ouverte avec le bout des doigts fermés, une ou deux fois.',
-    note: 'Geste simple et net, très utile pour demander une répétition ou une portion supplémentaire.'
-  },
-];
-
-/* ============================================================
-   CONSTRUCTION DES QUESTIONS QUIZ
-   ============================================================ */
-function buildQuizQuestions() {
-  const shuffled = [...DICT].sort(() => Math.random() - 0.5);
-  const picked = shuffled.slice(0, 8);
-  return picked.map(entry => {
-    const others = DICT.filter(d => d.word !== entry.word);
-    const distractors = others.sort(() => Math.random() - 0.5).slice(0, 3);
-    const choices = [entry, ...distractors].sort(() => Math.random() - 0.5);
-    return { correct: entry.word, desc: entry.desc, emoji: entry.emoji, choices };
-  });
+function lsGet(k, def) {
+  try { const v = localStorage.getItem(k); return v === null ? def : JSON.parse(v); }
+  catch(e) { return def; }
+}
+function lsSet(k, v) {
+  try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {}
 }
 
 /* ============================================================
-   ONGLETS (TABS)
+   DATA — ALPHABET (26 lettres avec mnémotechniques)
+   ============================================================ */
+const ALPHABET = [
+  { l:'A', desc:'Poing fermé, pouce posé sur le côté de l\'index replié. Main verticale, paume vers l\'interlocuteur.', tip:'Mnémotechnique : la main en A ressemble à la pointe d\'un triangle — la lettre A inversée.' },
+  { l:'B', desc:'Main ouverte, quatre doigts tendus et joints, pouce replié contre la paume. Main verticale.', tip:'Mnémotechnique : les quatre doigts forment le haut du B, le pouce replié trace le bas.' },
+  { l:'C', desc:'Main courbée en demi-cercle ample, pouce et doigts se font face. Main de côté.', tip:'Mnémotechnique : la main imite la forme arrondie de la lettre C — très facile à mémoriser.' },
+  { l:'D', desc:'Index pointé vers le haut, les trois autres doigts et le pouce forment un cercle fermé. Main verticale.', tip:'Mnémotechnique : l\'index est le bâton du D, le cercle des autres doigts en est la courbe.' },
+  { l:'E', desc:'Tous les doigts fléchis, le bout des doigts touche le bas de la paume. Pouce rentré sous les doigts.', tip:'Mnémotechnique : la main ressemble à une griffe — pensez à la "serre" de l\'aigle (Eagle = E).' },
+  { l:'F', desc:'Pouce et index forment un cercle fermé, les trois autres doigts tendus vers le haut et séparés.', tip:'Mnémotechnique : le cercle pouce-index est "fermé" comme la barre du F, les trois doigts sont ses traits.' },
+  { l:'G', desc:'Index pointé horizontalement sur le côté, pouce tendu parallèlement. Autres doigts repliés.', tip:'Mnémotechnique : la forme évoque un pistolet pointé sur le côté — Gunpoint = G.' },
+  { l:'H', desc:'Index et majeur tendus et joints horizontalement sur le côté. Annulaire, auriculaire et pouce repliés.', tip:'Mnémotechnique : deux doigts horizontaux comme les deux traits horizontaux du H couché.' },
+  { l:'I', desc:'Auriculaire (petit doigt) tendu vers le haut. Tous les autres doigts et le pouce repliés.', tip:'Mnémotechnique : un seul doigt, fin et droit, comme le jambage unique du I.' },
+  { l:'J', desc:'On part du I (auriculaire tendu), puis on trace la forme d\'un J dans l\'air : descente puis crochet vers la gauche.', tip:'Mnémotechnique : le J est le I auquel on ajoute le mouvement courbe caractéristique de la lettre.' },
+  { l:'K', desc:'Index tendu vers le haut, majeur tendu en oblique, pouce glissé entre les deux. Autres doigts repliés.', tip:'Mnémotechnique : imaginez le K de l\'alphabet, les deux diagonales partent du pouce central.' },
+  { l:'L', desc:'Index tendu vers le haut, pouce tendu horizontalement à 90°. Autres doigts repliés en poing.', tip:'Mnémotechnique : l\'index et le pouce forment un L parfait — impossible à rater !' },
+  { l:'M', desc:'Index, majeur et annulaire repliés par-dessus le pouce. Auriculaire également replié.', tip:'Mnémotechnique : trois doigts "cachent" le pouce, comme les trois ponts du M.' },
+  { l:'N', desc:'Index et majeur repliés par-dessus le pouce. Annulaire et auriculaire repliés. Similaire au M mais deux doigts.', tip:'Mnémotechnique : N comme M mais avec un doigt de moins — le N a deux ponts, le M en a trois.' },
+  { l:'O', desc:'Tous les doigts et le pouce se rejoignent bout à bout pour former un O bien rond. Main verticale.', tip:'Mnémotechnique : la main forme un O parfait. La plus facile à retenir !' },
+  { l:'P', desc:'Index pointé vers le bas, majeur tendu parallèlement, pouce intercalé. Main orientée vers le bas.', tip:'Mnémotechnique : le P est souvent décrit comme un K retourné vers le sol — la tige pend.' },
+  { l:'Q', desc:'Index et pouce pointés vers le bas, similaire au G mais la main retournée. Autres doigts repliés.', tip:'Mnémotechnique : Q ressemble à un G retourné — la queue du Q pend vers le bas.' },
+  { l:'R', desc:'Index et majeur tendus et entrecroisés (l\'un par-dessus l\'autre), pointant vers le haut.', tip:'Mnémotechnique : les doigts croisés évoquent le "R" de "croisement" — comme croiser les doigts pour la chance.' },
+  { l:'S', desc:'Poing fermé, pouce posé en travers des ongles des doigts repliés. Main verticale.', tip:'Mnémotechnique : le pouce "barre" les doigts comme la barre transversale du S — poing très serré.' },
+  { l:'T', desc:'Pouce inséré et coincé entre index et majeur repliés. Autres doigts repliés.', tip:'Mnémotechnique : le pouce "ressort" entre les deux doigts comme la barre du T entre ses montants.' },
+  { l:'U', desc:'Index et majeur tendus et joints vers le haut. Autres doigts et pouce repliés.', tip:'Mnémotechnique : deux doigts serrés forment les deux jambages parallèles du U.' },
+  { l:'V', desc:'Index et majeur tendus et bien écartés en V (signe de victoire). Autres doigts et pouce repliés.', tip:'Mnémotechnique : le V de Victoire — ce signe est identique dans de nombreuses langues des signes.' },
+  { l:'W', desc:'Index, majeur et annulaire tendus et écartés en éventail. Pouce et auriculaire repliés.', tip:'Mnémotechnique : trois doigts écartés comme les trois pointes du W — comptez les pointes.' },
+  { l:'X', desc:'Index courbé en crochet (comme un hameçon). Autres doigts et pouce repliés.', tip:'Mnémotechnique : l\'index crochu dessine l\'une des deux diagonales du X — ou un hameçon (X-trème pêche !).' },
+  { l:'Y', desc:'Pouce et auriculaire (petit doigt) tendus et écartés. Index, majeur et annulaire repliés.', tip:'Mnémotechnique : le Y ressemble au geste "shaka" hawaïen et au geste "tu me téléphones ?".' },
+  { l:'Z', desc:'Index tendu, on trace la lettre Z dans l\'air : trait horizontal, diagonale, trait horizontal.', tip:'Mnémotechnique : l\'index "dessine" le Z dans l\'espace — le signe ET la lettre se superposent.' },
+];
+
+/* ============================================================
+   DATA — DICTIONNAIRE (40+ signes, catégories variées)
+   ============================================================ */
+const DICT = [
+  { word:'Bonjour',   emoji:'&#128075;', cat:'Salutation', desc:'Main ouverte, doigts joints, paume vers l\'interlocuteur. On amène le bout des doigts au niveau du front puis on avance légèrement la main vers l\'avant, comme un salut stylisé.', note:'Ce signe peut varier selon les régions. Le contact du front ou de la tempe est courant.' },
+  { word:'Au revoir', emoji:'&#128400;', cat:'Salutation', desc:'Main ouverte, paume vers l\'interlocuteur, on agite la main de gauche à droite plusieurs fois — mouvement similaire au geste de "coucou" universellement compris.', note:'Expression du visage souriante recommandée pour exprimer la chaleur de l\'au revoir.' },
+  { word:'Merci',     emoji:'&#128591;', cat:'Politesse',  desc:'Bout des doigts d\'une main ouverte posés sur les lèvres ou le menton, puis on avance la main vers l\'interlocuteur en la retournant paume vers le haut.', note:'L\'image est celle d\'un baiser de gratitude envoyé vers l\'autre personne.' },
+  { word:'S\'il vous plaît', emoji:'&#9997;&#65039;', cat:'Politesse', desc:'Main ouverte, paume vers le haut, on effectue un léger mouvement circulaire ou de va-et-vient devant la poitrine. Le regard et l\'expression du visage doivent être doux et bienveillants.', note:'Certaines variantes placent la main plus près du cœur pour accentuer la demande.' },
+  { word:'Pardon',    emoji:'&#128533;', cat:'Politesse',  desc:'Poing légèrement fermé, on effectue de petits cercles sur la poitrine (sur le sternum), comme pour s\'excuser sincèrement. L\'expression du visage exprime la contrition.', note:'Ce signe peut aussi signifier "désolé·e" selon le contexte et l\'expression faciale.' },
+  { word:'Oui',       emoji:'&#9989;',  cat:'Réponse',   desc:'Poing fermé que l\'on hoche de haut en bas, une ou deux fois, imitant le hochement de tête affirmatif.', note:'L\'expression du visage (sourcils relevés) renforce l\'affirmation.' },
+  { word:'Non',       emoji:'&#10060;', cat:'Réponse',   desc:'Index, majeur et pouce tendus ensemble, ils se ferment rapidement en pinceau une à deux fois, comme un bec qui se referme. Accompagné d\'une expression négative.', note:'Une légère rotation du poignet peut accompagner le geste.' },
+  { word:'Manger',    emoji:'&#127829;', cat:'Quotidien', desc:'Les cinq doigts rapprochés en bouquet (comme si on pinçait de la nourriture), on amène la main vers la bouche à plusieurs reprises.', note:'Mouvement répété 2 à 3 fois. Le geste mime naturellement l\'action de porter de la nourriture à la bouche.' },
+  { word:'Boire',     emoji:'&#129380;', cat:'Quotidien', desc:'Main courbée en C (comme si on tenait un verre). On lève la main vers la bouche en inclinant légèrement la tête vers l\'arrière, mimant l\'action de boire.', note:'Le mouvement est naturel et ressemble au geste réel de boire au verre.' },
+  { word:'Dormir',    emoji:'&#128564;', cat:'Quotidien', desc:'La main ouverte descend lentement devant le visage, les doigts se ferment progressivement vers un poing, pendant que la tête s\'incline doucement sur le côté.', note:'Le mouvement devant les yeux évoque les paupières qui se ferment progressivement.' },
+  { word:'Se lever',  emoji:'&#128583;', cat:'Quotidien', desc:'Index et majeur posés à plat sur la paume de l\'autre main (représentant une personne assise), puis ces deux doigts se redressent lentement vers le haut.', note:'Le geste mime une personne qui se lève d\'une surface plane.' },
+  { word:'Marcher',   emoji:'&#127938;', cat:'Quotidien', desc:'Index et majeur tendus vers le bas, on les déplace alternativement vers l\'avant en imitant le mouvement des jambes qui marchent.', note:'Le rythme alterné des deux doigts est la clé de ce signe.' },
+  { word:'Maison',    emoji:'&#127968;', cat:'Lieu',      desc:'Les deux mains forment un toit triangulaire en rejoignant les bouts des doigts en pointe, puis elles descendent des deux côtés pour dessiner les murs.', note:'Le geste trace la silhouette d\'une maison : toit pointu puis les deux façades.' },
+  { word:'École',     emoji:'&#127979;', cat:'Lieu',      desc:'Les deux mains à plat, paumes vers le bas, on les agite légèrement de haut en bas à plusieurs reprises, comme pour attirer l\'attention des élèves.', note:'Ce signe peut varier selon les régions. Certaines variantes montrent le tableau ou les livres.' },
+  { word:'Hôpital',   emoji:'&#127973;', cat:'Lieu',      desc:'On trace une croix avec l\'index de la main dominante sur le dos de l\'autre main ou sur l\'épaule, symbolisant la croix rouge médicale.', note:'La croix tracée rappelle le symbole médical universel.' },
+  { word:'Ville',     emoji:'&#127749;', cat:'Lieu',      desc:'Les deux mains, paumes se faisant face, miment les façades des immeubles en se déplaçant de haut en bas plusieurs fois, esquissant une rangée de bâtiments.', note:'On peut varier la hauteur des mains pour évoquer des immeubles plus ou moins hauts.' },
+  { word:'Aide',      emoji:'&#129309;', cat:'Action',    desc:'Une main formant un poing (ou la lettre A) est posée sur la paume ouverte de l\'autre main. La main inférieure pousse vers le haut, symbolisant le soutien.', note:'Une main "soulève" l\'autre — image concrète du coup de main donné.' },
+  { word:'Travailler',emoji:'&#128188;', cat:'Action',    desc:'Les deux poings se frappent alternativement l\'un l\'autre (le dos de chaque poing frappe l\'autre poing), mouvement répété 2 à 3 fois.', note:'Le mouvement rythmé évoque l\'effort et la répétition du travail.' },
+  { word:'Apprendre', emoji:'&#128218;', cat:'Action',    desc:'Les doigts d\'une main ouverte se ferment vers le pouce en ramenant la main vers le front, comme si on "captait" de la connaissance et la stockait dans la tête.', note:'Le geste de la main qui "ramène" l\'info vers le front est très expressif.' },
+  { word:'Comprendre',emoji:'&#129504;', cat:'Action',    desc:'Index tendu pointé vers la tempe, on effectue un petit mouvement de rotation ou on tape légèrement la tempe, indiquant que l\'information "est arrivée" au cerveau.', note:'Le contact avec la tempe symbolise la compréhension intellectuelle.' },
+  { word:'Famille',   emoji:'&#128106;', cat:'Personnes', desc:'Les deux mains font le signe F (pouce et index en cercle, trois autres doigts tendus), puis on les fait tourner l\'une autour de l\'autre en cercle horizontal.', note:'Le mouvement circulaire évoque le groupe, le cercle des proches.' },
+  { word:'Enfant',    emoji:'&#128118;', cat:'Personnes', desc:'Main à plat, paume vers le bas, on effectue un léger rebond vers le bas à la hauteur approximative d\'un enfant, indiquant la petite taille.', note:'La hauteur du geste peut indiquer l\'âge approximatif de l\'enfant.' },
+  { word:'Ami·e',     emoji:'&#129309;', cat:'Personnes', desc:'Les deux index s\'accrochent l\'un à l\'autre alternativement (d\'abord l\'un par-dessus, puis l\'autre), symbolisant le lien et l\'attachement mutuel.', note:'L\'alternance du lien symbolise la réciprocité de l\'amitié.' },
+  { word:'Médecin',   emoji:'&#129657;', cat:'Personnes', desc:'On prend le pouls de l\'autre main en posant les doigts sur le poignet intérieur — geste du médecin qui ausculte. Mouvement de pression légère et répétée.', note:'Ce signe iconique représente l\'action typique du médecin.' },
+  { word:'Content·e', emoji:'&#128522;', cat:'Émotion',   desc:'Main ouverte posée sur la poitrine (sur le cœur), on effectue un mouvement circulaire dans le sens des aiguilles d\'une montre depuis son propre point de vue.', note:'Le cercle sur la poitrine est le signe classique du bonheur. L\'expression du visage souriante est indispensable.' },
+  { word:'Triste',    emoji:'&#128546;', cat:'Émotion',   desc:'Les deux mains ouvertes, paumes vers soi, descendent lentement le long des joues, comme des larmes qui glissent. L\'expression du visage doit exprimer la tristesse.', note:'Le mouvement descendant des mains illustre les larmes — très expressif et universellement compris.' },
+  { word:'Peur',      emoji:'&#128561;', cat:'Émotion',   desc:'Les deux mains ouvertes, doigts écartés, s\'approchent rapidement du torse en se crispant légèrement. Le corps se raidit et les épaules remontent légèrement.', note:'L\'ensemble du corps participe — le visage effrayé est indispensable.' },
+  { word:'Amour',     emoji:'&#10084;&#65039;', cat:'Émotion', desc:'On croise les bras sur la poitrine (comme pour se serrer soi-même dans ses bras) ou on place les deux mains en forme de cœur sur la poitrine, l\'une sur l\'autre.', note:'Certaines variantes utilisent le signe "Je t\'aime" de l\'ASL (pouce, index et auriculaire étendus), très répandu.' },
+  { word:'Un',        emoji:'1&#65039;&#8419;',  cat:'Nombre',  desc:'Index tendu vers le haut, tous les autres doigts et le pouce repliés. Main verticale, paume vers l\'interlocuteur.', note:'Identique dans de nombreuses langues des signes et dans le geste courant pour "un".' },
+  { word:'Deux',      emoji:'2&#65039;&#8419;',  cat:'Nombre',  desc:'Index et majeur tendus vers le haut et légèrement écartés (signe V), autres doigts et pouce repliés. Main verticale.', note:'Le V peut être interprété comme "deux" ou "victoire" selon le contexte.' },
+  { word:'Trois',     emoji:'3&#65039;&#8419;',  cat:'Nombre',  desc:'Pouce, index et majeur tendus et écartés. Annulaire et auriculaire repliés contre la paume.', note:'Le pouce compte comme premier doigt en LSF pour les chiffres.' },
+  { word:'Cinq',      emoji:'5&#65039;&#8419;',  cat:'Nombre',  desc:'Main ouverte, les cinq doigts tendus et légèrement écartés, paume vers l\'interlocuteur. Main verticale bien visible.', note:'La main complètement ouverte est le chiffre cinq — simple et universel.' },
+  { word:'Dix',       emoji:'&#128081;', cat:'Nombre',   desc:'Pouce tendu, main fermée en poing (signe du pouce en l\'air), que l\'on secoue légèrement de gauche à droite sur le côté.', note:'La rotation du poignet avec le pouce tendu signifie "dix" en LSF.' },
+  { word:'Rouge',     emoji:'&#129001;', cat:'Couleur',  desc:'Index ou index+majeur posés sur les lèvres, on descend légèrement la main en la relâchant. La couleur rouge est associée aux lèvres naturellement rouges.', note:'Le lien iconique avec la couleur des lèvres rend ce signe mémorable.' },
+  { word:'Bleu',      emoji:'&#129001;', cat:'Couleur',  desc:'Main en B (quatre doigts tendus, pouce replié) que l\'on secoue légèrement sur le côté, parfois avec une torsion du poignet.', note:'La configuration B de "Bleu" est un exemple de signe initialisé (basé sur la lettre dactylologique).' },
+  { word:'Vert',      emoji:'&#129002;', cat:'Couleur',  desc:'Main en V (index et majeur tendus en ciseaux) que l\'on secoue légèrement de gauche à droite, parfois avec un léger pivotement du poignet.', note:'V de Vert — un autre exemple de signe initialisé facile à mémoriser.' },
+  { word:'Chien',     emoji:'&#128054;', cat:'Animal',   desc:'On claque la cuisse deux fois avec la paume de la main ouverte, puis on siffle doucement ou on fait le geste d\'appeler un chien. Certaines variantes imitent le mouvement d\'une oreille pendante.', note:'Le claquement de cuisse est le geste universel pour appeler un chien.' },
+  { word:'Chat',      emoji:'&#128049;', cat:'Animal',   desc:'On trace les moustaches du chat avec les deux index tirés vers l\'extérieur depuis les côtés du visage, imitant les vibrisses du félin.', note:'Les moustaches tirées sont le signe iconique du chat dans de nombreuses langues des signes.' },
+  { word:'Eau',       emoji:'&#128167;', cat:'Nourriture', desc:'Main en W (index, majeur et annulaire tendus et écartés), on touche le coin des lèvres avec les doigts ou on amène la main vers la bouche.', note:'Le W peut représenter "Water" — ce signe est influencé par l\'ASL dans certaines régions.' },
+  { word:'Pain',      emoji:'&#127838;', cat:'Nourriture', desc:'Une main à plat (le pain), l\'autre main effectue un mouvement de scie sur le dos de la première main, comme si on coupait une miche de pain.', note:'Le mouvement de coupe est très iconique et facile à comprendre intuitivement.' },
+  { word:'Encore',    emoji:'&#128260;', cat:'Quantité', desc:'Une main à plat (paume vers le haut), l\'autre main formant un O ou un F, on touche la paume de la main ouverte avec le bout des doigts fermés, une ou deux fois.', note:'Geste simple et net, très utile pour demander une répétition ou une portion supplémentaire.' },
+];
+
+/* ============================================================
+   DATA — LEÇONS (6 leçons)
+   ============================================================ */
+const LESSONS = [
+  {
+    id:'l1', title:'Les salutations', subtitle:'Bonjour, au revoir, merci, pardon',
+    intro:'Commencez par les signes les plus utiles au quotidien : saluer et remercier. Ces signes s\'utilisent dans tous les contextes et créent immédiatement du lien.',
+    steps:[
+      { n:1, text:'Apprenez BONJOUR : main ouverte au front, puis avancez vers l\'interlocuteur.' },
+      { n:2, text:'Apprenez AU REVOIR : main ouverte agitée de gauche à droite, paume vers l\'avant.' },
+      { n:3, text:'Apprenez MERCI : doigts sur le menton, puis main avancée paume vers le haut.' },
+      { n:4, text:'Apprenez PARDON : poing sur la poitrine, petits cercles.' },
+      { n:5, text:'Exercice : présentez-vous avec BONJOUR + votre prénom épelé + MERCI à la fin.' },
+    ]
+  },
+  {
+    id:'l2', title:'Oui, Non et les réponses', subtitle:'Répondre en LSF',
+    intro:'OUI et NON sont fondamentaux. En LSF, les expressions du visage renforcent ou modifient le sens — un OUI avec le sourire n\'a pas le même poids qu\'un OUI neutre.',
+    steps:[
+      { n:1, text:'Apprenez OUI : poing qui hoche de haut en bas (1-2 fois).' },
+      { n:2, text:'Apprenez NON : trois doigts qui se ferment comme un bec.' },
+      { n:3, text:'Apprenez S\'IL VOUS PLAÎT : main ouverte, cercle doux devant la poitrine.' },
+      { n:4, text:'Exercice : un·e partenaire signe une question (mimer), l\'autre répond OUI ou NON avec l\'expression du visage adaptée.' },
+      { n:5, text:'Important : essayez de répondre sans parler — laissez les mains et le visage parler seuls.' },
+    ]
+  },
+  {
+    id:'l3', title:'Le quotidien', subtitle:'Manger, boire, dormir, marcher',
+    intro:'Ces signes du quotidien se produisent plusieurs fois par jour. En les intégrant dans votre routine, vous créez des automatismes rapidement.',
+    steps:[
+      { n:1, text:'Apprenez MANGER : cinq doigts en bouquet vers la bouche, répété.' },
+      { n:2, text:'Apprenez BOIRE : main en C vers la bouche, tête légèrement inclinée.' },
+      { n:3, text:'Apprenez DORMIR : main qui descend et se ferme devant le visage.' },
+      { n:4, text:'Apprenez MARCHER : index et majeur vers le bas, mouvement alterné.' },
+      { n:5, text:'Exercice du soir : avant de dormir, signez MANGER, BOIRE et DORMIR en vous regardant dans un miroir.' },
+    ]
+  },
+  {
+    id:'l4', title:'Les émotions', subtitle:'Content·e, triste, peur, amour',
+    intro:'Les émotions sont au cœur de la communication. En LSF, l\'expression du visage N\'EST PAS optionnelle : elle fait partie de la grammaire. Un signe sans expression est incomplet.',
+    steps:[
+      { n:1, text:'Apprenez CONTENT·E : main ouverte, cercle sur la poitrine — AVEC un vrai sourire !' },
+      { n:2, text:'Apprenez TRISTE : deux mains qui descendent le long des joues — avec l\'expression triste.' },
+      { n:3, text:'Apprenez PEUR : mains qui s\'approchent du torse, corps qui se raidit.' },
+      { n:4, text:'Apprenez AMOUR : bras croisés sur la poitrine ou cœur formé avec les mains.' },
+      { n:5, text:'Exercice : racontez votre journée en signes d\'émotion uniquement. Exagérez les expressions du visage !' },
+    ]
+  },
+  {
+    id:'l5', title:'Les lieux', subtitle:'Maison, école, hôpital, ville',
+    intro:'Localiser, indiquer, décrire un endroit : les signes de lieux servent à construire des phrases contextuelles. L\'espace devant soi devient une carte en LSF.',
+    steps:[
+      { n:1, text:'Apprenez MAISON : toit triangulaire avec les deux mains, puis murs qui descendent.' },
+      { n:2, text:'Apprenez ÉCOLE : deux mains agitées vers le bas, comme pour attirer l\'attention.' },
+      { n:3, text:'Apprenez HÔPITAL : croix tracée avec l\'index sur le dos de l\'autre main.' },
+      { n:4, text:'Apprenez VILLE : deux mains qui miment des rangées d\'immeubles.' },
+      { n:5, text:'Exercice : pointez des lieux autour de vous et signez leur nom. Dehors, dans la maison, dans le quartier.' },
+    ]
+  },
+  {
+    id:'l6', title:'Alphabet et épellation', subtitle:'A–Z, stratégies et pratique',
+    intro:'L\'alphabet dactylologique permet d\'épeler tout mot qui n\'a pas encore de signe. C\'est un outil de secours et de précision — à maîtriser absolument.',
+    steps:[
+      { n:1, text:'Révisez les lettres A à G dans l\'onglet Alphabet — concentrez-vous sur la forme de la main, pas la vitesse.' },
+      { n:2, text:'Révisez H à N — comparez M et N (trois doigts vs deux), S et A (position du pouce).' },
+      { n:3, text:'Révisez O à Z — faites attention aux lettres avec mouvement : J, Z.' },
+      { n:4, text:'Utilisez l\'onglet Épellation pour taper votre prénom et l\'épeler lettre par lettre.' },
+      { n:5, text:'Exercice final : épeler 5 mots différents (ville, animal, prénom, couleur, aliment) en moins de 30 secondes chacun.' },
+    ]
+  },
+];
+
+/* ============================================================
+   DATA — BADGES
+   ============================================================ */
+const BADGE_DEFS = [
+  { id:'alpha5',   icon:'&#127774;', name:'Premiers pas',     desc:'5 lettres apprises',          check: s => s.learnedLetters >= 5 },
+  { id:'alpha13',  icon:'&#11088;',  name:'Mi-chemin',        desc:'13 lettres apprises',         check: s => s.learnedLetters >= 13 },
+  { id:'alpha26',  icon:'&#127775;', name:'Alphabet complet', desc:'26 lettres apprises',         check: s => s.learnedLetters >= 26 },
+  { id:'quiz10',   icon:'&#129504;', name:'Primo quiz',       desc:'10 questions de quiz',        check: s => s.quizAnswered >= 10 },
+  { id:'quiz50',   icon:'&#129351;', name:'Quiz master',      desc:'50 questions de quiz',        check: s => s.quizAnswered >= 50 },
+  { id:'streak3',  icon:'&#128293;', name:'En feu !',         desc:'Série de 3 bonnes réponses',  check: s => s.bestStreak >= 3 },
+  { id:'lesson1',  icon:'&#128218;', name:'Première leçon',   desc:'1 leçon terminée',            check: s => s.lessonsCompleted >= 1 },
+  { id:'lesson6',  icon:'&#127942;', name:'Diplômé·e',        desc:'Toutes les leçons finies',    check: s => s.lessonsCompleted >= 6 },
+  { id:'spell5',   icon:'&#9000;&#65039;',  name:'Épeleur·se',      desc:'5 mots épelés',               check: s => s.wordsSpelled >= 5 },
+];
+
+/* ============================================================
+   STATE — chargé depuis localStorage
+   ============================================================ */
+let state = lsGet('signlearn_state', {
+  learnedLetters: 0,
+  learnedSet: [],      // array of letters
+  lessonsCompleted: 0,
+  lessonsDone: [],     // array of lesson ids
+  quizAnswered: 0,
+  quizCorrect: 0,
+  bestStreak: 0,
+  wordsSpelled: 0,
+  leitner: {},         // { word: boxNumber 0-4 }
+  earnedBadges: [],
+});
+// Ensure arrays exist (migration)
+if (!Array.isArray(state.learnedSet))   state.learnedSet = [];
+if (!Array.isArray(state.lessonsDone))  state.lessonsDone = [];
+if (!Array.isArray(state.earnedBadges)) state.earnedBadges = [];
+if (typeof state.leitner !== 'object')  state.leitner = {};
+
+function saveState() {
+  lsSet('signlearn_state', state);
+  checkBadges();
+}
+
+function checkBadges() {
+  BADGE_DEFS.forEach(b => {
+    if (!state.earnedBadges.includes(b.id) && b.check(state)) {
+      state.earnedBadges.push(b.id);
+    }
+  });
+  lsSet('signlearn_state', state);
+}
+
+/* ============================================================
+   TABS
    ============================================================ */
 const allTabs   = document.querySelectorAll('.nav-tab');
 const allPanels = document.querySelectorAll('.panel');
@@ -871,17 +676,14 @@ const allPanels = document.querySelectorAll('.panel');
 allTabs.forEach(tab => {
   tab.addEventListener('click', () => activateTab(tab));
   tab.addEventListener('keydown', e => {
-    const i = [...allTabs].indexOf(e.currentTarget);
+    const tabs = [...allTabs];
+    const i = tabs.indexOf(e.currentTarget);
     let next = -1;
-    if (e.key === 'ArrowRight') next = (i + 1) % allTabs.length;
-    if (e.key === 'ArrowLeft')  next = (i - 1 + allTabs.length) % allTabs.length;
+    if (e.key === 'ArrowRight') next = (i + 1) % tabs.length;
+    if (e.key === 'ArrowLeft')  next = (i - 1 + tabs.length) % tabs.length;
     if (e.key === 'Home')       next = 0;
-    if (e.key === 'End')        next = allTabs.length - 1;
-    if (next >= 0) {
-      e.preventDefault();
-      allTabs[next].focus();
-      activateTab(allTabs[next]);
-    }
+    if (e.key === 'End')        next = tabs.length - 1;
+    if (next >= 0) { e.preventDefault(); tabs[next].focus(); activateTab(tabs[next]); }
   });
 });
 
@@ -889,83 +691,308 @@ function activateTab(activeTab) {
   allTabs.forEach(t => t.setAttribute('aria-selected', t === activeTab ? 'true' : 'false'));
   const pid = activeTab.getAttribute('aria-controls');
   allPanels.forEach(p => p.classList.toggle('active', p.id === pid));
+  if (pid === 'panel-progress') renderProgress();
+}
+
+/* ============================================================
+   SPEECH SYNTHESIS
+   ============================================================ */
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  try {
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = 'fr-FR';
+    utt.rate = 0.9;
+    window.speechSynthesis.speak(utt);
+  } catch(e) {}
 }
 
 /* ============================================================
    ALPHABET
    ============================================================ */
-const alphaGrid   = document.getElementById('alphabet-grid');
-const alphaDetail = document.getElementById('alpha-detail');
-const detailLetter= document.getElementById('alpha-detail-letter');
-const detailTitle = document.getElementById('alpha-detail-title');
-const detailDesc  = document.getElementById('alpha-detail-desc');
-const detailTip   = document.getElementById('alpha-detail-tip');
+const alphaGrid       = document.getElementById('alphabet-grid');
+const alphaDetail     = document.getElementById('alpha-detail');
+const detailLetter    = document.getElementById('alpha-detail-letter');
+const detailTitle     = document.getElementById('alpha-detail-title');
+const detailDesc      = document.getElementById('alpha-detail-desc');
+const detailMnemonic  = document.getElementById('alpha-detail-mnemonic');
+const alphaSpeakBtn   = document.getElementById('alpha-speak-btn');
+const alphaLearnBtn   = document.getElementById('alpha-learn-btn');
+const alphaStats      = document.getElementById('alpha-stats');
+const alphaFilter     = document.getElementById('alpha-filter');
+
 let currentLetter = null;
+let currentAlphaItem = null;
+const alphaCards = {};
+
+function updateAlphaStats() {
+  alphaStats.textContent = `${state.learnedSet.length} / 26 lettres apprises`;
+}
 
 ALPHABET.forEach(item => {
   const btn = document.createElement('button');
-  btn.className = 'alpha-card';
+  btn.className = 'alpha-card' + (state.learnedSet.includes(item.l) ? ' learned' : '');
   btn.setAttribute('aria-pressed', 'false');
-  btn.setAttribute('aria-label', `Lettre ${item.l} — voir la description du signe`);
+  btn.setAttribute('aria-label', `Lettre ${item.l}${state.learnedSet.includes(item.l) ? ' — apprise' : ''}`);
   btn.setAttribute('type', 'button');
+  btn.dataset.letter = item.l;
   btn.innerHTML = `
+    <span class="learned-dot" aria-hidden="true"></span>
     <span class="alpha-letter" aria-hidden="true">${item.l}</span>
-    <span class="alpha-sub">voir le signe</span>
+    <span class="alpha-sub">${state.learnedSet.includes(item.l) ? 'appris &#10003;' : 'voir le signe'}</span>
   `;
-  btn.addEventListener('click', () => {
-    const isOpen = currentLetter === item.l;
-    alphaGrid.querySelectorAll('.alpha-card').forEach(c => {
-      c.setAttribute('aria-pressed', 'false');
-    });
-    if (isOpen) {
-      currentLetter = null;
-      alphaDetail.classList.remove('visible');
-      alphaDetail.setAttribute('aria-hidden', 'true');
-    } else {
-      currentLetter = item.l;
-      btn.setAttribute('aria-pressed', 'true');
-      detailLetter.textContent = item.l;
-      detailTitle.textContent  = `— Lettre ${item.l}`;
-      detailDesc.textContent   = item.desc;
-      detailTip.textContent    = item.tip ? `💡 ${item.tip}` : '';
-      alphaDetail.classList.add('visible');
-      alphaDetail.removeAttribute('aria-hidden');
-      // Scroll smooth vers le détail si besoin
-      alphaDetail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-  });
+  btn.addEventListener('click', () => openAlpha(item, btn));
   alphaGrid.appendChild(btn);
+  alphaCards[item.l] = btn;
+});
+
+updateAlphaStats();
+
+function openAlpha(item, btn) {
+  const isOpen = currentLetter === item.l;
+  alphaGrid.querySelectorAll('.alpha-card').forEach(c => c.setAttribute('aria-pressed', 'false'));
+  if (isOpen) {
+    currentLetter = null; currentAlphaItem = null;
+    alphaDetail.classList.remove('visible');
+    alphaDetail.setAttribute('aria-hidden', 'true');
+    return;
+  }
+  currentLetter = item.l; currentAlphaItem = item;
+  btn.setAttribute('aria-pressed', 'true');
+  detailLetter.textContent = item.l;
+  detailTitle.textContent  = '— Lettre ' + item.l;
+  detailDesc.textContent   = item.desc;
+  detailMnemonic.textContent = item.tip ? item.tip : '';
+  updateLearnBtn();
+  alphaDetail.classList.add('visible');
+  alphaDetail.removeAttribute('aria-hidden');
+  alphaDetail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function updateLearnBtn() {
+  if (!currentAlphaItem) return;
+  const learned = state.learnedSet.includes(currentAlphaItem.l);
+  alphaLearnBtn.textContent = learned ? '&#10003; Appris !' : '&#10003; Marquer appris';
+  alphaLearnBtn.innerHTML   = learned
+    ? '<span aria-hidden="true">&#9733;</span> Appris !'
+    : '<span aria-hidden="true">&#10003;</span> Marquer appris';
+  alphaLearnBtn.style.borderColor = learned ? '#16a34a' : '';
+  alphaLearnBtn.style.color       = learned ? '#14532d' : '';
+}
+
+alphaSpeakBtn.addEventListener('click', () => {
+  if (!currentAlphaItem) return;
+  speak(`Lettre ${currentAlphaItem.l}. ${currentAlphaItem.desc} ${currentAlphaItem.tip || ''}`);
+});
+
+alphaLearnBtn.addEventListener('click', () => {
+  if (!currentAlphaItem) return;
+  const l = currentAlphaItem.l;
+  const idx = state.learnedSet.indexOf(l);
+  const card = alphaCards[l];
+  if (idx === -1) {
+    state.learnedSet.push(l);
+    state.learnedLetters = state.learnedSet.length;
+    card.classList.add('learned');
+    card.querySelector('.alpha-sub').innerHTML = 'appris &#10003;';
+    card.setAttribute('aria-label', `Lettre ${l} — apprise`);
+  } else {
+    state.learnedSet.splice(idx, 1);
+    state.learnedLetters = state.learnedSet.length;
+    card.classList.remove('learned');
+    card.querySelector('.alpha-sub').textContent = 'voir le signe';
+    card.setAttribute('aria-label', `Lettre ${l}`);
+  }
+  saveState();
+  updateAlphaStats();
+  updateLearnBtn();
+});
+
+alphaFilter.addEventListener('input', () => {
+  const v = alphaFilter.value.toUpperCase().trim();
+  alphaGrid.querySelectorAll('.alpha-card').forEach(c => {
+    c.style.display = (!v || c.dataset.letter.startsWith(v)) ? '' : 'none';
+  });
 });
 
 /* ============================================================
-   DICTIONNAIRE
+   DICTIONARY
    ============================================================ */
-const dictGrid = document.getElementById('dict-grid');
-DICT.forEach(entry => {
-  const card = document.createElement('article');
-  card.className = 'dict-card';
-  card.setAttribute('aria-label', `Signe : ${entry.word}`);
-  card.innerHTML = `
-    <div class="dict-word">
-      <span class="dict-emoji" aria-hidden="true">${entry.emoji}</span>
-      <span>${entry.word}</span>
-    </div>
-    <span class="dict-category">${entry.cat}</span>
-    <div class="dict-desc">${entry.desc}</div>
-    ${entry.note ? `<p class="dict-note">💡 ${entry.note}</p>` : ''}
-  `;
-  dictGrid.appendChild(card);
+const dictGrid      = document.getElementById('dict-grid');
+const dictSearch    = document.getElementById('dict-search');
+const dictCatFilter = document.getElementById('dict-cat-filter');
+const dictCount     = document.getElementById('dict-count');
+const dictNoResult  = document.getElementById('dict-no-result');
+
+// Populate category filter
+const cats = [...new Set(DICT.map(d => d.cat))].sort();
+cats.forEach(c => {
+  const opt = document.createElement('option');
+  opt.value = c; opt.textContent = c;
+  dictCatFilter.appendChild(opt);
 });
 
+function renderDict() {
+  const q   = dictSearch.value.trim().toLowerCase();
+  const cat = dictCatFilter.value;
+  const filtered = DICT.filter(d =>
+    (d.word.toLowerCase().includes(q) || d.desc.toLowerCase().includes(q)) &&
+    (!cat || d.cat === cat)
+  );
+  dictCount.textContent = `${filtered.length} signe${filtered.length !== 1 ? 's' : ''}`;
+  dictGrid.innerHTML = '';
+  dictNoResult.style.display = filtered.length === 0 ? 'block' : 'none';
+  filtered.forEach(entry => {
+    const card = document.createElement('article');
+    card.className = 'dict-card';
+    card.setAttribute('aria-label', `Signe : ${entry.word}`);
+    card.innerHTML = `
+      <div class="dict-word">
+        <span class="dict-emoji" aria-hidden="true">${entry.emoji}</span>
+        <span>${entry.word}</span>
+      </div>
+      <span class="dict-category">${entry.cat}</span>
+      <div class="dict-desc">${entry.desc}</div>
+      ${entry.note ? `<p class="dict-note">&#128161; ${entry.note}</p>` : ''}
+      <div class="dict-actions">
+        <button class="dict-speak-btn" type="button" aria-label="Écouter la description de ${entry.word}">
+          &#128266; Écouter
+        </button>
+      </div>
+    `;
+    card.querySelector('.dict-speak-btn').addEventListener('click', () => {
+      speak(`${entry.word}. ${entry.desc}`);
+    });
+    dictGrid.appendChild(card);
+  });
+}
+
+dictSearch.addEventListener('input', renderDict);
+dictCatFilter.addEventListener('change', renderDict);
+renderDict();
+
 /* ============================================================
-   QUIZ
+   LESSONS
    ============================================================ */
-let questions    = [];
-let qIndex       = 0;
-let score        = 0;
-let answered     = false;
+const lessonsList   = document.getElementById('lessons-list');
+const lessonProgFill= document.getElementById('lessons-prog-fill');
+const lessonsPctLbl = document.getElementById('lessons-pct-label');
+const lessonsProgBar= document.getElementById('lessons-prog-bar');
+
+function renderLessons() {
+  const done  = state.lessonsDone.length;
+  const total = LESSONS.length;
+  const pct   = Math.round((done / total) * 100);
+  lessonProgFill.style.width = pct + '%';
+  lessonsPctLbl.textContent  = `${done} / ${total}`;
+  lessonsProgBar.setAttribute('aria-valuenow', done);
+  lessonsList.innerHTML = '';
+  LESSONS.forEach((lesson, idx) => {
+    const isDone   = state.lessonsDone.includes(lesson.id);
+    const isLocked = idx > 0 && !state.lessonsDone.includes(LESSONS[idx - 1].id);
+    const card = document.createElement('div');
+    card.className = 'lesson-card';
+    const badge = isDone ? '<span class="lesson-badge badge-done">&#10003; Terminée</span>'
+                : isLocked ? '<span class="lesson-badge badge-locked">&#128274; Verrouillée</span>'
+                : '<span class="lesson-badge badge-progress">En cours</span>';
+    const numClass = isDone ? 'lesson-num done' : isLocked ? 'lesson-num locked' : 'lesson-num';
+    card.innerHTML = `
+      <button class="lesson-header" aria-expanded="false" aria-controls="lesson-body-${lesson.id}"
+              ${isLocked ? 'disabled aria-disabled="true"' : ''} type="button">
+        <div class="${numClass}" aria-hidden="true">${idx + 1}</div>
+        <div class="lesson-title-wrap">
+          <div class="lesson-title">${lesson.title}</div>
+          <div class="lesson-subtitle">${lesson.subtitle}</div>
+        </div>
+        ${badge}
+      </button>
+      <div class="lesson-body" id="lesson-body-${lesson.id}">
+        <p>${lesson.intro}</p>
+        <ol class="lesson-steps" aria-label="Étapes de la leçon">
+          ${lesson.steps.map(s => `<li class="lesson-step"><span class="lesson-step-num" aria-hidden="true">${s.n}.</span><span>${s.text}</span></li>`).join('')}
+        </ol>
+        <button class="lesson-complete-btn${isDone ? ' done' : ''}" type="button"
+                data-id="${lesson.id}" aria-pressed="${isDone ? 'true' : 'false'}">
+          ${isDone ? '&#9733; Leçon terminée !' : '&#10003; Marquer comme terminée'}
+        </button>
+      </div>
+    `;
+    const hdr  = card.querySelector('.lesson-header');
+    const body = card.querySelector('.lesson-body');
+    const cBtn = card.querySelector('.lesson-complete-btn');
+    if (!isLocked) {
+      hdr.addEventListener('click', () => {
+        const open = body.classList.toggle('open');
+        hdr.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    }
+    cBtn.addEventListener('click', () => {
+      const lid = cBtn.dataset.id;
+      if (!state.lessonsDone.includes(lid)) {
+        state.lessonsDone.push(lid);
+        state.lessonsCompleted = state.lessonsDone.length;
+        saveState();
+      } else {
+        // Toggle off
+        state.lessonsDone = state.lessonsDone.filter(x => x !== lid);
+        state.lessonsCompleted = state.lessonsDone.length;
+        saveState();
+      }
+      renderLessons();
+    });
+    lessonsList.appendChild(card);
+  });
+}
+renderLessons();
+
+/* ============================================================
+   QUIZ — LEITNER (5 boites)
+   ============================================================ */
+// Leitner: box 0 = new/failed, box 1-4 = progressive mastery
+// Question draw probability: box 0 → 50%, 1 → 25%, 2 → 12.5%, 3 → 8%, 4 → 4.5%
+const LEITNER_WEIGHTS = [50, 25, 13, 8, 4];
+
+function getLeitnerPool() {
+  // Build weighted pool from DICT entries
+  const pool = [];
+  DICT.forEach(entry => {
+    const box = state.leitner[entry.word] !== undefined ? state.leitner[entry.word] : 0;
+    const weight = LEITNER_WEIGHTS[Math.min(box, 4)];
+    for (let i = 0; i < weight; i++) pool.push(entry);
+  });
+  return pool;
+}
+
+function pickLeitnerQuestion() {
+  const pool = getLeitnerPool();
+  if (pool.length === 0) return DICT[Math.floor(Math.random() * DICT.length)];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function buildQuizQuestions(n = 8) {
+  const qs = [];
+  const used = new Set();
+  for (let attempt = 0; attempt < n * 10 && qs.length < n; attempt++) {
+    const entry = pickLeitnerQuestion();
+    if (used.has(entry.word)) continue;
+    used.add(entry.word);
+    const distractors = DICT.filter(d => d.word !== entry.word).sort(() => Math.random() - .5).slice(0, 3);
+    const choices     = [entry, ...distractors].sort(() => Math.random() - .5);
+    const box         = state.leitner[entry.word] !== undefined ? state.leitner[entry.word] : 0;
+    qs.push({ correct: entry.word, desc: entry.desc, emoji: entry.emoji, choices, box });
+  }
+  return qs;
+}
+
+let questions = [];
+let qIndex    = 0;
+let score     = 0;
+let streak    = 0;
+let answered  = false;
 
 const qCard      = document.getElementById('quiz-card');
+const qBoxLabel  = document.getElementById('quiz-box-label');
 const qDesc      = document.getElementById('quiz-desc');
 const qChoices   = document.getElementById('quiz-choices');
 const qFeedback  = document.getElementById('quiz-feedback');
@@ -973,17 +1000,17 @@ const qNextBtn   = document.getElementById('quiz-next-btn');
 const qEndScreen = document.getElementById('quiz-end-screen');
 const qFinalScore= document.getElementById('quiz-final-score');
 const qEndMsg    = document.getElementById('quiz-end-message');
+const qLeitnerInfo= document.getElementById('quiz-leitner-info');
 const qRestartBtn= document.getElementById('quiz-restart-btn');
 const qScoreDisp = document.getElementById('quiz-score-display');
+const qStreakDisp = document.getElementById('quiz-streak');
 const qProgFill  = document.getElementById('quiz-progress-fill');
 const qProgBar   = document.getElementById('quiz-progress-bar');
 const qLive      = document.getElementById('quiz-live');
 
 function startQuiz() {
-  questions = buildQuizQuestions();
-  qIndex    = 0;
-  score     = 0;
-  answered  = false;
+  questions = buildQuizQuestions(8);
+  qIndex = 0; score = 0; streak = 0; answered = false;
   qEndScreen.classList.remove('show');
   qCard.style.display = '';
   renderQuestion();
@@ -991,17 +1018,18 @@ function startQuiz() {
 
 function renderQuestion() {
   answered = false;
-  const q     = questions[qIndex];
+  const q = questions[qIndex];
   const total = questions.length;
   const pct   = Math.round((qIndex / total) * 100);
-
   qProgFill.style.width = pct + '%';
   qProgBar.setAttribute('aria-valuenow', pct);
-  qScoreDisp.textContent = `Question ${qIndex + 1} / ${total}  ·  Score : ${score}`;
-
-  qDesc.textContent  = q.desc;
+  qScoreDisp.textContent  = `Q ${qIndex + 1}/${total}  ·  Score : ${score}`;
+  qStreakDisp.textContent  = streak >= 2 ? `&#128293; Série : ${streak}` : '';
+  qStreakDisp.innerHTML    = streak >= 2 ? `<span aria-hidden="true">&#128293;</span> Série : ${streak}` : '';
+  const boxNames = ['Nouvelle','Boîte 1','Boîte 2','Boîte 3','Maîtrisée'];
+  qBoxLabel.textContent = `Niveau : ${boxNames[Math.min(q.box, 4)]}`;
+  qDesc.textContent = q.desc;
   qChoices.innerHTML = '';
-
   q.choices.forEach(choice => {
     const btn = document.createElement('button');
     btn.className = 'quiz-choice';
@@ -1011,8 +1039,6 @@ function renderQuestion() {
     btn.addEventListener('click', () => handleAnswer(btn, choice.word, q.correct));
     qChoices.appendChild(btn);
   });
-
-  // Réinitialiser feedback
   qFeedback.className = '';
   qFeedback.textContent = '';
   qNextBtn.classList.remove('show');
@@ -1021,29 +1047,34 @@ function renderQuestion() {
 function handleAnswer(clickedBtn, chosen, correct) {
   if (answered) return;
   answered = true;
-
+  state.quizAnswered++;
   qChoices.querySelectorAll('.quiz-choice').forEach(b => {
     b.disabled = true;
-    const label = b.textContent.trim();
-    if (label.includes(correct)) b.classList.add('correct');
+    if (b.textContent.trim().includes(correct)) b.classList.add('correct');
   });
-
   const isCorrect = chosen === correct;
+  // Update Leitner
+  const curBox = state.leitner[correct] !== undefined ? state.leitner[correct] : 0;
   if (isCorrect) {
     score++;
+    streak++;
+    state.quizCorrect++;
+    if (streak > state.bestStreak) state.bestStreak = streak;
+    state.leitner[correct] = Math.min(curBox + 1, 4);
     clickedBtn.classList.add('correct');
-    qFeedback.textContent = '✅ Bravo ! C\'est la bonne réponse.';
-    qFeedback.className = 'show good';
-    qLive.textContent   = 'Bonne réponse !';
+    qFeedback.innerHTML   = '<span aria-hidden="true">&#9989;</span> Bravo ! C\'est la bonne réponse.';
+    qFeedback.className   = 'show good';
+    qLive.textContent     = 'Bonne réponse !';
   } else {
+    streak = 0;
+    state.leitner[correct] = 0; // reset to box 0
     clickedBtn.classList.add('wrong');
-    qFeedback.textContent = `❌ Pas tout à fait. La bonne réponse était : ${correct}.`;
+    qFeedback.innerHTML   = `<span aria-hidden="true">&#10060;</span> Pas tout à fait. La bonne réponse était : ${correct}.`;
     qFeedback.className   = 'show bad';
     qLive.textContent     = `Mauvaise réponse. La bonne réponse était : ${correct}.`;
   }
-
-  qScoreDisp.textContent = `Question ${qIndex + 1} / ${questions.length}  ·  Score : ${score}`;
-
+  qScoreDisp.textContent = `Q ${qIndex + 1}/${questions.length}  ·  Score : ${score}`;
+  saveState();
   if (qIndex + 1 < questions.length) {
     qNextBtn.classList.add('show');
     setTimeout(() => qNextBtn.focus(), 60);
@@ -1055,50 +1086,149 @@ function handleAnswer(clickedBtn, chosen, correct) {
 function endQuiz() {
   qCard.style.display = 'none';
   qEndScreen.classList.add('show');
-  const total = questions.length;
-  const pct   = 100;
-  qProgFill.style.width = pct + '%';
-  qProgBar.setAttribute('aria-valuenow', pct);
-  qFinalScore.textContent = `${score} / ${total}`;
-
-  const ratio = score / total;
-  let msg;
-  if (ratio === 1)       msg = 'Score parfait ! Vous avez reconnu tous les signes. Félicitations !';
-  else if (ratio >= 0.75) msg = 'Très bien ! Quelques signes à revoir, mais vous progressez solidement.';
-  else if (ratio >= 0.5)  msg = 'Bon début ! Parcourez le dictionnaire et réessayez.';
-  else                   msg = 'C\'est un départ encourageant. Relisez les descriptions et retentez le quiz !';
-
-  qEndMsg.textContent = msg;
-  qLive.textContent   = `Quiz terminé. Score : ${score} sur ${total}. ${msg}`;
+  qProgFill.style.width = '100%';
+  qProgBar.setAttribute('aria-valuenow', 100);
+  qFinalScore.textContent = `${score} / ${questions.length}`;
+  const ratio = score / questions.length;
+  let msg = ratio === 1 ? 'Score parfait ! Vous avez reconnu tous les signes. Excellent !'
+          : ratio >= .75 ? 'Très bien ! Quelques signes à revoir, mais vous progressez solidement.'
+          : ratio >= .5  ? 'Bon début ! Parcourez le dictionnaire et réessayez.'
+          : 'Encourageant ! Relisez les descriptions et retentez le quiz.';
+  qEndMsg.textContent    = msg;
+  // Leitner stats
+  const boxes = [0,0,0,0,0];
+  DICT.forEach(d => { const b = state.leitner[d.word] || 0; boxes[Math.min(b,4)]++; });
+  qLeitnerInfo.textContent = `Leitner — Nouvelle: ${boxes[0]}, B1: ${boxes[1]}, B2: ${boxes[2]}, B3: ${boxes[3]}, Maîtrisée: ${boxes[4]}`;
+  qLive.textContent = `Session terminée. Score : ${score} sur ${questions.length}. ${msg}`;
   setTimeout(() => qRestartBtn.focus(), 60);
 }
 
-qNextBtn.addEventListener('click', () => {
-  qIndex++;
-  renderQuestion();
-});
-
+qNextBtn.addEventListener('click', () => { qIndex++; renderQuestion(); });
 qRestartBtn.addEventListener('click', () => startQuiz());
 
-// Lancer le quiz à l'ouverture de l'onglet (si pas encore commencé)
 document.getElementById('tab-quiz').addEventListener('click', () => {
   if (questions.length === 0) startQuiz();
 });
-
-// Démarrage initial (au cas où l'onglet quiz serait le premier affiché)
 startQuiz();
 
 /* ============================================================
-   PREFERS-REDUCED-MOTION
+   EPELLATION
    ============================================================ */
-(function applyMotionPref() {
-  const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const set = rm => {
-    document.documentElement.style.setProperty('--tr', rm.matches ? '0s' : '0.15s ease');
+const spellForm      = document.getElementById('spell-form');
+const spellInput     = document.getElementById('spell-input');
+const spellResult    = document.getElementById('spell-result');
+const spellHint      = document.getElementById('spell-hint');
+const spellClearBtn  = document.getElementById('spell-clear-btn');
+
+spellForm.addEventListener('submit', e => {
+  e.preventDefault();
+  doSpell();
+});
+
+spellClearBtn.addEventListener('click', () => {
+  spellInput.value = '';
+  spellResult.innerHTML = '';
+  spellHint.classList.remove('visible');
+  spellHint.textContent = '';
+  spellInput.focus();
+});
+
+function doSpell() {
+  const raw  = spellInput.value.trim().toUpperCase().replace(/[^A-Z]/g, '');
+  spellResult.innerHTML = '';
+  spellHint.classList.remove('visible');
+  if (!raw) return;
+  state.wordsSpelled++;
+  saveState();
+  [...raw].forEach((ch, i) => {
+    const alphaItem = ALPHABET.find(a => a.l === ch);
+    const btn = document.createElement('button');
+    btn.className = 'spell-letter-btn';
+    btn.setAttribute('type', 'button');
+    btn.setAttribute('aria-label', `Lettre ${ch}${alphaItem ? ' — cliquer pour écouter la description' : ''}`);
+    btn.innerHTML = `${ch}<span class="spell-letter-sub">${alphaItem ? 'clic = desc.' : '?'}</span>`;
+    if (alphaItem) {
+      btn.addEventListener('click', () => {
+        speak(`Lettre ${ch}. ${alphaItem.desc}`);
+        spellHint.textContent = `${ch} : ${alphaItem.desc}`;
+        spellHint.classList.add('visible');
+      });
+    }
+    spellResult.appendChild(btn);
+  });
+  // Auto-speak sequence label
+  speak(`Épellation : ${[...raw].join(', ')}`);
+}
+
+/* ============================================================
+   PROGRESSION
+   ============================================================ */
+function renderProgress() {
+  const statsRows = document.getElementById('stats-rows');
+  const acc = state.quizAnswered > 0 ? Math.round((state.quizCorrect / state.quizAnswered) * 100) : 0;
+  statsRows.innerHTML = `
+    <div class="stat-row"><span class="stat-label">Lettres apprises</span><span class="stat-val">${state.learnedSet.length} / 26</span></div>
+    <div class="stat-row"><span class="stat-label">Leçons terminées</span><span class="stat-val">${state.lessonsDone.length} / ${LESSONS.length}</span></div>
+    <div class="stat-row"><span class="stat-label">Questions de quiz</span><span class="stat-val">${state.quizAnswered}</span></div>
+    <div class="stat-row"><span class="stat-label">Bonnes réponses</span><span class="stat-val">${state.quizCorrect}</span></div>
+    <div class="stat-row"><span class="stat-label">Précision quiz</span><span class="stat-val">${acc}%</span></div>
+    <div class="stat-row"><span class="stat-label">Meilleure série</span><span class="stat-val">${state.bestStreak}</span></div>
+    <div class="stat-row"><span class="stat-label">Mots épelés</span><span class="stat-val">${state.wordsSpelled}</span></div>
+  `;
+  const badgesGrid = document.getElementById('badges-grid');
+  badgesGrid.innerHTML = '';
+  BADGE_DEFS.forEach(b => {
+    const earned = state.earnedBadges.includes(b.id);
+    const el = document.createElement('div');
+    el.className = 'badge-item' + (earned ? ' earned' : '');
+    el.setAttribute('aria-label', `Badge : ${b.name}${earned ? ' — débloqué' : ' — non débloqué'}`);
+    el.innerHTML = `<span class="badge-icon" aria-hidden="true">${b.icon}</span><span class="badge-name">${b.name}</span><span>${b.desc}</span>`;
+    badgesGrid.appendChild(el);
+  });
+}
+
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if (!window.confirm('Effacer toute la progression ? Cette action est irréversible.')) return;
+  state = {
+    learnedLetters:0, learnedSet:[], lessonsCompleted:0, lessonsDone:[],
+    quizAnswered:0, quizCorrect:0, bestStreak:0, wordsSpelled:0, leitner:{}, earnedBadges:[]
   };
+  saveState();
+  // Reset alpha card visuals
+  alphaGrid.querySelectorAll('.alpha-card').forEach(c => {
+    c.classList.remove('learned');
+    c.querySelector('.alpha-sub').textContent = 'voir le signe';
+    c.setAttribute('aria-label', `Lettre ${c.dataset.letter}`);
+  });
+  updateAlphaStats();
+  alphaDetail.classList.remove('visible');
+  currentLetter = null; currentAlphaItem = null;
+  renderLessons();
+  startQuiz();
+  renderProgress();
+  speak('Progression réinitialisée.');
+});
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+(function() {
+  const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const set = rm => document.documentElement.style.setProperty('--tr', rm.matches ? '0s' : '0.15s ease');
   set(mq);
-  mq.addEventListener('change', set);
+  try { mq.addEventListener('change', set); } catch(e) {}
 })();
+
+/* ============================================================
+   SERVICE WORKER
+   ============================================================ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    try {
+      navigator.serviceWorker.register('./sw.js').catch(e => console.warn('[SW] register error:', e));
+    } catch(e) {}
+  });
+}
 </script>
 </body>
 </html>

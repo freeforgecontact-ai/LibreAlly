@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VoxRead — Lecture vocale | LibreA11y</title>
 <meta name="description" content="Lecture vocale avec OCR via Tesseract.js. Traitement sur l'appareil ; modele charge au 1er usage (ou hors-ligne si embarque).">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#0F4C81">
 <script src="./vendor/tesseract.min.js" onerror="this.onerror=null;this.remove();var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js';document.head.appendChild(s);"></script>
 <style>
 :root {
@@ -12,9 +14,16 @@
   --encre: #16202E; --fond: #F7F9FC; --surface: #FFFFFF; --border: #D0D9E8;
   --focus-ring: #F4B81C; --radius: 12px; --radius-sm: 8px;
   --shadow: 0 2px 8px rgba(15,76,129,0.12); --shadow-hv: 0 4px 16px rgba(15,76,129,0.22); --tr: 0.15s ease;
+  --font-size-base: 16px; --line-height-base: 1.5;
 }
+/* Display accessibility overrides */
+body.gros-texte { --font-size-base: 20px; --line-height-base: 1.7; }
+body.fort-contraste { --fond: #000; --surface: #111; --encre: #fff; --border: #fff; --marine: #5599ff; --or: #FFD700; --or-lt: #FFE566; --marine-dk: #3377dd; }
+body.interligne-large #text-input, body.interligne-large #reading-display, body.interligne-large .ocr-result-box,
+body.interligne-large #file-preview, body.interligne-large #file-reading-display, body.interligne-large #camera-result-box { line-height: 2.2 !important; }
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: var(--fond); color: var(--encre); font-size: 16px; line-height: 1.5; }
+html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: var(--fond); color: var(--encre); font-size: var(--font-size-base); line-height: var(--line-height-base); }
 #skip-link { position: absolute; top: -999px; left: 8px; background: var(--or); color: var(--encre); font-weight: 700; padding: 10px 18px; border-radius: var(--radius-sm); z-index: 9999; text-decoration: none; font-size: 1rem; }
 #skip-link:focus { top: 8px; }
 :focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
@@ -27,7 +36,7 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
 #app-body { display: flex; flex-direction: column; min-height: calc(100vh - 64px); }
 #app-main { flex: 1; max-width: 900px; width: 100%; margin: 0 auto; padding: 24px 20px 40px; display: flex; flex-direction: column; gap: 24px; }
 #tabs-nav { display: flex; gap: 4px; border-bottom: 2px solid var(--border); padding-bottom: 0; flex-wrap: wrap; }
-.tab-btn { background: none; border: none; border-bottom: 3px solid transparent; margin-bottom: -2px; padding: 12px 20px; font-size: 1rem; font-weight: 600; color: #5a6e84; cursor: pointer; border-radius: var(--radius-sm) var(--radius-sm) 0 0; min-height: 48px; transition: color var(--tr), background var(--tr), border-color var(--tr); }
+.tab-btn { background: none; border: none; border-bottom: 3px solid transparent; margin-bottom: -2px; padding: 10px 14px; font-size: 0.95rem; font-weight: 600; color: #5a6e84; cursor: pointer; border-radius: var(--radius-sm) var(--radius-sm) 0 0; min-height: 48px; transition: color var(--tr), background var(--tr), border-color var(--tr); }
 .tab-btn:hover { background: rgba(15,76,129,0.06); color: var(--marine); }
 .tab-btn[aria-selected="true"] { color: var(--marine); border-bottom-color: var(--marine); background: var(--surface); }
 .tab-panel { display: none; } .tab-panel.active { display: block; }
@@ -57,6 +66,7 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
 .btn-ghost { background: var(--surface); color: var(--encre); border: 2px solid var(--border); }
 .btn-ghost:hover:not(:disabled) { background: #fee2e2; border-color: #f87171; color: #b91c1c; }
 .btn-sm { min-height: 44px; font-size: 0.9rem; padding: 0 16px; }
+.btn-xs { min-height: 36px; font-size: 0.82rem; padding: 0 12px; min-width: 36px; }
 .settings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
 .setting-row { display: flex; flex-direction: column; gap: 6px; }
 .setting-row label { font-size: 0.85rem; font-weight: 600; color: var(--encre); }
@@ -100,7 +110,44 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
 #shortcuts-list { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
 #shortcuts-list li { display: flex; align-items: center; gap: 10px; font-size: 0.88rem; }
 #shortcuts-list kbd { background: var(--encre); color: #fff; padding: 2px 8px; border-radius: 5px; font-size: 0.78rem; font-family: monospace; white-space: nowrap; flex-shrink: 0; }
-@media (max-width: 600px) { #app-main { padding: 16px 12px 32px; gap: 16px; } .card { padding: 16px; } .controls-row { gap: 8px; } #status-msg { right: 12px; bottom: 12px; max-width: 220px; } }
+
+/* Bibliotheque & Historique */
+.lib-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.lib-item { display: flex; align-items: center; gap: 8px; background: var(--fond); border: 2px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; }
+.lib-item-name { flex: 1; font-size: 0.9rem; font-weight: 600; color: var(--encre); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lib-item-meta { font-size: 0.75rem; color: #7a8a9a; white-space: nowrap; }
+.empty-state { text-align: center; padding: 32px 16px; color: #7a8a9a; font-size: 0.9rem; }
+.empty-state span { display: block; font-size: 2.5rem; margin-bottom: 8px; }
+
+/* Profils voix */
+.profile-list { display: flex; flex-direction: column; gap: 8px; }
+.profile-item { display: flex; align-items: center; gap: 8px; background: var(--fond); border: 2px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; }
+.profile-item.active-profile { border-color: var(--marine); background: #e8f0fb; }
+.profile-name { flex: 1; font-size: 0.88rem; font-weight: 600; color: var(--encre); }
+.profile-meta { font-size: 0.75rem; color: #7a8a9a; }
+
+/* Marque-pages */
+.bookmark-list { display: flex; flex-direction: column; gap: 6px; }
+.bookmark-item { display: flex; align-items: center; gap: 8px; background: var(--fond); border: 2px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; cursor: pointer; }
+.bookmark-item:hover { border-color: var(--marine); background: #e8f0fb; }
+.bookmark-pos { font-size: 0.75rem; color: #7a8a9a; white-space: nowrap; }
+.bookmark-preview { flex: 1; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Nav para/phrase */
+.nav-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.progress-reading { font-size: 0.8rem; color: #7a8a9a; }
+
+/* Reglages affichage */
+.display-toggles { display: flex; gap: 10px; flex-wrap: wrap; }
+.toggle-btn { background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius-sm); padding: 8px 16px; font-size: 0.88rem; font-weight: 600; cursor: pointer; min-height: 44px; color: var(--encre); transition: background var(--tr), border-color var(--tr); }
+.toggle-btn[aria-pressed="true"] { background: var(--marine); color: #fff; border-color: var(--marine); }
+.toggle-btn:hover { border-color: var(--marine); }
+
+/* Nom biblio input */
+.inline-input { flex: 1; padding: 8px 12px; border: 2px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9rem; font-family: inherit; min-height: 44px; background: var(--fond); color: var(--encre); }
+.inline-input:focus { border-color: var(--marine); outline: none; }
+
+@media (max-width: 600px) { #app-main { padding: 16px 12px 32px; gap: 16px; } .card { padding: 16px; } .controls-row { gap: 8px; } #status-msg { right: 12px; bottom: 12px; max-width: 220px; } .tab-btn { padding: 8px 10px; font-size: 0.82rem; } }
 </style>
 </head>
 <body>
@@ -120,11 +167,13 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
 <main id="app-main" tabindex="-1">
 
   <nav id="tabs-nav" role="tablist" aria-label="Modes de lecture">
-    <button class="tab-btn" role="tab" aria-selected="true"  aria-controls="panel-text"   id="tab-text"   tabindex="0">Texte</button>
-    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-file"   id="tab-file"   tabindex="-1">Fichier .txt</button>
-    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-ocr"    id="tab-ocr"    tabindex="-1">OCR Image</button>
-    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-camera" id="tab-camera" tabindex="-1">OCR Camera</button>
-    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-help"   id="tab-help"   tabindex="-1">Raccourcis</button>
+    <button class="tab-btn" role="tab" aria-selected="true"  aria-controls="panel-text"      id="tab-text"      tabindex="0">Texte</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-file"      id="tab-file"      tabindex="-1">Fichier .txt</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-ocr"       id="tab-ocr"       tabindex="-1">OCR Image</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-camera"    id="tab-camera"    tabindex="-1">OCR Camera</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-library"   id="tab-library"   tabindex="-1">Bibliotheque</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-settings"  id="tab-settings"  tabindex="-1">Reglages</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-help"      id="tab-help"      tabindex="-1">Raccourcis</button>
   </nav>
 
   <!-- PANNEAU TEXTE -->
@@ -144,6 +193,27 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
         <button class="btn btn-ghost" id="btn-stop" type="button" aria-label="Arreter la lecture" disabled>&#9209; Stop</button>
         <button class="btn btn-outline btn-sm" id="btn-example" type="button" aria-label="Charger un texte d'exemple">Exemple</button>
         <button class="btn btn-ghost btn-sm" id="btn-clear-text" type="button" aria-label="Effacer le texte">Effacer</button>
+      </div>
+      <!-- Navigation paragraphe/phrase -->
+      <div class="nav-bar" role="group" aria-label="Navigation dans le texte">
+        <button class="btn btn-outline btn-sm" id="btn-prev-para" type="button" aria-label="Paragraphe precedent">&#8679; Para.</button>
+        <button class="btn btn-outline btn-sm" id="btn-next-para" type="button" aria-label="Paragraphe suivant">&#8681; Para.</button>
+        <button class="btn btn-outline btn-sm" id="btn-prev-sent" type="button" aria-label="Phrase precedente">&#8592; Phrase</button>
+        <button class="btn btn-outline btn-sm" id="btn-next-sent" type="button" aria-label="Phrase suivante">&#8594; Phrase</button>
+        <span class="progress-reading" id="text-progress" aria-live="polite"></span>
+      </div>
+      <!-- Marque-pages -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <button class="btn btn-outline btn-sm" id="btn-add-bookmark" type="button" aria-label="Ajouter un marque-page a la position actuelle">&#128278; Marque-page</button>
+        <button class="btn btn-outline btn-sm" id="btn-resume-reading" type="button" aria-label="Reprendre la lecture au dernier marque-page">&#9654; Reprendre</button>
+        <span style="font-size:0.78rem;color:#7a8a9a;" id="bookmark-info" aria-live="polite"></span>
+      </div>
+      <!-- Sauvegarde en bibliotheque -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <input class="inline-input" id="lib-save-name" type="text" placeholder="Nom du texte..." aria-label="Nom pour la sauvegarde en bibliotheque" style="max-width:260px;">
+        <button class="btn btn-outline btn-sm" id="btn-lib-save" type="button" aria-label="Sauvegarder ce texte dans la bibliotheque">&#128190; Sauvegarder</button>
+        <button class="btn btn-outline btn-sm" id="btn-export-txt" type="button" aria-label="Exporter le texte en fichier .txt">&#8681; Exporter .txt</button>
+        <button class="btn btn-outline btn-sm" id="btn-copy-text" type="button" aria-label="Copier le texte dans le presse-papier">&#128203; Copier</button>
       </div>
       <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">
         <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:200px;">
@@ -171,6 +241,15 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
           <label for="pitch-slider">Hauteur : <span class="range-val" id="pitch-label">1.00</span></label>
           <input type="range" id="pitch-slider" min="0.5" max="2" step="0.05" value="1" aria-valuemin="0.5" aria-valuemax="2" aria-valuenow="1" aria-label="Hauteur de la voix">
         </div>
+      </div>
+      <!-- Profils voix -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px;">
+        <input class="inline-input" id="profile-name-input" type="text" placeholder="Nom du profil..." aria-label="Nom du profil de voix" style="max-width:200px;">
+        <button class="btn btn-outline btn-sm" id="btn-save-profile" type="button" aria-label="Sauvegarder le profil de voix actuel">&#128190; Sauvegarder profil</button>
+      </div>
+      <div id="profile-list-wrap" style="display:none;">
+        <p style="font-size:0.82rem;font-weight:600;color:var(--encre);margin-bottom:6px;">Profils sauvegardes :</p>
+        <div class="profile-list" id="profile-list"></div>
       </div>
     </div>
   </section>
@@ -201,6 +280,11 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
         <button class="btn btn-accent" id="btn-pause-file" type="button" disabled aria-label="Pause ou reprise">&#9208; Pause</button>
         <button class="btn btn-ghost" id="btn-stop-file" type="button" disabled aria-label="Arreter la lecture">&#9209; Stop</button>
       </div>
+      <div class="controls-row">
+        <button class="btn btn-outline btn-sm" id="btn-export-file" type="button" disabled aria-label="Exporter le contenu du fichier en .txt">&#8681; Exporter .txt</button>
+        <button class="btn btn-outline btn-sm" id="btn-copy-file" type="button" disabled aria-label="Copier le contenu dans le presse-papier">&#128203; Copier</button>
+        <button class="btn btn-outline btn-sm" id="btn-lib-save-file" type="button" disabled aria-label="Sauvegarder dans la bibliotheque">&#128190; Sauvegarder</button>
+      </div>
     </div>
   </section>
 
@@ -229,6 +313,12 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
         <button class="btn btn-ghost btn-sm" id="btn-ocr-clear" type="button" disabled aria-label="Effacer l'image et le resultat">Effacer</button>
       </div>
       <div id="ocr-result-box" class="ocr-result-box" aria-label="Texte reconnu par OCR" tabindex="0"></div>
+      <div class="controls-row" id="ocr-post-actions" style="display:none;">
+        <button class="btn btn-outline btn-sm" id="btn-ocr-export" type="button" aria-label="Exporter le texte OCR en .txt">&#8681; Exporter .txt</button>
+        <button class="btn btn-outline btn-sm" id="btn-ocr-copy" type="button" aria-label="Copier le texte OCR">&#128203; Copier</button>
+        <button class="btn btn-outline btn-sm" id="btn-ocr-save-lib" type="button" aria-label="Sauvegarder le texte OCR dans la bibliotheque">&#128190; Sauvegarder</button>
+        <button class="btn btn-outline btn-sm" id="btn-ocr-history" type="button" aria-label="Ajouter a l'historique OCR">+ Historique</button>
+      </div>
     </div>
   </section>
 
@@ -257,12 +347,80 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
           </div>
         </div>
         <div id="camera-result-box" class="ocr-result-box" aria-label="Texte reconnu depuis la camera" tabindex="0"></div>
+        <div class="controls-row" id="cam-post-actions" style="display:none;">
+          <button class="btn btn-outline btn-sm" id="btn-cam-export" type="button" aria-label="Exporter le texte camera en .txt">&#8681; Exporter .txt</button>
+          <button class="btn btn-outline btn-sm" id="btn-cam-copy" type="button" aria-label="Copier le texte camera">&#128203; Copier</button>
+          <button class="btn btn-outline btn-sm" id="btn-cam-save-lib" type="button" aria-label="Sauvegarder dans la bibliotheque">&#128190; Sauvegarder</button>
+        </div>
         <div id="camera-unavail-box">
           <p style="font-weight:700;color:var(--marine);margin-bottom:8px;">Camera non disponible</p>
           <p id="camera-unavail-reason"></p>
           <p style="margin-top:8px;font-size:0.85rem;color:#4a5a6a;">L'OCR sur image (onglet <strong>OCR Image</strong>) reste entierement fonctionnel.</p>
         </div>
         <div class="ocr-offline-note">&#128274; L'OCR camera s'execute sur votre appareil ; aucune image n'est envoyee.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PANNEAU BIBLIOTHEQUE -->
+  <section class="tab-panel" id="panel-library" role="tabpanel" aria-labelledby="tab-library">
+    <div class="card">
+      <h2>&#128218; Bibliotheque</h2>
+      <p style="font-size:0.9rem;color:#4a5a6a;">Textes sauvegardes localement dans votre navigateur.</p>
+      <div id="lib-list-wrap">
+        <div class="empty-state" id="lib-empty"><span>&#128218;</span>Aucun texte sauvegarde. Saisissez un texte et cliquez sur Sauvegarder.</div>
+        <ul class="lib-list" id="lib-list" aria-label="Liste des textes sauvegardes"></ul>
+      </div>
+    </div>
+    <div class="card">
+      <h2>&#128336; Historique OCR</h2>
+      <p style="font-size:0.9rem;color:#4a5a6a;">Derniers textes reconnus par OCR (garde les 10 derniers).</p>
+      <div class="controls-row" style="margin-bottom:4px;">
+        <button class="btn btn-ghost btn-sm" id="btn-clear-history" type="button" aria-label="Effacer tout l'historique OCR">Effacer l'historique</button>
+      </div>
+      <div class="empty-state" id="history-empty"><span>&#128336;</span>Aucun resultat OCR pour l'instant.</div>
+      <ul class="lib-list" id="history-list" aria-label="Historique des textes reconnus par OCR"></ul>
+    </div>
+    <div class="card">
+      <h2>&#128278; Marque-pages</h2>
+      <p style="font-size:0.9rem;color:#4a5a6a;">Marque-pages poses dans les textes.</p>
+      <div class="empty-state" id="bookmarks-empty"><span>&#128278;</span>Aucun marque-page. Posez-en un pendant la lecture.</div>
+      <ul class="bookmark-list" id="bookmarks-list" aria-label="Liste des marque-pages"></ul>
+    </div>
+  </section>
+
+  <!-- PANNEAU REGLAGES -->
+  <section class="tab-panel" id="panel-settings" role="tabpanel" aria-labelledby="tab-settings">
+    <div class="card">
+      <h2>&#127358; Affichage et accessibilite</h2>
+      <p style="font-size:0.9rem;color:#4a5a6a;">Ces reglages s'appliquent a toute l'application et sont sauvegardes.</p>
+      <div>
+        <p style="font-size:0.85rem;font-weight:600;margin-bottom:8px;">Taille du texte :</p>
+        <div class="display-toggles">
+          <button class="toggle-btn" id="toggle-gros-texte" type="button" aria-pressed="false" aria-label="Activer ou desactiver le grand texte">Grand texte</button>
+        </div>
+      </div>
+      <div>
+        <p style="font-size:0.85rem;font-weight:600;margin-bottom:8px;">Contraste :</p>
+        <div class="display-toggles">
+          <button class="toggle-btn" id="toggle-contraste" type="button" aria-pressed="false" aria-label="Activer ou desactiver le fort contraste">Fort contraste</button>
+        </div>
+      </div>
+      <div>
+        <p style="font-size:0.85rem;font-weight:600;margin-bottom:8px;">Interligne :</p>
+        <div class="display-toggles">
+          <button class="toggle-btn" id="toggle-interligne" type="button" aria-pressed="false" aria-label="Activer ou desactiver l'interligne large">Interligne large</button>
+        </div>
+      </div>
+      <div style="margin-top:8px;">
+        <button class="btn btn-ghost btn-sm" id="btn-reset-display" type="button" aria-label="Reinitialiser tous les reglages d'affichage">Reinitialiser l'affichage</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>&#128190; Donnees locales</h2>
+      <p style="font-size:0.9rem;color:#4a5a6a;">Toutes les donnees (bibliotheque, historique, profils, marque-pages) sont stockees dans votre navigateur et ne quittent jamais votre appareil.</p>
+      <div class="controls-row">
+        <button class="btn btn-ghost btn-sm" id="btn-clear-all-data" type="button" aria-label="Effacer toutes les donnees locales">Effacer toutes les donnees</button>
       </div>
     </div>
   </section>
@@ -277,11 +435,14 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
         <li><kbd>Alt + P</kbd> <span>Pause / Reprendre</span></li>
         <li><kbd>Alt + S</kbd> <span>Stop</span></li>
         <li><kbd>Alt + E</kbd> <span>Epeler le mot</span></li>
+        <li><kbd>Alt + B</kbd> <span>Ajouter un marque-page</span></li>
         <li><kbd>Alt + 1</kbd> <span>Onglet Texte</span></li>
         <li><kbd>Alt + 2</kbd> <span>Onglet Fichier</span></li>
         <li><kbd>Alt + 3</kbd> <span>Onglet OCR Image</span></li>
         <li><kbd>Alt + 4</kbd> <span>Onglet OCR Camera</span></li>
-        <li><kbd>Alt + 5</kbd> <span>Onglet Raccourcis</span></li>
+        <li><kbd>Alt + 5</kbd> <span>Onglet Bibliotheque</span></li>
+        <li><kbd>Alt + 6</kbd> <span>Onglet Reglages</span></li>
+        <li><kbd>Alt + 7</kbd> <span>Onglet Raccourcis</span></li>
         <li><kbd>Fleches gauche/droite</kbd> <span>Naviguer entre onglets</span></li>
         <li><kbd>Echap</kbd> <span>Stop si lecture en cours</span></li>
         <li><kbd>Tab</kbd> <span>Passer d'un controle au suivant</span></li>
@@ -290,7 +451,7 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
     </div>
     <div class="card">
       <h2>Navigation sans voir</h2>
-      <p style="font-size:0.9rem;line-height:1.7;color:var(--encre);">VoxRead est concu pour etre utilise sans regarder l'ecran : toutes les actions sont vocalisees (annonces aria-live), les boutons ont des libelles aria-label explicites, le focus est toujours visible (anneau de 3 px couleur or), et les cibles font au minimum 56 px. Un lecteur d'ecran tel que NVDA, JAWS ou VoiceOver fonctionne pleinement.</p>
+      <p style="font-size:0.9rem;line-height:1.7;color:var(--encre);">VoxRead est concu pour etre utilise sans regarder l'ecran : toutes les actions sont vocalisees (annonces aria-live), les boutons ont des libelles aria-label explicites, le focus est toujours visible (anneau de 3 px couleur or), et les cibles font au minimum 44-56 px. Un lecteur d'ecran tel que NVDA, JAWS ou VoiceOver fonctionne pleinement.</p>
       <p style="font-size:0.9rem;line-height:1.7;color:var(--encre);margin-top:8px;"><strong>OCR sur l'appareil</strong> : le moteur Tesseract.js LSTM traite l'image localement. Le modele francais (~6 Mo) se telecharge au 1er usage (puis mis en cache), ou peut etre embarque pour un fonctionnement 100% hors-ligne.</p>
     </div>
   </section>
@@ -302,6 +463,14 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
 (function () {
   'use strict';
 
+  /* ── Service Worker ── */
+  if ('serviceWorker' in navigator) {
+    try {
+      navigator.serviceWorker.register('./sw.js').catch(function(e){ console.warn('SW registration failed:', e); });
+    } catch(e) { /* ignore */ }
+  }
+
+  /* ── TTS ── */
   var hasTTS = ('speechSynthesis' in window);
   var voices = [], voiceList = [], selVoice = null;
   var rate = 1, pitch = 1;
@@ -314,26 +483,34 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
   var ocrImageResult = '', ocrCameraResult = '';
   var cameraStream = null;
 
-  var ttsWarning     = document.getElementById('tts-warning');
-  var statusMsg      = document.getElementById('status-msg');
-  var readingStatus  = document.getElementById('reading-status');
-  var ocrAnnounce    = document.getElementById('ocr-announce');
-  var textInput      = document.getElementById('text-input');
-  var charCount      = document.getElementById('char-count');
-  var readingDisplay = document.getElementById('reading-display');
-  var btnRead        = document.getElementById('btn-read');
-  var btnPause       = document.getElementById('btn-pause');
-  var btnStop        = document.getElementById('btn-stop');
-  var btnExample     = document.getElementById('btn-example');
-  var btnClearText   = document.getElementById('btn-clear-text');
-  var spellInput     = document.getElementById('spell-input');
-  var btnSpell       = document.getElementById('btn-spell');
-  var spellOutput    = document.getElementById('spell-output');
-  var voiceSelect    = document.getElementById('voice-select');
-  var rateSlider     = document.getElementById('rate-slider');
-  var rateLabel      = document.getElementById('rate-label');
-  var pitchSlider    = document.getElementById('pitch-slider');
-  var pitchLabel     = document.getElementById('pitch-label');
+  /* paragraph/sentence navigation state */
+  var textParas = [], textSents = [], textParaIdx = 0, textSentIdx = 0;
+
+  /* bookmarks */
+  var bookmarks = [];
+  var lastReadPos = 0; /* char index in current text */
+
+  /* ── DOM refs ── */
+  var ttsWarning         = document.getElementById('tts-warning');
+  var statusMsg          = document.getElementById('status-msg');
+  var readingStatus      = document.getElementById('reading-status');
+  var ocrAnnounce        = document.getElementById('ocr-announce');
+  var textInput          = document.getElementById('text-input');
+  var charCount          = document.getElementById('char-count');
+  var readingDisplay     = document.getElementById('reading-display');
+  var btnRead            = document.getElementById('btn-read');
+  var btnPause           = document.getElementById('btn-pause');
+  var btnStop            = document.getElementById('btn-stop');
+  var btnExample         = document.getElementById('btn-example');
+  var btnClearText       = document.getElementById('btn-clear-text');
+  var spellInput         = document.getElementById('spell-input');
+  var btnSpell           = document.getElementById('btn-spell');
+  var spellOutput        = document.getElementById('spell-output');
+  var voiceSelect        = document.getElementById('voice-select');
+  var rateSlider         = document.getElementById('rate-slider');
+  var rateLabel          = document.getElementById('rate-label');
+  var pitchSlider        = document.getElementById('pitch-slider');
+  var pitchLabel         = document.getElementById('pitch-label');
   var fileDropZone       = document.getElementById('file-drop-zone');
   var fileInput          = document.getElementById('file-input');
   var fileInfo           = document.getElementById('file-info');
@@ -366,15 +543,58 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
   var btnCameraRead      = document.getElementById('btn-camera-read');
   var cameraResultBox    = document.getElementById('camera-result-box');
   var cameraUnavailBox   = document.getElementById('camera-unavail-box');
-  var cameraUnavailReason = document.getElementById('camera-unavail-reason');
-  var ocrCamProgressWrap  = document.getElementById('ocr-cam-progress-wrap');
-  var ocrCamProgressBar   = document.getElementById('ocr-cam-progress-bar');
+  var cameraUnavailReason= document.getElementById('camera-unavail-reason');
+  var ocrCamProgressWrap = document.getElementById('ocr-cam-progress-wrap');
+  var ocrCamProgressBar  = document.getElementById('ocr-cam-progress-bar');
   var ocrCamProgressBarOuter = document.getElementById('ocr-cam-progress-bar-outer');
-  var ocrCamProgressLabel = document.getElementById('ocr-cam-progress-label');
-  var tabBtns   = document.querySelectorAll('[role="tab"]');
-  var tabPanels = document.querySelectorAll('.tab-panel');
-  var tabBtnArr = Array.prototype.slice.call(tabBtns);
+  var ocrCamProgressLabel= document.getElementById('ocr-cam-progress-label');
+  var tabBtns            = document.querySelectorAll('[role="tab"]');
+  var tabPanels          = document.querySelectorAll('.tab-panel');
+  var tabBtnArr          = Array.prototype.slice.call(tabBtns);
 
+  /* new UI refs */
+  var btnPrevPara    = document.getElementById('btn-prev-para');
+  var btnNextPara    = document.getElementById('btn-next-para');
+  var btnPrevSent    = document.getElementById('btn-prev-sent');
+  var btnNextSent    = document.getElementById('btn-next-sent');
+  var textProgress   = document.getElementById('text-progress');
+  var btnAddBookmark = document.getElementById('btn-add-bookmark');
+  var btnResumeReading = document.getElementById('btn-resume-reading');
+  var bookmarkInfo   = document.getElementById('bookmark-info');
+  var libSaveName    = document.getElementById('lib-save-name');
+  var btnLibSave     = document.getElementById('btn-lib-save');
+  var btnExportTxt   = document.getElementById('btn-export-txt');
+  var btnCopyText    = document.getElementById('btn-copy-text');
+  var profileNameInput = document.getElementById('profile-name-input');
+  var btnSaveProfile = document.getElementById('btn-save-profile');
+  var profileListWrap= document.getElementById('profile-list-wrap');
+  var profileListEl  = document.getElementById('profile-list');
+  var libEmpty       = document.getElementById('lib-empty');
+  var libList        = document.getElementById('lib-list');
+  var historyEmpty   = document.getElementById('history-empty');
+  var historyList    = document.getElementById('history-list');
+  var bookmarksEmpty = document.getElementById('bookmarks-empty');
+  var bookmarksList  = document.getElementById('bookmarks-list');
+  var btnClearHistory= document.getElementById('btn-clear-history');
+  var toggleGrosTexte= document.getElementById('toggle-gros-texte');
+  var toggleContraste= document.getElementById('toggle-contraste');
+  var toggleInterligne = document.getElementById('toggle-interligne');
+  var btnResetDisplay= document.getElementById('btn-reset-display');
+  var btnClearAllData= document.getElementById('btn-clear-all-data');
+  var btnExportFile  = document.getElementById('btn-export-file');
+  var btnCopyFile    = document.getElementById('btn-copy-file');
+  var btnLibSaveFile = document.getElementById('btn-lib-save-file');
+  var ocrPostActions = document.getElementById('ocr-post-actions');
+  var btnOcrExport   = document.getElementById('btn-ocr-export');
+  var btnOcrCopy     = document.getElementById('btn-ocr-copy');
+  var btnOcrSaveLib  = document.getElementById('btn-ocr-save-lib');
+  var btnOcrHistory  = document.getElementById('btn-ocr-history');
+  var camPostActions = document.getElementById('cam-post-actions');
+  var btnCamExport   = document.getElementById('btn-cam-export');
+  var btnCamCopy     = document.getElementById('btn-cam-copy');
+  var btnCamSaveLib  = document.getElementById('btn-cam-save-lib');
+
+  /* ── Helpers ── */
   function showStatus(msg) {
     statusMsg.textContent = msg;
     statusMsg.classList.add('show');
@@ -397,7 +617,49 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
     if (b < 1048576) return (b/1024).toFixed(1) + ' Ko';
     return (b/1048576).toFixed(1) + ' Mo';
   }
+  function lsGet(key, def) { try { var v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : def; } catch(e){ return def; } }
+  function lsSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){ /* quota */ } }
 
+  /* ── Display settings (localStorage) ── */
+  var displaySettings = lsGet('voxread_display', { grosTexte: false, fortContraste: false, interlignes: false });
+  function applyDisplaySettings() {
+    document.body.classList.toggle('gros-texte', !!displaySettings.grosTexte);
+    document.body.classList.toggle('fort-contraste', !!displaySettings.fortContraste);
+    document.body.classList.toggle('interligne-large', !!displaySettings.interlignes);
+    toggleGrosTexte.setAttribute('aria-pressed', displaySettings.grosTexte ? 'true' : 'false');
+    toggleContraste.setAttribute('aria-pressed', displaySettings.fortContraste ? 'true' : 'false');
+    toggleInterligne.setAttribute('aria-pressed', displaySettings.interlignes ? 'true' : 'false');
+  }
+  applyDisplaySettings();
+  toggleGrosTexte.addEventListener('click', function() {
+    displaySettings.grosTexte = !displaySettings.grosTexte;
+    lsSet('voxread_display', displaySettings); applyDisplaySettings();
+    showStatus(displaySettings.grosTexte ? 'Grand texte active' : 'Grand texte desactive');
+  });
+  toggleContraste.addEventListener('click', function() {
+    displaySettings.fortContraste = !displaySettings.fortContraste;
+    lsSet('voxread_display', displaySettings); applyDisplaySettings();
+    showStatus(displaySettings.fortContraste ? 'Fort contraste active' : 'Fort contraste desactive');
+  });
+  toggleInterligne.addEventListener('click', function() {
+    displaySettings.interlignes = !displaySettings.interlignes;
+    lsSet('voxread_display', displaySettings); applyDisplaySettings();
+    showStatus(displaySettings.interlignes ? 'Interligne large actif' : 'Interligne large desactive');
+  });
+  btnResetDisplay.addEventListener('click', function() {
+    displaySettings = { grosTexte: false, fortContraste: false, interlignes: false };
+    lsSet('voxread_display', displaySettings); applyDisplaySettings();
+    showStatus('Affichage reinitialise'); announce('Affichage reinitialise.');
+  });
+
+  /* ── Voice settings persistence ── */
+  var savedVoiceSettings = lsGet('voxread_voice', { rate: 1, pitch: 1 });
+  rate = savedVoiceSettings.rate || 1;
+  pitch = savedVoiceSettings.pitch || 1;
+  rateSlider.value = rate; rateLabel.textContent = rate.toFixed(2);
+  pitchSlider.value = pitch; pitchLabel.textContent = pitch.toFixed(2);
+
+  /* ── TTS init ── */
   if (!hasTTS) {
     setWarning('La synthese vocale est indisponible dans ce navigateur.');
     [btnRead, btnPause, btnStop, btnReadFile, btnPauseFile, btnStopFile, btnSpell].forEach(function(b){ if(b) b.disabled=true; });
@@ -409,6 +671,7 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
     if (!v || v.length === 0) return;
     voices = v;
     buildVoiceSelect();
+    restoreVoiceFromSettings();
   }
   function buildVoiceSelect() {
     var frVoices = voices.filter(function(v){ return v.lang && v.lang.indexOf('fr') === 0; });
@@ -430,21 +693,35 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
     if (best >= 0) voiceSelect.selectedIndex = best;
     selVoice = voiceList[voiceSelect.selectedIndex] || null;
   }
+  function restoreVoiceFromSettings() {
+    var saved = lsGet('voxread_voice', {});
+    if (saved.voiceName && voiceList.length) {
+      for (var i = 0; i < voiceList.length; i++) {
+        if (voiceList[i].name === saved.voiceName) { voiceSelect.selectedIndex = i; selVoice = voiceList[i]; break; }
+      }
+    }
+  }
   if (hasTTS) {
     loadVoices();
     if (typeof window.speechSynthesis.onvoiceschanged !== 'undefined') window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
     setTimeout(loadVoices, 250);
     setTimeout(loadVoices, 900);
   }
-  voiceSelect.addEventListener('change', function() { selVoice = voiceList[parseInt(voiceSelect.value, 10)] || null; });
+  voiceSelect.addEventListener('change', function() {
+    selVoice = voiceList[parseInt(voiceSelect.value, 10)] || null;
+    var vs = lsGet('voxread_voice', {});
+    vs.voiceName = selVoice ? selVoice.name : '';
+    lsSet('voxread_voice', vs);
+  });
 
   function updateCharCount() {
     var n = textInput.value.length;
     charCount.textContent = n + ' caractere' + (n > 1 ? 's' : '');
   }
-  textInput.addEventListener('input', updateCharCount);
+  textInput.addEventListener('input', function() { updateCharCount(); rebuildNavIndex(); });
   updateCharCount();
 
+  /* ── Word highlighting ── */
   function buildWordSpans(text, container) {
     container.innerHTML = '';
     var tokens = text.split(/(\s+)/);
@@ -477,6 +754,7 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
     currentWordIdx = -1;
   }
 
+  /* ── Sentence fallback ── */
   function splitSentences(text) {
     return text.split(/(?<=[.!?])\s+/).filter(function(s){ return s.trim().length > 0; });
   }
@@ -499,6 +777,7 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
     sentenceIndex++;
   }
 
+  /* ── TTS engine ── */
   function createUtt(text) {
     var utt = new SpeechSynthesisUtterance(text);
     utt.lang = 'fr-FR'; utt.rate = rate; utt.pitch = pitch;
@@ -578,6 +857,7 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
     window.speechSynthesis.speak(utt);
   }
 
+  /* ── Main read controls ── */
   btnRead.addEventListener('click', function() {
     var text = textInput.value.trim();
     if (!text) { showStatus('Zone de texte vide'); announce('Zone de texte vide.'); return; }
@@ -587,7 +867,7 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
     if (!hasTTS) return;
     if (isPaused) {
       window.speechSynthesis.resume(); isPaused = false;
-      btnPause.textContent = 'Pause'; announce('Lecture reprise.'); showStatus('Lecture reprise');
+      btnPause.textContent = '⏸ Pause'; announce('Lecture reprise.'); showStatus('Lecture reprise');
     } else {
       window.speechSynthesis.pause(); isPaused = true;
       btnPause.textContent = 'Reprendre'; announce('Pause.'); showStatus('Pause');
@@ -596,15 +876,16 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
   btnStop.addEventListener('click', function() { currentMode = 'text'; stopAll(); });
   btnExample.addEventListener('click', function() {
     textInput.value = 'Bonjour ! VoxRead est un lecteur vocal accessible, entierement hors-ligne. Il peut vous aider a lire des textes longs, des documents importants, ou simplement reposer vos yeux. Chaque mot est surligne pendant la lecture. Vous pouvez regler la vitesse, la hauteur et choisir parmi les voix disponibles. Ce logiciel est libre et gratuit, developpe dans le cadre de la suite LibreA11y.';
-    updateCharCount(); textInput.focus();
+    updateCharCount(); rebuildNavIndex(); textInput.focus();
     showStatus('Exemple charge'); announce('Texte d\'exemple charge.');
   });
   btnClearText.addEventListener('click', function() {
-    textInput.value = ''; updateCharCount();
+    textInput.value = ''; updateCharCount(); rebuildNavIndex();
     readingDisplay.style.display = 'none'; readingDisplay.classList.remove('active');
     textInput.focus(); showStatus('Texte efface'); announce('Texte efface.');
   });
 
+  /* ── Spell ── */
   function doSpell() {
     var word = spellInput.value.trim();
     if (!word) { showStatus('Saisissez un mot'); return; }
@@ -622,15 +903,268 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
   btnSpell.addEventListener('click', doSpell);
   spellInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') doSpell(); });
 
+  /* ── Rate / Pitch ── */
   rateSlider.addEventListener('input', function() {
     rate = parseFloat(rateSlider.value); rateLabel.textContent = rate.toFixed(2);
     rateSlider.setAttribute('aria-valuenow', rate.toFixed(2));
+    var vs = lsGet('voxread_voice', {}); vs.rate = rate; lsSet('voxread_voice', vs);
   });
   pitchSlider.addEventListener('input', function() {
     pitch = parseFloat(pitchSlider.value); pitchLabel.textContent = pitch.toFixed(2);
     pitchSlider.setAttribute('aria-valuenow', pitch.toFixed(2));
+    var vs = lsGet('voxread_voice', {}); vs.pitch = pitch; lsSet('voxread_voice', vs);
   });
 
+  /* ── Voice profiles ── */
+  var voiceProfiles = lsGet('voxread_profiles', []);
+  function renderProfiles() {
+    profileListEl.innerHTML = '';
+    if (!voiceProfiles.length) { profileListWrap.style.display = 'none'; return; }
+    profileListWrap.style.display = 'block';
+    voiceProfiles.forEach(function(p, i) {
+      var item = document.createElement('div');
+      item.className = 'profile-item';
+      item.innerHTML = '<span class="profile-name">' + escHtml(p.name) + '</span>' +
+        '<span class="profile-meta">' + escHtml(p.voiceName || 'defaut') + ' &mdash; x' + p.rate + ' &mdash; h' + p.pitch + '</span>';
+      var btnLoad = document.createElement('button');
+      btnLoad.className = 'btn btn-outline btn-xs'; btnLoad.textContent = 'Charger';
+      btnLoad.setAttribute('aria-label', 'Charger le profil ' + p.name);
+      btnLoad.addEventListener('click', function() { loadProfile(p); });
+      var btnDel = document.createElement('button');
+      btnDel.className = 'btn btn-ghost btn-xs'; btnDel.textContent = 'Suppr.';
+      btnDel.setAttribute('aria-label', 'Supprimer le profil ' + p.name);
+      btnDel.addEventListener('click', function() { voiceProfiles.splice(i, 1); lsSet('voxread_profiles', voiceProfiles); renderProfiles(); showStatus('Profil supprime'); });
+      item.appendChild(btnLoad); item.appendChild(btnDel);
+      profileListEl.appendChild(item);
+    });
+  }
+  function loadProfile(p) {
+    rate = p.rate; pitch = p.pitch;
+    rateSlider.value = rate; rateLabel.textContent = rate.toFixed(2);
+    pitchSlider.value = pitch; pitchLabel.textContent = pitch.toFixed(2);
+    if (p.voiceName) {
+      for (var i = 0; i < voiceList.length; i++) {
+        if (voiceList[i].name === p.voiceName) { voiceSelect.selectedIndex = i; selVoice = voiceList[i]; break; }
+      }
+    }
+    showStatus('Profil charge : ' + p.name); announce('Profil ' + p.name + ' charge.');
+  }
+  btnSaveProfile.addEventListener('click', function() {
+    var name = profileNameInput.value.trim();
+    if (!name) { showStatus('Donnez un nom au profil'); return; }
+    voiceProfiles.push({ name: name, voiceName: selVoice ? selVoice.name : '', rate: rate, pitch: pitch });
+    lsSet('voxread_profiles', voiceProfiles);
+    profileNameInput.value = ''; renderProfiles();
+    showStatus('Profil sauvegarde : ' + name); announce('Profil sauvegarde.');
+  });
+  renderProfiles();
+
+  /* ── Paragraph / sentence navigation ── */
+  function rebuildNavIndex() {
+    var text = textInput.value;
+    textParas = text.split(/\n\s*\n/).filter(function(p){ return p.trim().length > 0; });
+    textSents = splitSentences(text);
+    textParaIdx = 0; textSentIdx = 0;
+    updateNavProgress();
+  }
+  function updateNavProgress() {
+    var p = textParas.length, s = textSents.length;
+    if (!p && !s) { textProgress.textContent = ''; return; }
+    textProgress.textContent = 'Para. ' + Math.min(textParaIdx + 1, p) + '/' + p + ' — Phrase ' + Math.min(textSentIdx + 1, s) + '/' + s;
+  }
+  btnPrevPara.addEventListener('click', function() {
+    if (!textParas.length) return;
+    textParaIdx = Math.max(0, textParaIdx - 1);
+    speakText(textParas[textParaIdx], readingDisplay); currentMode = 'text';
+    updateNavProgress(); showStatus('Paragraphe ' + (textParaIdx + 1));
+  });
+  btnNextPara.addEventListener('click', function() {
+    if (!textParas.length) return;
+    textParaIdx = Math.min(textParas.length - 1, textParaIdx + 1);
+    speakText(textParas[textParaIdx], readingDisplay); currentMode = 'text';
+    updateNavProgress(); showStatus('Paragraphe ' + (textParaIdx + 1));
+  });
+  btnPrevSent.addEventListener('click', function() {
+    if (!textSents.length) return;
+    textSentIdx = Math.max(0, textSentIdx - 1);
+    speakText(textSents[textSentIdx], readingDisplay); currentMode = 'text';
+    updateNavProgress(); showStatus('Phrase ' + (textSentIdx + 1));
+  });
+  btnNextSent.addEventListener('click', function() {
+    if (!textSents.length) return;
+    textSentIdx = Math.min(textSents.length - 1, textSentIdx + 1);
+    speakText(textSents[textSentIdx], readingDisplay); currentMode = 'text';
+    updateNavProgress(); showStatus('Phrase ' + (textSentIdx + 1));
+  });
+  rebuildNavIndex();
+
+  /* ── Bookmarks ── */
+  bookmarks = lsGet('voxread_bookmarks', []);
+  function renderBookmarks() {
+    bookmarksList.innerHTML = '';
+    if (!bookmarks.length) { bookmarksEmpty.style.display = ''; return; }
+    bookmarksEmpty.style.display = 'none';
+    bookmarks.forEach(function(bk, i) {
+      var li = document.createElement('li');
+      li.className = 'bookmark-item';
+      li.setAttribute('tabindex', '0');
+      li.setAttribute('role', 'button');
+      li.setAttribute('aria-label', 'Marque-page : ' + bk.preview + '. Cliquer pour reprendre la lecture.');
+      li.innerHTML = '<span class="bookmark-pos">Pos. ' + bk.pos + '</span><span class="bookmark-preview">' + escHtml(bk.preview) + '</span>';
+      var btnDel = document.createElement('button');
+      btnDel.className = 'btn btn-ghost btn-xs'; btnDel.textContent = 'X';
+      btnDel.setAttribute('aria-label', 'Supprimer ce marque-page');
+      btnDel.addEventListener('click', function(e) { e.stopPropagation(); bookmarks.splice(i, 1); lsSet('voxread_bookmarks', bookmarks); renderBookmarks(); showStatus('Marque-page supprime'); });
+      li.appendChild(btnDel);
+      li.addEventListener('click', function() { resumeFromBookmark(bk); });
+      li.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); resumeFromBookmark(bk); } });
+      bookmarksList.appendChild(li);
+    });
+  }
+  function resumeFromBookmark(bk) {
+    var text = bk.text;
+    textInput.value = text; updateCharCount(); rebuildNavIndex();
+    switchTab(0); tabBtnArr[0].focus();
+    var fromPos = bk.pos;
+    var chunk = text.slice(fromPos);
+    speakText(chunk, readingDisplay); currentMode = 'text';
+    showStatus('Reprise au marque-page'); announce('Reprise de la lecture depuis le marque-page.');
+  }
+  btnAddBookmark.addEventListener('click', function() {
+    var text = textInput.value;
+    if (!text.trim()) { showStatus('Pas de texte'); return; }
+    var pos = textInput.selectionStart || 0;
+    var preview = text.slice(pos, pos + 60).replace(/\n/g, ' ');
+    bookmarks.push({ pos: pos, preview: preview, text: text, date: new Date().toISOString() });
+    if (bookmarks.length > 30) bookmarks.shift();
+    lsSet('voxread_bookmarks', bookmarks);
+    renderBookmarks();
+    bookmarkInfo.textContent = 'Marque-page pose a la position ' + pos;
+    showStatus('Marque-page ajoute'); announce('Marque-page ajoute a la position ' + pos + '.');
+  });
+  btnResumeReading.addEventListener('click', function() {
+    if (!bookmarks.length) { showStatus('Aucun marque-page'); return; }
+    resumeFromBookmark(bookmarks[bookmarks.length - 1]);
+  });
+  renderBookmarks();
+
+  /* ── Bibliotheque ── */
+  var library = lsGet('voxread_library', []);
+  function renderLibrary() {
+    libList.innerHTML = '';
+    if (!library.length) { libEmpty.style.display = ''; return; }
+    libEmpty.style.display = 'none';
+    library.forEach(function(item, i) {
+      var li = document.createElement('li');
+      li.className = 'lib-item';
+      li.innerHTML = '<span class="lib-item-name" title="' + escHtml(item.name) + '">' + escHtml(item.name) + '</span>' +
+        '<span class="lib-item-meta">' + (item.date ? new Date(item.date).toLocaleDateString('fr-FR') : '') + '</span>';
+      var btnOpen = document.createElement('button');
+      btnOpen.className = 'btn btn-outline btn-xs'; btnOpen.textContent = 'Ouvrir';
+      btnOpen.setAttribute('aria-label', 'Ouvrir ' + item.name);
+      btnOpen.addEventListener('click', function() {
+        textInput.value = item.content; updateCharCount(); rebuildNavIndex();
+        switchTab(0); tabBtnArr[0].focus();
+        showStatus('Ouvert : ' + item.name); announce('Texte ' + item.name + ' ouvert dans l\'onglet Texte.');
+      });
+      var btnDel = document.createElement('button');
+      btnDel.className = 'btn btn-ghost btn-xs'; btnDel.textContent = 'Suppr.';
+      btnDel.setAttribute('aria-label', 'Supprimer ' + item.name + ' de la bibliotheque');
+      btnDel.addEventListener('click', function() {
+        if (!confirm('Supprimer "' + item.name + '" ?')) return;
+        library.splice(i, 1); lsSet('voxread_library', library); renderLibrary();
+        showStatus('Supprime : ' + item.name);
+      });
+      li.appendChild(btnOpen); li.appendChild(btnDel);
+      libList.appendChild(li);
+    });
+  }
+  function saveToLibrary(name, content) {
+    if (!name || !content) return;
+    library.push({ name: name, content: content, date: new Date().toISOString() });
+    lsSet('voxread_library', library); renderLibrary();
+    showStatus('Sauvegarde : ' + name); announce('Texte sauvegarde dans la bibliotheque.');
+  }
+  btnLibSave.addEventListener('click', function() {
+    var name = libSaveName.value.trim() || ('Texte ' + new Date().toLocaleTimeString('fr-FR'));
+    var content = textInput.value;
+    if (!content.trim()) { showStatus('Pas de texte a sauvegarder'); return; }
+    saveToLibrary(name, content); libSaveName.value = '';
+  });
+  renderLibrary();
+
+  /* ── Historique OCR ── */
+  var ocrHistory = lsGet('voxread_ocr_history', []);
+  function renderHistory() {
+    historyList.innerHTML = '';
+    if (!ocrHistory.length) { historyEmpty.style.display = ''; return; }
+    historyEmpty.style.display = 'none';
+    ocrHistory.slice().reverse().forEach(function(item, i) {
+      var li = document.createElement('li');
+      li.className = 'lib-item';
+      var preview = item.text.slice(0, 60).replace(/\n/g, ' ') + (item.text.length > 60 ? '...' : '');
+      li.innerHTML = '<span class="lib-item-name" title="' + escHtml(item.text) + '">' + escHtml(preview) + '</span>' +
+        '<span class="lib-item-meta">' + (item.date ? new Date(item.date).toLocaleTimeString('fr-FR') : '') + '</span>';
+      var btnRead2 = document.createElement('button');
+      btnRead2.className = 'btn btn-outline btn-xs'; btnRead2.textContent = 'Relire';
+      btnRead2.setAttribute('aria-label', 'Relire ce texte OCR');
+      btnRead2.addEventListener('click', function() { speakPlain(item.text); showStatus('Relecture OCR'); });
+      var btnOpen = document.createElement('button');
+      btnOpen.className = 'btn btn-outline btn-xs'; btnOpen.textContent = 'Ouvrir';
+      btnOpen.setAttribute('aria-label', 'Ouvrir ce texte dans l\'onglet Texte');
+      btnOpen.addEventListener('click', function() {
+        textInput.value = item.text; updateCharCount(); rebuildNavIndex();
+        switchTab(0); tabBtnArr[0].focus();
+        showStatus('Texte OCR ouvert'); announce('Texte OCR ouvert dans l\'onglet Texte.');
+      });
+      li.appendChild(btnRead2); li.appendChild(btnOpen);
+      historyList.appendChild(li);
+    });
+  }
+  function addToHistory(text) {
+    ocrHistory.push({ text: text, date: new Date().toISOString() });
+    if (ocrHistory.length > 10) ocrHistory.shift();
+    lsSet('voxread_ocr_history', ocrHistory); renderHistory();
+  }
+  btnClearHistory.addEventListener('click', function() {
+    ocrHistory = []; lsSet('voxread_ocr_history', ocrHistory); renderHistory();
+    showStatus('Historique efface'); announce('Historique OCR efface.');
+  });
+  renderHistory();
+
+  /* ── Export / Copy helpers ── */
+  function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function exportTxt(text, filename) {
+    var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a'); a.href = url; a.download = filename || 'voxread-export.txt';
+    document.body.appendChild(a); a.click(); setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);
+    showStatus('Fichier exporte'); announce('Fichier exporte.');
+  }
+  function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function(){ showStatus('Texte copie'); announce('Texte copie dans le presse-papier.'); })
+        .catch(function(){ fallbackCopy(text); });
+    } else { fallbackCopy(text); }
+  }
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea'); ta.value = text;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try { document.execCommand('copy'); showStatus('Texte copie'); announce('Copie effectuee.'); } catch(e){ showStatus('Copie echouee'); }
+    document.body.removeChild(ta);
+  }
+
+  btnExportTxt.addEventListener('click', function() {
+    var t = textInput.value; if (!t.trim()) { showStatus('Pas de texte'); return; }
+    exportTxt(t, 'voxread-texte.txt');
+  });
+  btnCopyText.addEventListener('click', function() {
+    var t = textInput.value; if (!t.trim()) { showStatus('Pas de texte'); return; }
+    copyToClipboard(t);
+  });
+
+  /* ── File tab ── */
   function loadFile(file) {
     if (!file) return;
     var ext = file.name.split('.').pop().toLowerCase();
@@ -646,6 +1180,7 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
       filePreview.textContent = fileContent.slice(0, 800) + (fileContent.length > 800 ? '\n...(suite tronquee)' : '');
       filePreviewWrap.style.display = 'flex';
       btnReadFile.disabled = false;
+      btnExportFile.disabled = false; btnCopyFile.disabled = false; btnLibSaveFile.disabled = false;
       showStatus('Fichier charge : ' + file.name);
       announce('Fichier charge : ' + file.name + '. Appuyez sur Lire le fichier.');
     };
@@ -667,6 +1202,7 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
     filePreviewWrap.style.display = 'none'; filePreview.textContent = '';
     fileReadingDisplay.style.display = 'none';
     btnReadFile.disabled = true; btnPauseFile.disabled = true; btnStopFile.disabled = true;
+    btnExportFile.disabled = true; btnCopyFile.disabled = true; btnLibSaveFile.disabled = true;
     fileInput.value = ''; fileDropZone.focus();
     showStatus('Fichier retire'); announce('Fichier retire.');
   });
@@ -678,16 +1214,22 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
     if (!hasTTS) return;
     if (isPaused) {
       window.speechSynthesis.resume(); isPaused = false;
-      btnPauseFile.textContent = 'Pause'; announce('Lecture reprise.'); showStatus('Lecture reprise');
+      btnPauseFile.textContent = '⏸ Pause'; announce('Lecture reprise.'); showStatus('Lecture reprise');
     } else {
       window.speechSynthesis.pause(); isPaused = true;
       btnPauseFile.textContent = 'Reprendre'; announce('Pause.'); showStatus('Pause');
     }
   });
   btnStopFile.addEventListener('click', function() { currentMode = 'file'; stopAll(); });
+  btnExportFile.addEventListener('click', function() { if (fileContent) exportTxt(fileContent, 'voxread-fichier.txt'); });
+  btnCopyFile.addEventListener('click', function() { if (fileContent) copyToClipboard(fileContent); });
+  btnLibSaveFile.addEventListener('click', function() {
+    if (!fileContent) return;
+    var name = fileNameEl.textContent || ('Fichier ' + new Date().toLocaleTimeString('fr-FR'));
+    saveToLibrary(name, fileContent);
+  });
 
-  // Mode hors-ligne automatique : si les fichiers locaux ./vendor/ sont presents
-  // (telecharges par l'utilisateur), on les utilise ; sinon on charge depuis le CDN.
+  /* ── OCR core (UNTOUCHED) ── */
   window.__voxLocal = false;
   try {
     fetch('./vendor/fra.traineddata.gz', { method: 'HEAD' })
@@ -717,6 +1259,7 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
     ocrImageFile = file;
     ocrImageResult = '';
     ocrResultBox.textContent = ''; ocrResultBox.classList.remove('visible');
+    ocrPostActions.style.display = 'none';
     btnOcrRead.disabled = true;
     var url = URL.createObjectURL(file);
     ocrPreviewImg.src = url; ocrPreviewImg.style.display = 'block';
@@ -750,6 +1293,7 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
     ocrWorkerBusy = true;
     btnOcrRun.disabled = true; btnOcrRead.disabled = true;
     ocrResultBox.classList.remove('visible');
+    ocrPostActions.style.display = 'none';
     ocrProgressWrap.classList.add('visible');
     ocrProgressBar.style.width = '0%';
     ocrProgressBarOuter.setAttribute('aria-valuenow', 0);
@@ -768,6 +1312,8 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
         if (text) {
           ocrResultBox.textContent = text; ocrResultBox.classList.add('visible');
           btnOcrRead.disabled = !hasTTS;
+          ocrPostActions.style.display = 'flex';
+          addToHistory(text);
           showStatus('OCR termine -- ' + text.length + ' caracteres');
           announceOcr('OCR termine. ' + text.slice(0, 120));
         } else {
@@ -793,11 +1339,21 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
     ocrPreviewImg.src = ''; ocrPreviewImg.style.display = 'none';
     ocrResultBox.textContent = ''; ocrResultBox.classList.remove('visible');
     ocrProgressWrap.classList.remove('visible');
+    ocrPostActions.style.display = 'none';
     ocrImageInput.value = '';
     btnOcrRun.disabled = true; btnOcrRead.disabled = true; btnOcrClear.disabled = true;
     ocrImageDropZone.focus(); showStatus('Image effacee'); announce('Image effacee.');
   });
+  btnOcrExport.addEventListener('click', function() { if (ocrImageResult) exportTxt(ocrImageResult, 'voxread-ocr.txt'); });
+  btnOcrCopy.addEventListener('click', function() { if (ocrImageResult) copyToClipboard(ocrImageResult); });
+  btnOcrSaveLib.addEventListener('click', function() {
+    if (!ocrImageResult) return;
+    var name = 'OCR ' + new Date().toLocaleTimeString('fr-FR');
+    saveToLibrary(name, ocrImageResult);
+  });
+  btnOcrHistory.addEventListener('click', function() { if (ocrImageResult) { addToHistory(ocrImageResult); showStatus('Ajoute a l\'historique'); } });
 
+  /* ── Camera OCR ── */
   function setCamProgress(status, pct) {
     var label = status ? (status.charAt(0).toUpperCase() + status.slice(1)) : 'Traitement...';
     var p = Math.round((pct || 0) * 100);
@@ -829,6 +1385,7 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
         btnCameraStop.style.display = 'inline-flex';
         cameraUnavailBox.classList.remove('visible');
         cameraResultBox.classList.remove('visible');
+        camPostActions.style.display = 'none';
         showStatus('Camera active');
         announceOcr('Camera ouverte. Pointez vers un texte et appuyez sur Capturer et OCR.');
       })
@@ -859,6 +1416,7 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
     ocrCamProgressBarOuter.setAttribute('aria-valuenow', 0);
     ocrCamProgressLabel.textContent = 'Initialisation...';
     cameraResultBox.classList.remove('visible');
+    camPostActions.style.display = 'none';
     announceOcr('OCR en cours sur la capture.'); showStatus('OCR camera en cours...');
     cameraCanvas.toBlob(function(blob) {
       makeTesseractWorker(function(m) { if (m.status) setCamProgress(m.status, m.progress); })
@@ -873,6 +1431,8 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
           if (text) {
             cameraResultBox.textContent = text; cameraResultBox.classList.add('visible');
             btnCameraRead.disabled = !hasTTS;
+            camPostActions.style.display = 'flex';
+            addToHistory(text);
             showStatus('OCR camera -- ' + text.length + ' caracteres');
             announceOcr('Texte reconnu. ' + text.slice(0, 160));
           } else {
@@ -892,7 +1452,25 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
     }, 'image/png');
   });
   btnCameraRead.addEventListener('click', function() { if (ocrCameraResult) speakPlain(ocrCameraResult); });
+  btnCamExport.addEventListener('click', function() { if (ocrCameraResult) exportTxt(ocrCameraResult, 'voxread-camera.txt'); });
+  btnCamCopy.addEventListener('click', function() { if (ocrCameraResult) copyToClipboard(ocrCameraResult); });
+  btnCamSaveLib.addEventListener('click', function() {
+    if (!ocrCameraResult) return;
+    var name = 'OCR Camera ' + new Date().toLocaleTimeString('fr-FR');
+    saveToLibrary(name, ocrCameraResult);
+  });
 
+  /* ── Clear all data ── */
+  btnClearAllData.addEventListener('click', function() {
+    if (!confirm('Effacer toutes les donnees locales (bibliotheque, historique, profils, marque-pages, reglages) ?')) return;
+    try { localStorage.clear(); } catch(e){}
+    library = []; ocrHistory = []; voiceProfiles = []; bookmarks = [];
+    displaySettings = { grosTexte: false, fortContraste: false, interlignes: false };
+    renderLibrary(); renderHistory(); renderProfiles(); renderBookmarks(); applyDisplaySettings();
+    showStatus('Donnees effacees'); announce('Toutes les donnees locales ont ete effacees.');
+  });
+
+  /* ── Tabs ── */
   function switchTab(idx) {
     tabBtnArr.forEach(function(btn, i) {
       btn.setAttribute('aria-selected', i === idx ? 'true' : 'false');
@@ -902,7 +1480,8 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
       if (i === idx) panel.classList.add('active');
       else           panel.classList.remove('active');
     });
-    if (tabBtnArr[idx].getAttribute('aria-controls') !== 'panel-camera' && cameraStream) stopCameraStream();
+    var ctrl = tabBtnArr[idx].getAttribute('aria-controls');
+    if (ctrl !== 'panel-camera' && cameraStream) stopCameraStream();
   }
   tabBtnArr.forEach(function(btn, i) {
     btn.addEventListener('click', function() { switchTab(i); btn.focus(); });
@@ -917,6 +1496,7 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
     });
   });
 
+  /* ── Global keyboard shortcuts ── */
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') { if (isSpeaking || isPaused) stopAll(); return; }
     if (!e.altKey) return;
@@ -925,7 +1505,9 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
       case '2': e.preventDefault(); switchTab(1); tabBtnArr[1].focus(); announce('Onglet Fichier'); break;
       case '3': e.preventDefault(); switchTab(2); tabBtnArr[2].focus(); announce('Onglet OCR Image'); break;
       case '4': e.preventDefault(); switchTab(3); tabBtnArr[3].focus(); announce('Onglet OCR Camera'); break;
-      case '5': e.preventDefault(); switchTab(4); tabBtnArr[4].focus(); announce('Onglet Raccourcis'); break;
+      case '5': e.preventDefault(); switchTab(4); tabBtnArr[4].focus(); announce('Onglet Bibliotheque'); break;
+      case '6': e.preventDefault(); switchTab(5); tabBtnArr[5].focus(); announce('Onglet Reglages'); break;
+      case '7': e.preventDefault(); switchTab(6); tabBtnArr[6].focus(); announce('Onglet Raccourcis'); break;
       case 'l': case 'L':
         e.preventDefault();
         if (currentMode === 'file' && fileContent.trim()) btnReadFile.click(); else btnRead.click();
@@ -940,11 +1522,13 @@ html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', Ro
         break;
       case 'e': case 'E':
         e.preventDefault(); doSpell(); break;
+      case 'b': case 'B':
+        e.preventDefault(); btnAddBookmark.click(); break;
     }
   });
 
   setTimeout(function() {
-    announce('VoxRead charge. OCR hors-ligne actif. Onglet Texte actif. Alt+L lire, Alt+P pause, Alt+S stop.');
+    announce('VoxRead charge. OCR hors-ligne actif. Onglet Texte actif. Alt+L lire, Alt+P pause, Alt+S stop, Alt+B marque-page.');
   }, 600);
 
 })();

@@ -1,0 +1,26 @@
+{
+  "name": "GazeType — Clavier regard/tête",
+  "short_name": "GazeType",
+  "description": "Clavier visuel piloté par maintien du regard ou de la tête. Suivi de tête MediaPipe. Aucune donnée envoyée.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F7F9FC",
+  "theme_color": "#0F4C81",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%230F4C81'/%3E%3Ccircle cx='96' cy='80' r='36' fill='%23F4B81C'/%3E%3Ccircle cx='96' cy='80' r='16' fill='%230F4C81'/%3E%3Ccircle cx='96' cy='80' r='6' fill='%23F4B81C'/%3E%3Crect x='40' y='140' width='112' height='20' rx='6' fill='%23F4B81C'/%3E%3Crect x='40' y='168' width='72' height='12' rx='4' fill='rgba(244,184,28,0.5)'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230F4C81'/%3E%3Ccircle cx='256' cy='210' r='96' fill='%23F4B81C'/%3E%3Ccircle cx='256' cy='210' r='44' fill='%230F4C81'/%3E%3Ccircle cx='256' cy='210' r='16' fill='%23F4B81C'/%3E%3Crect x='100' y='370' width='312' height='56' rx='16' fill='%23F4B81C'/%3E%3Crect x='100' y='442' width='200' height='32' rx='10' fill='rgba(244,184,28,0.5)'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["accessibility", "utilities"],
+  "screenshots": []
+}

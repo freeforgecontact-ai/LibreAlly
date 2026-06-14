@@ -3,8 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GazeType — Démo clavier regard/tête | LibreA11y</title>
+<title>GazeType — Clavier regard/tête | LibreA11y</title>
 <meta name="description" content="Clavier visuel piloté par maintien du regard ou de la tête. Suivi de tête par webcam via MediaPipe. Démo hors-ligne partielle, aucune donnée envoyée.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0F4C81">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 /* ===== VARIABLES & RESET ===== */
 :root {
@@ -23,7 +27,23 @@
   --shadow-hv: 0 4px 16px rgba(15,76,129,0.22);
   --tr:        0.15s ease;
   --dwell-time: 1000;
+  --key-size: 52px;
 }
+/* ===== THEME FORT CONTRASTE ===== */
+body.hc {
+  --marine:    #000080;
+  --marine-dk: #00005A;
+  --or:        #FFD700;
+  --or-lt:     #FFEE44;
+  --encre:     #000000;
+  --fond:      #FFFFFF;
+  --surface:   #FFFFFF;
+  --border:    #000000;
+  --focus-ring: #FF0000;
+}
+body.hc .key-btn { border-width: 3px; font-weight: 900; }
+body.hc #head-tracking-section { border-width: 3px; }
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { height: 100%; }
 body {
@@ -101,13 +121,28 @@ body {
   color: rgba(255,255,255,0.85);
   white-space: nowrap;
 }
+/* Install button */
+#btn-install {
+  display: none;
+  padding: 6px 14px;
+  border: 2px solid var(--or-lt);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--or-lt);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background var(--tr);
+}
+#btn-install:hover { background: rgba(255,255,255,0.15); }
 
 /* ===== LAYOUT ===== */
 #main-layout {
   display: flex;
   flex-direction: column;
   flex: 1;
-  max-width: 960px;
+  max-width: 980px;
   width: 100%;
   margin: 0 auto;
   padding: 16px;
@@ -204,6 +239,20 @@ body {
 }
 #btn-head-center:hover { background: #EEF3FA; box-shadow: var(--shadow); }
 #btn-head-center:disabled { opacity: 0.45; cursor: not-allowed; }
+#btn-calib-advanced {
+  height: 56px;
+  padding: 0 16px;
+  border: 2px solid var(--marine);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--marine);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background var(--tr);
+}
+#btn-calib-advanced:hover { background: #EEF3FA; }
 #ht-sensitivity-row {
   display: flex;
   align-items: center;
@@ -293,32 +342,6 @@ body {
   padding: 14px;
   box-shadow: var(--shadow);
 }
-#text-output {
-  width: 100%;
-  min-height: 90px;
-  border: none;
-  outline: none;
-  resize: vertical;
-  font-size: 1.15rem;
-  font-family: inherit;
-  color: var(--encre);
-  background: transparent;
-  line-height: 1.6;
-}
-#text-output:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  border-radius: 4px;
-}
-#text-cursor {
-  display: inline-block;
-  width: 2px;
-  height: 1.1em;
-  background: var(--marine);
-  margin-left: 2px;
-  vertical-align: text-bottom;
-  animation: blink 1s step-end infinite;
-}
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 #output-display {
   font-size: 1.15rem;
   min-height: 60px;
@@ -365,6 +388,7 @@ body {
 .btn-danger { background: #E53E3E; color: #fff; }
 .btn-speak { background: var(--or); color: var(--encre); }
 .btn-space { background: var(--surface); color: var(--marine); border: 2px solid var(--marine); flex: 1; }
+.btn-secondary { background: #5A7288; color: #fff; }
 
 /* ===== DWELL RING on BUTTONS ===== */
 .dwell-target { position: relative; overflow: hidden; }
@@ -453,19 +477,48 @@ body {
   padding: 10px 12px;
   box-shadow: var(--shadow);
 }
+#quick-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
 #quick-label {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--marine);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 8px;
+  flex: 1;
 }
+#btn-add-phrase {
+  height: 36px;
+  padding: 0 14px;
+  border: 2px solid var(--marine);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--marine);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background var(--tr);
+}
+#btn-add-phrase:hover { background: var(--marine); color: #fff; }
 #quick-list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   list-style: none;
+}
+.quick-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 .quick-btn {
   position: relative;
@@ -490,6 +543,77 @@ body {
 .quick-btn .dwell-ring.active circle {
   stroke: var(--marine);
 }
+.quick-del-btn {
+  width: 30px;
+  height: 30px;
+  border: 1.5px solid #C0392B;
+  border-radius: 50%;
+  background: transparent;
+  color: #C0392B;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+  padding: 0;
+  transition: background var(--tr), color var(--tr);
+}
+.quick-del-btn:hover { background: #C0392B; color: #fff; }
+
+/* ===== PHRASE MODAL ===== */
+#phrase-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 5000;
+  align-items: center;
+  justify-content: center;
+}
+#phrase-modal-overlay.open { display: flex; }
+#phrase-modal {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+#phrase-modal h2 {
+  font-size: 1rem;
+  color: var(--marine);
+  margin-bottom: 16px;
+}
+#phrase-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--encre);
+  background: var(--fond);
+  margin-bottom: 14px;
+}
+#phrase-input:focus { outline: 3px solid var(--focus-ring); border-color: var(--marine); }
+#phrase-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.modal-btn {
+  height: 44px;
+  padding: 0 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+.modal-btn-ok { background: var(--marine); color: #fff; }
+.modal-btn-ok:hover { background: var(--marine-dk); }
+.modal-btn-cancel { background: #E8EDF5; color: var(--encre); }
+.modal-btn-cancel:hover { background: var(--border); }
 
 /* ===== KEYBOARD ===== */
 #keyboard-section {
@@ -502,7 +626,7 @@ body {
 #keyboard-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   margin-bottom: 12px;
   flex-wrap: wrap;
 }
@@ -575,14 +699,75 @@ body {
   transform: scale(1.08);
   transition: background 0.08s, transform 0.08s;
 }
-/* Special wider keys */
 .key-wide { width: calc(var(--key-size, 52px) * 1.7) !important; }
 .key-xwide { width: calc(var(--key-size, 52px) * 2.6) !important; }
 
-/* Dwell progress ring on keys */
 .key-btn .dwell-ring.active circle {
   stroke: var(--or);
 }
+
+/* ===== PROFILES PANEL ===== */
+#profiles-section {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  box-shadow: var(--shadow);
+}
+#profiles-section summary {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--marine);
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  padding: 2px 0;
+}
+#profiles-section summary::before { content: "▶"; font-size: 0.7rem; transition: transform 0.2s; }
+#profiles-section[open] summary::before { transform: rotate(90deg); }
+.profiles-body { margin-top: 12px; }
+#profile-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.profile-btn {
+  height: 40px;
+  padding: 0 16px;
+  border: 2px solid var(--marine);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--marine);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background var(--tr), color var(--tr);
+}
+.profile-btn.active {
+  background: var(--marine);
+  color: #fff;
+}
+.profile-btn:hover { background: var(--marine); color: #fff; }
+#profile-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.profile-action-btn {
+  height: 36px;
+  padding: 0 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--fond);
+  color: var(--encre);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background var(--tr);
+}
+.profile-action-btn:hover { background: var(--border); }
 
 /* ===== SETTINGS ===== */
 #settings-section {
@@ -622,7 +807,7 @@ body {
   font-size: 0.88rem;
   font-weight: 600;
   color: var(--encre);
-  min-width: 160px;
+  min-width: 200px;
 }
 .setting-row input[type="range"] {
   flex: 1;
@@ -635,7 +820,7 @@ body {
   font-size: 0.88rem;
   font-weight: 700;
   color: var(--marine);
-  min-width: 38px;
+  min-width: 54px;
 }
 .setting-row input[type="checkbox"] {
   width: 20px;
@@ -644,6 +829,157 @@ body {
   cursor: pointer;
   border-radius: 4px;
 }
+.settings-sep {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2px 0;
+}
+#voice-select {
+  flex: 1;
+  padding: 6px 10px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-family: inherit;
+  color: var(--encre);
+  background: var(--fond);
+  cursor: pointer;
+  min-width: 140px;
+}
+
+/* ===== HISTORY PANEL ===== */
+#history-section {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  box-shadow: var(--shadow);
+}
+#history-section summary {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--marine);
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  padding: 2px 0;
+}
+#history-section summary::before { content: "▶"; font-size: 0.7rem; transition: transform 0.2s; }
+#history-section[open] summary::before { transform: rotate(90deg); }
+.history-body { margin-top: 12px; }
+#history-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--fond);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+}
+.history-item-text { flex: 1; word-break: break-word; }
+.history-item-time {
+  font-size: 0.72rem;
+  color: #9AABB8;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.history-copy-btn {
+  height: 30px;
+  padding: 0 10px;
+  border: 1.5px solid var(--marine);
+  border-radius: 15px;
+  background: transparent;
+  color: var(--marine);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: background var(--tr);
+}
+.history-copy-btn:hover { background: var(--marine); color: #fff; }
+#history-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ===== CALIBRATION PANEL ===== */
+#calib-section {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  box-shadow: var(--shadow);
+  display: none;
+}
+#calib-section.visible { display: block; }
+#calib-section h3 { font-size: 0.9rem; color: var(--marine); margin-bottom: 10px; }
+#calib-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  max-width: 320px;
+}
+.calib-point-btn {
+  height: 52px;
+  border: 2px solid var(--marine);
+  border-radius: var(--radius-sm);
+  background: var(--fond);
+  color: var(--marine);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  position: relative;
+  overflow: hidden;
+  transition: background var(--tr), color var(--tr);
+}
+.calib-point-btn:hover { background: var(--marine); color: #fff; }
+.calib-point-btn.done { background: #1A6E35; color: #fff; border-color: #145629; }
+.calib-point-btn .dwell-ring.active circle { stroke: var(--or); }
+#calib-progress {
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: var(--marine);
+  font-weight: 600;
+}
+
+/* ===== APP STATE INDICATOR ===== */
+#app-state-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 0.78rem;
+  padding: 6px 10px;
+  background: var(--fond);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.state-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  background: #E8EDF5;
+  color: #5A7288;
+}
+.state-chip.active { background: #D4EDDA; color: #155724; }
+.state-chip.loading { background: #FFF3CD; color: #856404; }
+.state-chip.chip-error { background: #F8D7DA; color: #721C24; }
 
 /* ===== STATUS BAR ===== */
 #status-bar {
@@ -675,7 +1011,6 @@ footer a:hover { text-decoration: underline; }
     animation-duration: 0.001ms !important;
     transition-duration: 0.001ms !important;
   }
-  #text-cursor { animation: none; opacity: 1; }
 }
 
 /* ===== RESPONSIVE ===== */
@@ -685,6 +1020,25 @@ footer a:hover { text-decoration: underline; }
   #header-notice { display: none; }
   #main-layout { padding: 10px; gap: 10px; }
 }
+
+/* ===== TOAST ===== */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--encre);
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 24px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  z-index: 9999;
+  pointer-events: none;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  opacity: 0;
+}
+#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 </style>
 </head>
 <body>
@@ -695,10 +1049,13 @@ footer a:hover { text-decoration: underline; }
 <!-- HEADER -->
 <header id="app-header" role="banner">
   <div id="header-left">
-    <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y">← LibreA11y</a>
-    <h1 id="app-title">👁️ GazeType — démo</h1>
+    <a href="../index.html" id="back-link" aria-label="Retour a LibreA11y">← LibreA11y</a>
+    <h1 id="app-title">GazeType</h1>
   </div>
-  <div id="header-notice" aria-hidden="true">démo · aucune donnée envoyée</div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button id="btn-install" type="button" aria-label="Installer GazeType comme application">Installer</button>
+    <div id="header-notice" aria-hidden="true">aucune donnée envoyée</div>
+  </div>
 </header>
 
 <!-- Hidden video element for MediaPipe webcam feed -->
@@ -707,77 +1064,130 @@ footer a:hover { text-decoration: underline; }
 <!-- Head pointer overlay -->
 <div id="head-pointer" aria-hidden="true" role="presentation"></div>
 
+<!-- Toast notification -->
+<div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<!-- Phrase modal -->
+<div id="phrase-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="phrase-modal-title">
+  <div id="phrase-modal">
+    <h2 id="phrase-modal-title">Ajouter une phrase rapide</h2>
+    <label for="phrase-input" style="font-size:0.85rem;font-weight:600;color:var(--marine);display:block;margin-bottom:6px;">Texte de la phrase</label>
+    <input type="text" id="phrase-input" maxlength="120" placeholder="Ex : J'ai besoin d'aide" autocomplete="off" spellcheck="true" lang="fr">
+    <div id="phrase-modal-actions">
+      <button class="modal-btn modal-btn-cancel" id="phrase-modal-cancel" type="button">Annuler</button>
+      <button class="modal-btn modal-btn-ok" id="phrase-modal-ok" type="button">Ajouter</button>
+    </div>
+  </div>
+</div>
+
 <!-- MAIN -->
 <main id="main-content" tabindex="-1" aria-label="Application GazeType">
 <div id="main-layout">
 
   <!-- HONEST BANNER -->
-  <details id="honest-banner" role="note" aria-label="Limite technique importante">
-    <summary>⚠️ Limite honnête — comment ça marche vraiment</summary>
+  <details id="honest-banner" role="note" aria-label="Informations sur le fonctionnement">
+    <summary>Information — comment ca marche</summary>
     <div class="banner-body">
-      <p><strong>Le suivi de tête par webcam</strong> utilise <strong>MediaPipe FaceLandmarker</strong> pour détecter la position du nez et déplacer le pointeur sans les mains. Le maintien (dwell) existant sélectionne la touche survolée.</p>
-      <p style="margin-top:8px"><strong>Ce mode nécessite une webcam et un modèle (~3–9 Mo)</strong> chargé au 1er usage depuis un CDN (ou hors-ligne si les fichiers <code>./vendor/</code> sont présents). Sans webcam ou si le modèle ne charge pas, le clavier reste pleinement utilisable à la souris et au toucher.</p>
-      <p style="margin-top:8px">Sans suivi de tête actif, cette démo reproduit <strong>l'expérience de saisie par maintien (dwell click)</strong> : survoler une touche pendant un temps réglable la sélectionne — anneau de progression visible.</p>
+      <p><strong>Le suivi de tete par webcam</strong> utilise <strong>MediaPipe FaceLandmarker</strong> pour detecter la position du nez et deplacer le pointeur sans les mains. Le maintien (dwell) selectionne la touche survolee.</p>
+      <p style="margin-top:8px"><strong>Le modele (~3–9 Mo) se charge au 1er usage depuis le CDN</strong>, puis mis en cache hors-ligne par le Service Worker. Sans webcam ou si le modele ne charge pas, le clavier reste pleinement utilisable a la souris et au toucher. Le SW met en cache les ressources de l'app, mais <em>pas</em> les fichiers MediaPipe CDN (trop lourds — ils se chargent 1 fois puis restent dans le cache navigateur).</p>
+      <p style="margin-top:8px">Sans suivi actif : <strong>dwell click</strong> — survoler une touche le temps regle la selectionne, avec anneau de progression visible.</p>
     </div>
   </details>
+
+  <!-- APP STATE BAR -->
+  <div id="app-state-bar" role="status" aria-label="Etat de l'application" aria-live="polite">
+    <div class="state-chip" id="chip-model">Modele : non charge</div>
+    <div class="state-chip" id="chip-camera">Camera : inactive</div>
+    <div class="state-chip" id="chip-input">Mode : souris/tactile</div>
+    <div class="state-chip" id="chip-sw">App web</div>
+  </div>
 
   <!-- HEAD TRACKING PANEL -->
   <section id="head-tracking-section" aria-labelledby="ht-heading">
     <h2 id="ht-heading">Suivi de tête (webcam)</h2>
     <div id="ht-controls">
       <button id="btn-head-toggle" class="dwell-target" aria-pressed="false"
-              aria-label="Activer le suivi de tête par webcam" type="button">
-        🎥 Suivi de tête (webcam)
+              aria-label="Activer le suivi de tete par webcam" type="button">
+        Suivi de tête (webcam)
         <span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span>
       </button>
       <button id="btn-head-center" type="button" disabled
-              aria-label="Centrer : la position actuelle de la tête devient le centre">
-        🎯 Centrer
+              aria-label="Centrer : la position actuelle de la tete devient le centre">
+        Centrer
+      </button>
+      <button id="btn-calib-advanced" type="button"
+              aria-label="Ouvrir la calibration avancee multi-points">
+        Calibration avancee
       </button>
     </div>
     <div id="ht-sensitivity-row">
-      <label for="ht-sens-slider">Sensibilité du suivi</label>
+      <label for="ht-sens-slider">Sensibilite du suivi</label>
       <input type="range" id="ht-sens-slider" min="1" max="10" step="1" value="5"
-             aria-label="Sensibilité du suivi de tête" aria-valuemin="1" aria-valuemax="10" aria-valuenow="5">
+             aria-label="Sensibilite du suivi de tete" aria-valuemin="1" aria-valuemax="10" aria-valuenow="5">
       <span id="ht-sens-val" aria-live="polite">5</span>
     </div>
     <div id="ht-status" role="status" aria-live="polite" aria-atomic="true">
       <span id="ht-status-dot"></span>
-      <span id="ht-status-text">Suivi de tête inactif. Cliquez le bouton pour démarrer.</span>
+      <span id="ht-status-text">Suivi de tete inactif. Cliquez le bouton pour demarrer.</span>
     </div>
     <div id="ht-model-source" aria-live="polite"></div>
   </section>
 
+  <!-- ADVANCED CALIBRATION -->
+  <section id="calib-section" aria-labelledby="calib-heading">
+    <h3 id="calib-heading">Calibration avancee — regardez chaque point et cliquez dessus</h3>
+    <div id="calib-grid" role="group" aria-label="Points de calibration">
+      <button class="calib-point-btn dwell-target" data-pos="tl" aria-label="Point haut-gauche" type="button">Haut-G<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button>
+      <button class="calib-point-btn dwell-target" data-pos="tc" aria-label="Point haut-centre" type="button">Haut-C<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button>
+      <button class="calib-point-btn dwell-target" data-pos="tr" aria-label="Point haut-droite" type="button">Haut-D<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button>
+      <button class="calib-point-btn dwell-target" data-pos="ml" aria-label="Point milieu-gauche" type="button">Mil-G<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button>
+      <button class="calib-point-btn dwell-target" data-pos="mc" aria-label="Point centre neutre" type="button">Centre<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button>
+      <button class="calib-point-btn dwell-target" data-pos="mr" aria-label="Point milieu-droite" type="button">Mil-D<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button>
+      <button class="calib-point-btn dwell-target" data-pos="bl" aria-label="Point bas-gauche" type="button">Bas-G<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button>
+      <button class="calib-point-btn dwell-target" data-pos="bc" aria-label="Point bas-centre" type="button">Bas-C<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button>
+      <button class="calib-point-btn dwell-target" data-pos="br" aria-label="Point bas-droite" type="button">Bas-D<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button>
+    </div>
+    <div id="calib-progress" aria-live="polite"></div>
+  </section>
+
   <!-- TEXT OUTPUT -->
   <section id="output-section" aria-labelledby="output-label">
-    <div id="output-label" style="font-size:0.8rem;font-weight:700;color:var(--marine);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Texte composé</div>
-    <div id="output-display" role="textbox" aria-multiline="true" aria-label="Zone de texte composé" aria-live="off"></div>
+    <div id="output-label" style="font-size:0.8rem;font-weight:700;color:var(--marine);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Texte compose</div>
+    <div id="output-display" role="textbox" aria-multiline="true" aria-label="Zone de texte compose" aria-live="off"></div>
   </section>
 
   <!-- STATUS (live) -->
   <div id="status-bar" aria-live="polite" aria-atomic="true">
-    <span>✏️ <span id="char-count">0</span> caractères</span>
-    <span>📝 <span id="word-count">0</span> mots</span>
+    <span><span id="char-count">0</span> car.</span>
+    <span><span id="word-count">0</span> mots</span>
     <span id="status-live" aria-live="assertive" aria-atomic="true"></span>
   </div>
 
   <!-- ACTION BAR -->
   <section aria-label="Actions principales">
     <div id="action-bar" role="toolbar" aria-label="Boutons d'action">
-      <button class="action-btn btn-space dwell-target" id="btn-space" aria-label="Insérer un espace">
-        ⎵ Espace
+      <button class="action-btn btn-space dwell-target" id="btn-space" aria-label="Inserer un espace">
+        Espace
         <span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span>
       </button>
-      <button class="action-btn btn-primary dwell-target" id="btn-back" aria-label="Effacer le dernier caractère">
-        ⌫ Effacer
+      <button class="action-btn btn-primary dwell-target" id="btn-back" aria-label="Effacer le dernier caractere">
+        Effacer
         <span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span>
       </button>
-      <button class="action-btn btn-speak dwell-target" id="btn-speak" aria-label="Lire le texte à voix haute">
-        🔊 Parler
+      <button class="action-btn btn-speak dwell-target" id="btn-speak" aria-label="Lire le texte a voix haute">
+        Parler
         <span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span>
       </button>
       <button class="action-btn btn-danger dwell-target" id="btn-clear" aria-label="Effacer tout le texte">
-        🗑️ Tout effacer
+        Tout effacer
+        <span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span>
+      </button>
+      <button class="action-btn btn-primary dwell-target" id="btn-copy" aria-label="Copier le texte dans le presse-papier">
+        Copier
+        <span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span>
+      </button>
+      <button class="action-btn btn-secondary dwell-target" id="btn-save-history" aria-label="Enregistrer dans l'historique">
+        Sauver
         <span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span>
       </button>
     </div>
@@ -785,21 +1195,17 @@ footer a:hover { text-decoration: underline; }
 
   <!-- WORD PREDICTION -->
   <section id="prediction-section" aria-labelledby="prediction-label" style="display:none">
-    <div id="prediction-label">Prédiction de mots</div>
-    <ul id="prediction-list" role="listbox" aria-label="Mots suggérés" aria-live="polite"></ul>
+    <div id="prediction-label">Prediction de mots</div>
+    <ul id="prediction-list" role="listbox" aria-label="Mots suggeres" aria-live="polite"></ul>
   </section>
 
   <!-- QUICK PHRASES -->
   <section id="quick-section" aria-labelledby="quick-label">
-    <div id="quick-label">Phrases rapides</div>
-    <ul id="quick-list" role="listbox" aria-label="Phrases pré-enregistrées">
-      <li role="option"><button class="quick-btn dwell-target" data-phrase="Oui" aria-label="Phrase rapide : Oui">Oui<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button></li>
-      <li role="option"><button class="quick-btn dwell-target" data-phrase="Non" aria-label="Phrase rapide : Non">Non<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button></li>
-      <li role="option"><button class="quick-btn dwell-target" data-phrase="J'ai besoin d'aide" aria-label="Phrase rapide : J'ai besoin d'aide">J'ai besoin d'aide<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button></li>
-      <li role="option"><button class="quick-btn dwell-target" data-phrase="Merci" aria-label="Phrase rapide : Merci">Merci<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button></li>
-      <li role="option"><button class="quick-btn dwell-target" data-phrase="S'il vous plaît" aria-label="Phrase rapide : S'il vous plaît">S'il vous plaît<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button></li>
-      <li role="option"><button class="quick-btn dwell-target" data-phrase="Je ne comprends pas" aria-label="Phrase rapide : Je ne comprends pas">Je ne comprends pas<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button></li>
-    </ul>
+    <div id="quick-header">
+      <div id="quick-label">Phrases rapides</div>
+      <button id="btn-add-phrase" type="button" aria-label="Ajouter une phrase rapide">+ Ajouter</button>
+    </div>
+    <ul id="quick-list" role="listbox" aria-label="Phrases pre-enregistrees"></ul>
   </section>
 
   <!-- KEYBOARD -->
@@ -807,30 +1213,81 @@ footer a:hover { text-decoration: underline; }
     <div id="keyboard-heading" style="font-size:0.8rem;font-weight:700;color:var(--marine);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">Clavier visuel</div>
     <div id="keyboard-controls" role="group" aria-label="Options du clavier">
       <button class="kb-toggle active" id="toggle-azerty" aria-pressed="true" aria-label="Disposition AZERTY">AZERTY</button>
-      <button class="kb-toggle" id="toggle-alpha" aria-pressed="false" aria-label="Disposition alphabétique">A–Z</button>
+      <button class="kb-toggle" id="toggle-alpha" aria-pressed="false" aria-label="Disposition alphabetique">A–Z</button>
+      <button class="kb-toggle" id="toggle-compact" aria-pressed="false" aria-label="Disposition compacte">Compact</button>
     </div>
     <div id="keyboard-grid" role="group" aria-label="Touches du clavier visuel"></div>
   </section>
 
+  <!-- PROFILES -->
+  <details id="profiles-section" aria-label="Profils de configuration">
+    <summary>Profils</summary>
+    <div class="profiles-body">
+      <div id="profile-list" role="group" aria-label="Profils disponibles"></div>
+      <div id="profile-actions">
+        <button class="profile-action-btn" id="btn-save-profile" type="button">Sauvegarder</button>
+        <button class="profile-action-btn" id="btn-new-profile" type="button">Nouveau profil</button>
+        <button class="profile-action-btn" id="btn-del-profile" type="button">Supprimer</button>
+      </div>
+    </div>
+  </details>
+
   <!-- SETTINGS -->
-  <details id="settings-section" aria-label="Réglages">
-    <summary>⚙️ Réglages</summary>
+  <details id="settings-section" aria-label="Reglages">
+    <summary>Reglages</summary>
     <div class="settings-body">
       <div class="setting-row">
-        <label for="dwell-slider">⏱️ Temps de maintien (dwell)</label>
-        <input type="range" id="dwell-slider" min="400" max="2000" step="100" value="1000"
-               aria-label="Temps de maintien en millisecondes" aria-valuemin="400" aria-valuemax="2000" aria-valuenow="1000">
+        <label for="dwell-slider">Temps de maintien (dwell)</label>
+        <input type="range" id="dwell-slider" min="400" max="3000" step="100" value="1000"
+               aria-label="Temps de maintien en millisecondes" aria-valuemin="400" aria-valuemax="3000" aria-valuenow="1000">
         <span class="setting-val" id="dwell-val" aria-live="polite">1,0 s</span>
       </div>
       <div class="setting-row">
-        <label for="size-slider">🔡 Taille des touches</label>
-        <input type="range" id="size-slider" min="38" max="80" step="4" value="52"
-               aria-label="Taille des touches en pixels" aria-valuemin="38" aria-valuemax="80" aria-valuenow="52">
+        <label for="size-slider">Taille des touches</label>
+        <input type="range" id="size-slider" min="38" max="90" step="4" value="52"
+               aria-label="Taille des touches en pixels" aria-valuemin="38" aria-valuemax="90" aria-valuenow="52">
         <span class="setting-val" id="size-val" aria-live="polite">52 px</span>
       </div>
       <div class="setting-row">
-        <label for="pred-toggle">💡 Prédiction de mots</label>
-        <input type="checkbox" id="pred-toggle" checked aria-label="Activer la prédiction de mots">
+        <label for="smooth-slider">Lissage pointeur (N frames)</label>
+        <input type="range" id="smooth-slider" min="2" max="16" step="1" value="6"
+               aria-label="Nombre de frames de lissage" aria-valuemin="2" aria-valuemax="16" aria-valuenow="6">
+        <span class="setting-val" id="smooth-val" aria-live="polite">6</span>
+      </div>
+      <hr class="settings-sep">
+      <div class="setting-row">
+        <label for="voice-select">Voix TTS</label>
+        <select id="voice-select" aria-label="Choix de la voix de synthese vocale"></select>
+      </div>
+      <div class="setting-row">
+        <label for="rate-slider">Vitesse de la voix</label>
+        <input type="range" id="rate-slider" min="0.5" max="1.8" step="0.05" value="0.95"
+               aria-label="Vitesse de la voix" aria-valuemin="0.5" aria-valuemax="1.8" aria-valuenow="0.95">
+        <span class="setting-val" id="rate-val" aria-live="polite">0,95</span>
+      </div>
+      <hr class="settings-sep">
+      <div class="setting-row">
+        <label for="pred-toggle">Prediction de mots</label>
+        <input type="checkbox" id="pred-toggle" checked aria-label="Activer la prediction de mots">
+      </div>
+      <div class="setting-row">
+        <label for="abbrev-toggle">Expansion d'abreviations</label>
+        <input type="checkbox" id="abbrev-toggle" checked aria-label="Activer l'expansion d'abreviations">
+      </div>
+      <div class="setting-row">
+        <label for="hc-toggle">Theme fort contraste</label>
+        <input type="checkbox" id="hc-toggle" aria-label="Activer le theme fort contraste">
+      </div>
+    </div>
+  </details>
+
+  <!-- HISTORY -->
+  <details id="history-section" aria-label="Historique des textes">
+    <summary>Historique</summary>
+    <div class="history-body">
+      <ul id="history-list" aria-label="Elements de l'historique"></ul>
+      <div id="history-actions">
+        <button class="profile-action-btn" id="btn-clear-history" type="button">Effacer l'historique</button>
       </div>
     </div>
   </details>
@@ -839,17 +1296,69 @@ footer a:hover { text-decoration: underline; }
 </main>
 
 <footer role="contentinfo">
-  <a href="../index.html">LibreA11y</a> — GazeType est un logiciel libre. Aucune donnée collectée. Aucun cookie.
-  Le suivi de tête utilise MediaPipe (CDN ou local), aucune autre donnée réseau.
+  <a href="../index.html">LibreA11y</a> — GazeType est un logiciel libre. Aucune donnee collectee. Aucun cookie.
+  Le suivi de tete utilise MediaPipe (CDN ou local), aucune autre donnee reseau.
 </footer>
 
 <script>
 /* =============================================
-   GAZETYPE — Clavier piloté au maintien (dwell)
-   + Suivi de tête par webcam (MediaPipe FaceLandmarker)
+   GAZETYPE — Clavier pilote au maintien (dwell)
+   + Suivi de tete par webcam (MediaPipe FaceLandmarker)
+   + App complete : profils, historique, phrases, prediction enrichie, PWA
    ============================================= */
 
 'use strict';
+
+/* -------- ABBREV TABLE (French) -------- */
+const ABBREV = {
+  'svp': "s'il vous plait", 'stp': "s'il te plait", 'bsr': 'bonsoir', 'bjr': 'bonjour',
+  'cad': "c'est-a-dire", 'pr': 'pour', 'qd': 'quand', 'bcp': 'beaucoup',
+  'pb': 'probleme', 'rdv': 'rendez-vous', 'tel': 'telephone', 'msg': 'message',
+  'tjs': 'toujours', 'dc': 'donc', 'ms': 'mais', 'slt': 'salut',
+  'mci': 'merci', 'qqch': 'quelque chose', 'qqn': 'quelqu\'un',
+  'avt': 'avant', 'apr': 'apres', 'pdt': 'pendant',
+};
+
+/* -------- WORD FREQUENCY LIST (French ~350 mots) -------- */
+const WORD_LIST = [
+  'le','la','les','de','des','du','un','une','et','en','est','que','qui',
+  'il','elle','ils','elles','nous','vous','je','tu','pas','plus','par',
+  'sur','avec','dans','pour','au','aux','se','ne','ce','cet','cette','ces',
+  'son','sa','ses','mon','ma','mes','ton','ta','tes','leur','leurs','y',
+  'ou','si','mais','donc','car','ni','or','avoir','etre','faire',
+  'dire','aller','voir','vouloir','pouvoir','savoir','venir','prendre',
+  'devoir','falloir','partir','donner','parler','manger','boire','dormir',
+  'aimer','penser','trouver','sembler','rester','tenir','mettre','lire',
+  'ecrire','entendre','sentir','connaitre','comprendre','vivre','croire',
+  'bien','tres','aussi','comme','tout','encore','meme','alors','apres',
+  'avant','depuis','lors','pendant','contre','entre','sans','sous','vers',
+  'oui','non','merci','aide','besoin','bonjour','bonsoir','revoir','salut',
+  'comment','allez','grand','petit','bon','mauvais','nouveau','vieux',
+  'jeune','long','haut','bas','premier','deuxieme','troisieme','autre',
+  'seul','plusieurs','certain','chaque','quelque','homme','femme','enfant',
+  'temps','jour','nuit','annee','heure','moment','vie','monde','pays',
+  'ville','maison','travail','main','tete','yeux','corps','coeur','bras',
+  'jambe','dos','ventre','eau','pain','repas','medicament','medicaments',
+  'medecin','hopital','urgence','douleur','mal','fatigue','fatigue',
+  'soif','faim','froid','chaud','lit','chambre','salle','toilette',
+  'telephone','famille','ami','amie','mere','pere','frere','soeur',
+  'enfants','bebe','chien','chat','soleil','pluie','vent','matin',
+  'midi','soir','lundi','mardi','mercredi','jeudi','vendredi','samedi',
+  'dimanche','janvier','fevrier','mars','avril','mai','juin','juillet',
+  'aout','septembre','octobre','novembre','decembre',
+  'malade','maladie','sante','aider','appeler','marcher','assis','debout',
+  'gauche','droite','ici','la','maintenant','demain','hier',
+  'toujours','jamais','souvent','parfois','longtemps','rapidement','lentement',
+  'possible','impossible','necessaire','important','urgent','grave','leger',
+  'changer','chercher','perdre','gagner','plaît','s\'il',
+];
+
+/* -------- DEFAULT PHRASES -------- */
+const DEFAULT_PHRASES = [
+  'Oui', 'Non', "J'ai besoin d'aide", 'Merci', "S'il vous plait",
+  "Je ne comprends pas", "J'ai mal", "J'ai soif", "J'ai faim",
+  'Appelez le medecin', 'Pouvez-vous repeter ?', 'Au revoir',
+];
 
 /* -------- STATE -------- */
 const state = {
@@ -857,10 +1366,44 @@ const state = {
   dwellMs: 1000,
   keySize: 52,
   predEnabled: true,
+  abbrevEnabled: true,
   layout: 'azerty',
   synth: null,
   activeVoice: null,
+  voiceRate: 0.95,
+  hcMode: false,
+  quickPhrases: [],
+  history: [],
+  profiles: {},
+  activeProfile: 'Default',
+  smoothN: 6,
 };
+
+/* -------- STORAGE HELPERS -------- */
+function lsGet(k, def) {
+  try { var v = localStorage.getItem(k); return v !== null ? JSON.parse(v) : def; }
+  catch (_) { return def; }
+}
+function lsSet(k, v) {
+  try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {}
+}
+
+/* -------- LOAD PERSISTED DATA -------- */
+function loadPersisted() {
+  state.quickPhrases  = lsGet('gt_phrases', DEFAULT_PHRASES);
+  state.history       = lsGet('gt_history', []);
+  state.profiles      = lsGet('gt_profiles', {});
+  state.activeProfile = lsGet('gt_active_profile', 'Default');
+  state.dwellMs       = lsGet('gt_dwell', 1000);
+  state.keySize       = lsGet('gt_keysize', 52);
+  state.predEnabled   = lsGet('gt_pred', true);
+  state.abbrevEnabled = lsGet('gt_abbrev', true);
+  state.hcMode        = lsGet('gt_hc', false);
+  state.layout        = lsGet('gt_layout', 'azerty');
+  state.voiceRate     = lsGet('gt_voicerate', 0.95);
+  state.smoothN       = lsGet('gt_smoothn', 6);
+  HT.sensitivity      = lsGet('gt_sensitivity', 5);
+}
 
 /* -------- KEYBOARD LAYOUTS -------- */
 const AZERTY = [
@@ -877,98 +1420,123 @@ const ALPHA = [
   ['È','À','Ç','1','2','3','4','5','6'],
   ['7','8','9','0','.',',','?','!','\''],
 ];
-
-/* -------- WORD FREQUENCY LIST (French top 200) -------- */
-const WORD_LIST = [
-  'le','la','les','de','des','du','un','une','et','en','est',
-  'que','qui','il','elle','ils','elles','nous','vous','je','tu',
-  'pas','plus','par','sur','avec','dans','pour','au','aux','se',
-  'ne','ce','cet','cette','ces','son','sa','ses','mon','ma','mes',
-  'ton','ta','tes','leur','leurs','y','à','ou','si','mais','donc',
-  'car','ni','or','avoir','être','faire','dire','aller','voir',
-  'vouloir','pouvoir','savoir','venir','prendre','devoir',
-  'falloir','partir','donner','parler','manger','boire','dormir',
-  'aimer','penser','trouver','sembler','rester','tenir','mettre',
-  'bien','très','aussi','comme','tout','encore','même','alors',
-  'après','avant','depuis','lors','pendant','contre','entre',
-  'oui','non','merci','aide','besoin','sil','vous','bonjour',
-  'bonsoir','au revoir','comment','allez','grand','petit','bon',
-  'mauvais','nouveau','vieux','jeune','long','haut','bas',
-  'premier','deuxième','troisième','autre','même','seul','tout',
-  'plusieurs','certain','chaque','quelque','homme','femme','enfant',
-  'temps','jour','nuit','année','heure','moment','vie','monde',
-  'pays','ville','maison','travail','main','tête','yeux','corps',
-  'eau','pain','médecin','hôpital','urgence','douleur','mal',
+const COMPACT = [
+  ['A','B','C','D','E','F','G'],
+  ['H','I','J','K','L','M','N'],
+  ['O','P','Q','R','S','T','U'],
+  ['V','W','X','Y','Z','É','È'],
+  ['1','2','3','4','5','.','?'],
 ];
 
 /* -------- DOM REFS -------- */
 const els = {
-  output: document.getElementById('output-display'),
-  charCount: document.getElementById('char-count'),
-  wordCount: document.getElementById('word-count'),
-  statusLive: document.getElementById('status-live'),
-  predSection: document.getElementById('prediction-section'),
-  predList: document.getElementById('prediction-list'),
-  kbGrid: document.getElementById('keyboard-grid'),
-  dwellSlider: document.getElementById('dwell-slider'),
-  dwellVal: document.getElementById('dwell-val'),
-  sizeSlider: document.getElementById('size-slider'),
-  sizeVal: document.getElementById('size-val'),
-  predToggle: document.getElementById('pred-toggle'),
+  output:       document.getElementById('output-display'),
+  charCount:    document.getElementById('char-count'),
+  wordCount:    document.getElementById('word-count'),
+  statusLive:   document.getElementById('status-live'),
+  predSection:  document.getElementById('prediction-section'),
+  predList:     document.getElementById('prediction-list'),
+  kbGrid:       document.getElementById('keyboard-grid'),
+  dwellSlider:  document.getElementById('dwell-slider'),
+  dwellVal:     document.getElementById('dwell-val'),
+  sizeSlider:   document.getElementById('size-slider'),
+  sizeVal:      document.getElementById('size-val'),
+  smoothSlider: document.getElementById('smooth-slider'),
+  smoothVal:    document.getElementById('smooth-val'),
+  predToggle:   document.getElementById('pred-toggle'),
+  abbrevToggle: document.getElementById('abbrev-toggle'),
+  hcToggle:     document.getElementById('hc-toggle'),
   toggleAzerty: document.getElementById('toggle-azerty'),
-  toggleAlpha: document.getElementById('toggle-alpha'),
+  toggleAlpha:  document.getElementById('toggle-alpha'),
+  toggleCompact:document.getElementById('toggle-compact'),
+  quickList:    document.getElementById('quick-list'),
+  historyList:  document.getElementById('history-list'),
+  voiceSelect:  document.getElementById('voice-select'),
+  rateSlider:   document.getElementById('rate-slider'),
+  rateVal:      document.getElementById('rate-val'),
+  profileList:  document.getElementById('profile-list'),
+  toast:        document.getElementById('toast'),
+  chipModel:    document.getElementById('chip-model'),
+  chipCamera:   document.getElementById('chip-camera'),
+  chipInput:    document.getElementById('chip-input'),
+  chipSW:       document.getElementById('chip-sw'),
+  calibSection: document.getElementById('calib-section'),
+  calibProgress:document.getElementById('calib-progress'),
 };
+
+/* -------- TOAST -------- */
+var _toastTimer = null;
+function showToast(msg) {
+  if (_toastTimer) clearTimeout(_toastTimer);
+  els.toast.textContent = msg;
+  els.toast.classList.add('show');
+  _toastTimer = setTimeout(function() { els.toast.classList.remove('show'); }, 2200);
+}
+
+/* -------- APP STATE CHIPS -------- */
+function setChip(el, text, cls) {
+  el.textContent = text;
+  el.className = 'state-chip' + (cls ? ' ' + cls : '');
+}
 
 /* -------- RENDER OUTPUT -------- */
 function renderOutput() {
-  const t = state.text;
+  var t = state.text;
   els.output.textContent = t;
   els.charCount.textContent = t.length;
-  const words = t.trim().length > 0 ? t.trim().split(/\s+/).length : 0;
+  var words = t.trim().length > 0 ? t.trim().split(/\s+/).length : 0;
   els.wordCount.textContent = words;
+}
+
+/* -------- ABBREV EXPANSION -------- */
+function expandAbbrev(text) {
+  if (!state.abbrevEnabled) return text;
+  return text.replace(/\b([a-zA-Z]{2,5})\b/g, function(m) {
+    var key = m.toLowerCase();
+    return ABBREV[key] ? ABBREV[key] : m;
+  });
 }
 
 /* -------- WORD PREDICTION -------- */
 function getPrefix() {
-  const parts = state.text.split(/\s/);
+  var parts = state.text.split(/\s/);
   return (parts[parts.length - 1] || '').toLowerCase();
 }
 function updatePredictions() {
   if (!state.predEnabled) { els.predSection.style.display = 'none'; return; }
-  const prefix = getPrefix();
+  var prefix = getPrefix();
   if (prefix.length < 1) { els.predSection.style.display = 'none'; return; }
-  const matches = WORD_LIST.filter(w => w.startsWith(prefix) && w !== prefix).slice(0, 6);
+  var matches = WORD_LIST.filter(function(w) { return w.startsWith(prefix) && w !== prefix; }).slice(0, 8);
   if (matches.length === 0) { els.predSection.style.display = 'none'; return; }
   els.predSection.style.display = '';
   els.predList.innerHTML = '';
-  matches.forEach(word => {
-    const li = document.createElement('li');
+  matches.forEach(function(word) {
+    var li = document.createElement('li');
     li.setAttribute('role', 'option');
-    const btn = document.createElement('button');
+    var btn = document.createElement('button');
     btn.className = 'pred-btn dwell-target';
-    btn.setAttribute('aria-label', `Compléter avec : ${word}`);
+    btn.setAttribute('aria-label', 'Completer avec : ' + word);
     btn.textContent = word;
-    const ring = buildRing();
+    var ring = buildRing();
     btn.appendChild(ring);
-    btn.addEventListener('click', () => selectWord(word));
-    attachDwell(btn, () => selectWord(word));
+    btn.addEventListener('click', function() { selectWord(word); });
+    attachDwell(btn, function() { selectWord(word); });
     li.appendChild(btn);
     els.predList.appendChild(li);
   });
 }
 function selectWord(word) {
-  // replace current prefix
-  const lastSpace = state.text.lastIndexOf(' ');
+  var lastSpace = state.text.lastIndexOf(' ');
   state.text = (lastSpace === -1 ? '' : state.text.slice(0, lastSpace + 1)) + word + ' ';
   renderOutput();
   updatePredictions();
   speak(word, true);
-  announceStatus(`Mot : ${word}`);
+  announceStatus('Mot : ' + word);
 }
 
 /* -------- BUILD RING SVG -------- */
 function buildRing() {
-  const span = document.createElement('span');
+  var span = document.createElement('span');
   span.className = 'dwell-ring';
   span.setAttribute('aria-hidden', 'true');
   span.innerHTML = '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg>';
@@ -976,58 +1544,53 @@ function buildRing() {
 }
 
 /* -------- DWELL LOGIC -------- */
-// Map: element -> { timerId, startTime, rafId, ring }
-const dwellMap = new WeakMap();
+var dwellMap = new WeakMap();
 
 function attachDwell(el, onFire) {
-  // Pointer events (mouse + touch + stylus)
-  el.addEventListener('pointerenter', () => startDwell(el, onFire));
-  el.addEventListener('pointerleave', () => cancelDwell(el));
-  el.addEventListener('pointercancel', () => cancelDwell(el));
-  // Also handle click for pure keyboard/mouse users (instant)
-  // (dwell fires on timer, but click is kept for accessibility)
+  el.addEventListener('pointerenter', function() { startDwell(el, onFire); });
+  el.addEventListener('pointerleave', function() { cancelDwell(el); });
+  el.addEventListener('pointercancel', function() { cancelDwell(el); });
 }
 
 function startDwell(el, onFire) {
   cancelDwell(el);
-  const ring = el.querySelector('.dwell-ring');
-  const start = performance.now();
-  const duration = state.dwellMs;
+  var ring = el.querySelector('.dwell-ring');
+  var start = performance.now();
+  var duration = state.dwellMs;
   el.classList.add('dwell-active');
   if (ring) ring.classList.add('active');
 
   function animate(now) {
-    const elapsed = now - start;
-    const pct = Math.min(elapsed / duration, 1);
-    const circ = 2 * Math.PI * 46;
+    var elapsed = now - start;
+    var pct = Math.min(elapsed / duration, 1);
+    var circ = 2 * Math.PI * 46;
     if (ring) {
       ring.style.setProperty('--dash', (pct * circ).toFixed(1));
-      const circle = ring.querySelector('circle');
-      if (circle) circle.style.strokeDasharray = `${(pct * circ).toFixed(1)} ${circ}`;
+      var circle = ring.querySelector('circle');
+      if (circle) circle.style.strokeDasharray = (pct * circ).toFixed(1) + ' ' + circ;
     }
     if (pct < 1) {
-      const rafId = requestAnimationFrame(animate);
-      dwellMap.set(el, { ...dwellMap.get(el), rafId });
+      var rafId = requestAnimationFrame(animate);
+      dwellMap.set(el, Object.assign({}, dwellMap.get(el), { rafId: rafId }));
     } else {
       cancelDwell(el);
-      // Flash fired
       el.classList.add('fired');
-      setTimeout(() => el.classList.remove('fired'), 250);
+      setTimeout(function() { el.classList.remove('fired'); }, 250);
       onFire();
     }
   }
 
-  const rafId = requestAnimationFrame(animate);
-  dwellMap.set(el, { rafId, ring });
+  var rafId = requestAnimationFrame(animate);
+  dwellMap.set(el, { rafId: rafId, ring: ring });
 }
 
 function cancelDwell(el) {
-  const info = dwellMap.get(el);
+  var info = dwellMap.get(el);
   if (info) {
     cancelAnimationFrame(info.rafId);
     if (info.ring) {
       info.ring.classList.remove('active');
-      const circle = info.ring.querySelector('circle');
+      var circle = info.ring.querySelector('circle');
       if (circle) circle.style.strokeDasharray = '0 1000';
     }
     dwellMap.delete(el);
@@ -1035,28 +1598,30 @@ function cancelDwell(el) {
   el.classList.remove('dwell-active');
 }
 
-
 /* -------- KEYBOARD BUILD -------- */
 function buildKeyboard() {
-  const grid = els.kbGrid;
+  var grid = els.kbGrid;
   grid.innerHTML = '';
-  const layout = state.layout === 'azerty' ? AZERTY : ALPHA;
-  const sz = state.keySize;
+  var layout;
+  if (state.layout === 'azerty') layout = AZERTY;
+  else if (state.layout === 'alpha') layout = ALPHA;
+  else layout = COMPACT;
+  var sz = state.keySize;
   document.documentElement.style.setProperty('--key-size', sz + 'px');
 
-  layout.forEach(row => {
-    const rowEl = document.createElement('div');
+  layout.forEach(function(row) {
+    var rowEl = document.createElement('div');
     rowEl.className = 'kb-row';
-    row.forEach(char => {
-      const btn = document.createElement('button');
+    row.forEach(function(char) {
+      var btn = document.createElement('button');
       btn.className = 'key-btn dwell-target';
       btn.textContent = char;
       btn.setAttribute('aria-label', 'Touche ' + char);
       btn.type = 'button';
-      const ring = buildRing();
+      var ring = buildRing();
       btn.appendChild(ring);
-      btn.addEventListener('click', () => typeChar(char));
-      attachDwell(btn, () => typeChar(char));
+      btn.addEventListener('click', function() { typeChar(char); });
+      attachDwell(btn, function() { typeChar(char); });
       rowEl.appendChild(btn);
     });
     grid.appendChild(rowEl);
@@ -1072,22 +1637,19 @@ function typeChar(c) {
 
 /* -------- ACTION BUTTONS -------- */
 function setupActions() {
-  const btnSpace = document.getElementById('btn-space');
-  const btnBack  = document.getElementById('btn-back');
-  const btnSpeak = document.getElementById('btn-speak');
-  const btnClear = document.getElementById('btn-clear');
+  var btnSpace = document.getElementById('btn-space');
+  var btnBack  = document.getElementById('btn-back');
+  var btnSpeak = document.getElementById('btn-speak');
+  var btnClear = document.getElementById('btn-clear');
+  var btnCopy  = document.getElementById('btn-copy');
+  var btnSave  = document.getElementById('btn-save-history');
 
-  btnSpace.addEventListener('click', doSpace);
-  attachDwell(btnSpace, doSpace);
-
-  btnBack.addEventListener('click', doBack);
-  attachDwell(btnBack, doBack);
-
-  btnSpeak.addEventListener('click', doSpeak);
-  attachDwell(btnSpeak, doSpeak);
-
-  btnClear.addEventListener('click', doClear);
-  attachDwell(btnClear, doClear);
+  btnSpace.addEventListener('click', doSpace);  attachDwell(btnSpace, doSpace);
+  btnBack.addEventListener('click', doBack);    attachDwell(btnBack, doBack);
+  btnSpeak.addEventListener('click', doSpeak);  attachDwell(btnSpeak, doSpeak);
+  btnClear.addEventListener('click', doClear);  attachDwell(btnClear, doClear);
+  btnCopy.addEventListener('click', doCopy);    attachDwell(btnCopy, doCopy);
+  btnSave.addEventListener('click', doSaveHistory); attachDwell(btnSave, doSaveHistory);
 }
 
 function doSpace() { state.text += ' '; renderOutput(); updatePredictions(); announceStatus('espace'); }
@@ -1099,25 +1661,98 @@ function doBack() {
 }
 function doSpeak() {
   if (!state.text.trim()) { announceStatus('Rien a lire'); return; }
-  speak(state.text, false);
+  var expanded = expandAbbrev(state.text);
+  speak(expanded, false);
 }
 function doClear() {
   state.text = '';
   renderOutput(); updatePredictions(); announceStatus('Texte efface');
 }
+function doCopy() {
+  if (!state.text) { showToast('Rien a copier'); return; }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(state.text).then(function() {
+      showToast('Texte copie');
+    }).catch(function() { showToast('Copie non disponible'); });
+  } else {
+    showToast('Copie non disponible dans ce navigateur');
+  }
+}
+function doSaveHistory() {
+  if (!state.text.trim()) { showToast('Rien a sauvegarder'); return; }
+  var entry = { text: state.text.trim(), ts: Date.now() };
+  state.history.unshift(entry);
+  if (state.history.length > 50) state.history.pop();
+  lsSet('gt_history', state.history);
+  renderHistory();
+  showToast("Sauvegarde dans l'historique");
+}
 
 /* -------- QUICK PHRASES -------- */
-function setupQuick() {
-  document.querySelectorAll('.quick-btn').forEach(btn => {
-    const phrase = btn.dataset.phrase;
-    btn.addEventListener('click', () => insertPhrase(phrase));
-    attachDwell(btn, () => insertPhrase(phrase));
+function renderQuickPhrases() {
+  els.quickList.innerHTML = '';
+  state.quickPhrases.forEach(function(phrase, idx) {
+    var li = document.createElement('li');
+    li.className = 'quick-item';
+    li.setAttribute('role', 'option');
+    var btn = document.createElement('button');
+    btn.className = 'quick-btn dwell-target';
+    btn.setAttribute('aria-label', 'Phrase rapide : ' + phrase);
+    btn.textContent = phrase;
+    var ring = buildRing();
+    btn.appendChild(ring);
+    (function(p) {
+      btn.addEventListener('click', function() { insertPhrase(p); });
+      attachDwell(btn, function() { insertPhrase(p); });
+    })(phrase);
+    var delBtn = document.createElement('button');
+    delBtn.className = 'quick-del-btn';
+    delBtn.setAttribute('aria-label', 'Supprimer la phrase : ' + phrase);
+    delBtn.textContent = '×';
+    (function(i) {
+      delBtn.addEventListener('click', function() {
+        state.quickPhrases.splice(i, 1);
+        lsSet('gt_phrases', state.quickPhrases);
+        renderQuickPhrases();
+      });
+    })(idx);
+    li.appendChild(btn);
+    li.appendChild(delBtn);
+    els.quickList.appendChild(li);
   });
 }
+
 function insertPhrase(phrase) {
   if (state.text && !state.text.endsWith(' ')) state.text += ' ';
   state.text += phrase;
   renderOutput(); updatePredictions(); speak(phrase, false); announceStatus(phrase);
+}
+
+function setupQuick() {
+  document.getElementById('btn-add-phrase').addEventListener('click', openPhraseModal);
+  document.getElementById('phrase-modal-cancel').addEventListener('click', closePhraseModal);
+  document.getElementById('phrase-modal-ok').addEventListener('click', confirmPhrase);
+  document.getElementById('phrase-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') confirmPhrase();
+    if (e.key === 'Escape') closePhraseModal();
+  });
+}
+function openPhraseModal() {
+  document.getElementById('phrase-input').value = '';
+  document.getElementById('phrase-modal-overlay').classList.add('open');
+  document.getElementById('phrase-input').focus();
+}
+function closePhraseModal() {
+  document.getElementById('phrase-modal-overlay').classList.remove('open');
+}
+function confirmPhrase() {
+  var val = document.getElementById('phrase-input').value.trim();
+  if (!val) { closePhraseModal(); return; }
+  state.quickPhrases.push(val);
+  lsSet('gt_phrases', state.quickPhrases);
+  renderQuickPhrases();
+  closePhraseModal();
+  showToast('Phrase ajoutee');
 }
 
 /* -------- TTS -------- */
@@ -1125,21 +1760,51 @@ function initSynth() {
   if (!('speechSynthesis' in window)) return;
   state.synth = window.speechSynthesis;
   function pickVoice() {
-    const voices = state.synth.getVoices();
-    const fr = voices.find(v => v.lang.startsWith('fr'));
-    state.activeVoice = fr || voices[0] || null;
+    var voices = state.synth.getVoices();
+    var fr = voices.filter(function(v) { return v.lang.startsWith('fr'); });
+    populateVoiceSelect(voices, fr);
+    var savedName = lsGet('gt_voice', null);
+    var found = voices.find(function(v) { return v.name === savedName; });
+    state.activeVoice = found || fr[0] || voices[0] || null;
+    if (state.activeVoice) {
+      for (var i = 0; i < els.voiceSelect.options.length; i++) {
+        if (els.voiceSelect.options[i].value === state.activeVoice.name) {
+          els.voiceSelect.selectedIndex = i; break;
+        }
+      }
+    }
   }
   pickVoice();
   state.synth.addEventListener('voiceschanged', pickVoice);
 }
+
+function populateVoiceSelect(voices, frVoices) {
+  els.voiceSelect.innerHTML = '';
+  function addOpt(v) {
+    var o = document.createElement('option');
+    o.value = v.name;
+    o.textContent = v.name + ' (' + v.lang + ')';
+    els.voiceSelect.appendChild(o);
+  }
+  frVoices.forEach(addOpt);
+  var nonFr = voices.filter(function(v) { return !v.lang.startsWith('fr'); });
+  if (nonFr.length && frVoices.length) {
+    var sep = document.createElement('option');
+    sep.disabled = true;
+    sep.textContent = '-- Autres langues --';
+    els.voiceSelect.appendChild(sep);
+  }
+  nonFr.forEach(addOpt);
+}
+
 function speak(text, quiet) {
   if (!state.synth) return;
   if (quiet && state.dwellMs < 600) return;
   state.synth.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
+  var utt = new SpeechSynthesisUtterance(text);
   utt.lang = 'fr-FR';
   if (state.activeVoice) utt.voice = state.activeVoice;
-  utt.rate = 0.95;
+  utt.rate = state.voiceRate;
   utt.pitch = 1.0;
   state.synth.speak(utt);
 }
@@ -1147,42 +1812,243 @@ function speak(text, quiet) {
 /* -------- STATUS -------- */
 function announceStatus(msg) {
   els.statusLive.textContent = '';
-  requestAnimationFrame(() => { els.statusLive.textContent = msg; });
+  requestAnimationFrame(function() { els.statusLive.textContent = msg; });
+}
+
+/* -------- HISTORY -------- */
+function renderHistory() {
+  els.historyList.innerHTML = '';
+  if (state.history.length === 0) {
+    var li = document.createElement('li');
+    li.className = 'history-item';
+    li.style.color = '#9AABB8';
+    li.textContent = 'Aucun historique.';
+    els.historyList.appendChild(li);
+    return;
+  }
+  state.history.forEach(function(entry) {
+    var li = document.createElement('li');
+    li.className = 'history-item';
+    var textSpan = document.createElement('span');
+    textSpan.className = 'history-item-text';
+    textSpan.textContent = entry.text;
+    var d = new Date(entry.ts);
+    var timeSpan = document.createElement('span');
+    timeSpan.className = 'history-item-time';
+    timeSpan.textContent = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    var copyBtn = document.createElement('button');
+    copyBtn.className = 'history-copy-btn';
+    copyBtn.textContent = 'Reutiliser';
+    copyBtn.setAttribute('aria-label', 'Reutiliser : ' + entry.text);
+    (function(txt) {
+      copyBtn.addEventListener('click', function() {
+        state.text = txt;
+        renderOutput();
+        updatePredictions();
+        showToast('Texte charge');
+      });
+    })(entry.text);
+    li.appendChild(textSpan);
+    li.appendChild(timeSpan);
+    li.appendChild(copyBtn);
+    els.historyList.appendChild(li);
+  });
+}
+
+function setupHistory() {
+  document.getElementById('btn-clear-history').addEventListener('click', function() {
+    state.history = [];
+    lsSet('gt_history', []);
+    renderHistory();
+    showToast("Historique efface");
+  });
+}
+
+/* -------- PROFILES -------- */
+function currentProfileSnapshot() {
+  return {
+    dwellMs:     state.dwellMs,
+    keySize:     state.keySize,
+    sensitivity: HT.sensitivity,
+    smoothN:     state.smoothN,
+    voiceRate:   state.voiceRate,
+    layout:      state.layout,
+    hcMode:      state.hcMode,
+    voiceName:   state.activeVoice ? state.activeVoice.name : null,
+  };
+}
+
+function applyProfile(snap) {
+  if (!snap) return;
+  if (snap.dwellMs    !== undefined) state.dwellMs    = snap.dwellMs;
+  if (snap.keySize    !== undefined) state.keySize    = snap.keySize;
+  if (snap.sensitivity!== undefined) HT.sensitivity  = snap.sensitivity;
+  if (snap.smoothN    !== undefined) state.smoothN    = snap.smoothN;
+  if (snap.voiceRate  !== undefined) state.voiceRate  = snap.voiceRate;
+  if (snap.layout     !== undefined) state.layout     = snap.layout;
+  if (snap.hcMode     !== undefined) applyHC(snap.hcMode);
+  if (snap.voiceName && state.synth) {
+    var v = state.synth.getVoices().find(function(v) { return v.name === snap.voiceName; });
+    if (v) state.activeVoice = v;
+  }
+  syncSettingsUI();
+  buildKeyboard();
+  HT.SMOOTH_N = state.smoothN;
+}
+
+function syncSettingsUI() {
+  els.dwellSlider.value = state.dwellMs;
+  els.dwellSlider.setAttribute('aria-valuenow', state.dwellMs);
+  els.dwellVal.textContent = (state.dwellMs / 1000).toFixed(1).replace('.', ',') + ' s';
+  els.sizeSlider.value = state.keySize;
+  els.sizeSlider.setAttribute('aria-valuenow', state.keySize);
+  els.sizeVal.textContent = state.keySize + ' px';
+  els.smoothSlider.value = state.smoothN;
+  els.smoothSlider.setAttribute('aria-valuenow', state.smoothN);
+  els.smoothVal.textContent = state.smoothN;
+  els.rateSlider.value = state.voiceRate;
+  els.rateSlider.setAttribute('aria-valuenow', state.voiceRate);
+  els.rateVal.textContent = state.voiceRate.toFixed(2).replace('.', ',');
+  document.getElementById('ht-sens-slider').value = HT.sensitivity;
+  document.getElementById('ht-sens-val').textContent = HT.sensitivity;
+  document.documentElement.style.setProperty('--key-size', state.keySize + 'px');
+  updateLayoutToggles();
+  els.hcToggle.checked = state.hcMode;
+}
+
+function renderProfiles() {
+  els.profileList.innerHTML = '';
+  var names = Object.keys(state.profiles);
+  if (names.length === 0) {
+    var note = document.createElement('p');
+    note.style.fontSize = '0.82rem';
+    note.style.color = '#9AABB8';
+    note.style.marginBottom = '10px';
+    note.textContent = 'Aucun profil sauvegarde. Configurez les reglages puis cliquez Sauvegarder.';
+    els.profileList.appendChild(note);
+    return;
+  }
+  names.forEach(function(name) {
+    var btn = document.createElement('button');
+    btn.className = 'profile-btn' + (name === state.activeProfile ? ' active' : '');
+    btn.textContent = name;
+    btn.setAttribute('aria-label', 'Activer le profil : ' + name);
+    btn.setAttribute('aria-pressed', name === state.activeProfile ? 'true' : 'false');
+    (function(n) {
+      btn.addEventListener('click', function() {
+        state.activeProfile = n;
+        lsSet('gt_active_profile', n);
+        applyProfile(state.profiles[n]);
+        renderProfiles();
+        showToast('Profil « ' + n + ' » charge');
+      });
+    })(name);
+    els.profileList.appendChild(btn);
+  });
+}
+
+function setupProfiles() {
+  document.getElementById('btn-save-profile').addEventListener('click', function() {
+    var name = state.activeProfile || 'Default';
+    state.profiles[name] = currentProfileSnapshot();
+    lsSet('gt_profiles', state.profiles);
+    renderProfiles();
+    showToast('Profil « ' + name + ' » sauvegarde');
+  });
+  document.getElementById('btn-new-profile').addEventListener('click', function() {
+    var name = prompt('Nom du nouveau profil :');
+    if (!name || !name.trim()) return;
+    var n = name.trim();
+    state.profiles[n] = currentProfileSnapshot();
+    state.activeProfile = n;
+    lsSet('gt_profiles', state.profiles);
+    lsSet('gt_active_profile', n);
+    renderProfiles();
+    showToast('Profil « ' + n + ' » cree');
+  });
+  document.getElementById('btn-del-profile').addEventListener('click', function() {
+    var name = state.activeProfile;
+    if (!name || !state.profiles[name]) { showToast('Aucun profil a supprimer'); return; }
+    if (!confirm('Supprimer le profil « ' + name + ' » ?')) return;
+    delete state.profiles[name];
+    lsSet('gt_profiles', state.profiles);
+    var remaining = Object.keys(state.profiles);
+    state.activeProfile = remaining.length > 0 ? remaining[0] : 'Default';
+    lsSet('gt_active_profile', state.activeProfile);
+    renderProfiles();
+    showToast('Profil supprime');
+  });
+}
+
+/* -------- HIGH CONTRAST -------- */
+function applyHC(on) {
+  state.hcMode = on;
+  document.body.classList.toggle('hc', on);
 }
 
 /* -------- SETTINGS -------- */
 function setupSettings() {
-  els.dwellSlider.addEventListener('input', () => {
+  els.dwellSlider.addEventListener('input', function() {
     state.dwellMs = parseInt(els.dwellSlider.value);
     els.dwellVal.textContent = (state.dwellMs / 1000).toFixed(1).replace('.', ',') + ' s';
     els.dwellSlider.setAttribute('aria-valuenow', state.dwellMs);
+    lsSet('gt_dwell', state.dwellMs);
   });
-  els.sizeSlider.addEventListener('input', () => {
+  els.sizeSlider.addEventListener('input', function() {
     state.keySize = parseInt(els.sizeSlider.value);
     els.sizeVal.textContent = state.keySize + ' px';
     els.sizeSlider.setAttribute('aria-valuenow', state.keySize);
     document.documentElement.style.setProperty('--key-size', state.keySize + 'px');
+    lsSet('gt_keysize', state.keySize);
   });
-  els.predToggle.addEventListener('change', () => {
+  els.smoothSlider.addEventListener('input', function() {
+    state.smoothN = parseInt(els.smoothSlider.value);
+    els.smoothVal.textContent = state.smoothN;
+    HT.SMOOTH_N = state.smoothN;
+    lsSet('gt_smoothn', state.smoothN);
+  });
+  els.predToggle.addEventListener('change', function() {
     state.predEnabled = els.predToggle.checked;
+    lsSet('gt_pred', state.predEnabled);
     updatePredictions();
   });
-  els.toggleAzerty.addEventListener('click', () => {
-    state.layout = 'azerty';
-    els.toggleAzerty.classList.add('active');
-    els.toggleAzerty.setAttribute('aria-pressed', 'true');
-    els.toggleAlpha.classList.remove('active');
-    els.toggleAlpha.setAttribute('aria-pressed', 'false');
-    buildKeyboard();
+  els.abbrevToggle.addEventListener('change', function() {
+    state.abbrevEnabled = els.abbrevToggle.checked;
+    lsSet('gt_abbrev', state.abbrevEnabled);
   });
-  els.toggleAlpha.addEventListener('click', () => {
-    state.layout = 'alpha';
-    els.toggleAlpha.classList.add('active');
-    els.toggleAlpha.setAttribute('aria-pressed', 'true');
-    els.toggleAzerty.classList.remove('active');
-    els.toggleAzerty.setAttribute('aria-pressed', 'false');
-    buildKeyboard();
+  els.hcToggle.addEventListener('change', function() {
+    applyHC(els.hcToggle.checked);
+    lsSet('gt_hc', state.hcMode);
   });
+  els.voiceSelect.addEventListener('change', function() {
+    if (!state.synth) return;
+    var name = els.voiceSelect.value;
+    var v = state.synth.getVoices().find(function(v) { return v.name === name; });
+    if (v) { state.activeVoice = v; lsSet('gt_voice', v.name); }
+  });
+  els.rateSlider.addEventListener('input', function() {
+    state.voiceRate = parseFloat(els.rateSlider.value);
+    els.rateVal.textContent = state.voiceRate.toFixed(2).replace('.', ',');
+    lsSet('gt_voicerate', state.voiceRate);
+  });
+  els.toggleAzerty.addEventListener('click', function() {
+    state.layout = 'azerty'; updateLayoutToggles(); buildKeyboard(); lsSet('gt_layout', state.layout);
+  });
+  els.toggleAlpha.addEventListener('click', function() {
+    state.layout = 'alpha'; updateLayoutToggles(); buildKeyboard(); lsSet('gt_layout', state.layout);
+  });
+  els.toggleCompact.addEventListener('click', function() {
+    state.layout = 'compact'; updateLayoutToggles(); buildKeyboard(); lsSet('gt_layout', state.layout);
+  });
+}
+
+function updateLayoutToggles() {
+  els.toggleAzerty.classList.toggle('active',  state.layout === 'azerty');
+  els.toggleAzerty.setAttribute('aria-pressed', state.layout === 'azerty' ? 'true' : 'false');
+  els.toggleAlpha.classList.toggle('active',   state.layout === 'alpha');
+  els.toggleAlpha.setAttribute('aria-pressed',  state.layout === 'alpha'  ? 'true' : 'false');
+  els.toggleCompact.classList.toggle('active', state.layout === 'compact');
+  els.toggleCompact.setAttribute('aria-pressed',state.layout === 'compact'? 'true' : 'false');
 }
 
 /* =============================================
@@ -1190,19 +2056,19 @@ function setupSettings() {
    ============================================= */
 
 const HT = {
-  active:        false,
-  loading:       false,
+  active:         false,
+  loading:        false,
   faceLandmarker: null,
-  stream:        null,
-  animFrameId:   null,
-  calibX:        null,
-  calibY:        null,
-  smoothBuf:     [],
-  SMOOTH_N:      6,
-  sensitivity:   5,
-  ptrX:          0,
-  ptrY:          0,
-  modelSource:   '',
+  stream:         null,
+  animFrameId:    null,
+  calibX:         null,
+  calibY:         null,
+  smoothBuf:      [],
+  SMOOTH_N:       6,
+  sensitivity:    5,
+  ptrX:           0,
+  ptrY:           0,
+  modelSource:    '',
 };
 
 /* URLs -- OPTION 3: local first, CDN fallback */
@@ -1327,6 +2193,7 @@ function htDetectionLoop() {
 /* Load MediaPipe library + model (local vendor/ if present, else CDN) */
 async function htLoadMediaPipe() {
   htSetStatus('Verification des fichiers locaux...', 'dot-warn');
+  setChip(els.chipModel, 'Modele : chargement...', 'loading');
   const hasLocal = await localFileExists(LOCAL_TASK);
 
   let libUrl, wasmPath, modelPath;
@@ -1349,6 +2216,7 @@ async function htLoadMediaPipe() {
     FilesetResolver = mod.FilesetResolver;
     FaceLandmarker  = mod.FaceLandmarker;
   } catch (e) {
+    setChip(els.chipModel, 'Modele : erreur', 'chip-error');
     throw new Error('Impossible de charger MediaPipe : ' + e.message);
   }
 
@@ -1357,6 +2225,7 @@ async function htLoadMediaPipe() {
   try {
     vision = await FilesetResolver.forVisionTasks(wasmPath);
   } catch (e) {
+    setChip(els.chipModel, 'Modele : erreur WASM', 'chip-error');
     throw new Error('Erreur WASM MediaPipe : ' + e.message);
   }
 
@@ -1380,21 +2249,25 @@ async function htLoadMediaPipe() {
         outputFacialTransformationMatrixes: false,
       });
     } catch (e2) {
+      setChip(els.chipModel, 'Modele : erreur', 'chip-error');
       throw new Error('Impossible de charger le modele : ' + e2.message);
     }
   }
+  setChip(els.chipModel, 'Modele : OK (' + (hasLocal ? 'local' : 'CDN') + ')', 'active');
   htDom.modelSource.textContent = 'Modele charge depuis : ' + HT.modelSource;
 }
 
 /* Request webcam stream */
 async function htStartCamera() {
   htSetStatus('Demande acces camera...', 'dot-warn');
+  setChip(els.chipCamera, 'Camera : demande...', 'loading');
   try {
     HT.stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
       audio: false,
     });
   } catch (e) {
+    setChip(els.chipCamera, 'Camera : refusee', 'chip-error');
     const msg = e.name === 'NotAllowedError'
       ? 'Acces camera refuse -- autorisez la camera dans les reglages du navigateur.'
       : 'Camera indisponible : ' + e.message;
@@ -1406,6 +2279,7 @@ async function htStartCamera() {
     setTimeout(() => reject(new Error('Delai camera depasse')), 10000);
   });
   await htDom.video.play().catch(() => {});
+  setChip(els.chipCamera, 'Camera : active', 'active');
 }
 
 /* Stop webcam and release resources */
@@ -1419,6 +2293,7 @@ function htStopCamera() {
     );
     _lastHoveredEl = null;
   }
+  setChip(els.chipCamera, 'Camera : inactive', '');
 }
 
 /* Safely rebuild toggle button label + dwell ring */
@@ -1444,6 +2319,7 @@ async function htToggle() {
     htDom.btnCenter.disabled = true;
     htSetStatus('Suivi de tete arrete. Clavier utilisable normalement.', '');
     htDom.modelSource.textContent = '';
+    setChip(els.chipInput, 'Mode : souris/tactile', '');
     return;
   }
 
@@ -1472,6 +2348,7 @@ async function htToggle() {
     htDom.btnToggle.disabled = false;
     htSetStatus('Suivi actif -- bougez la tete pour deplacer le pointeur dore.', 'dot-ok');
     htDom.modelSource.textContent = 'Modele charge depuis : ' + HT.modelSource;
+    setChip(els.chipInput, 'Mode : suivi de tete', 'active');
     htDetectionLoop();
 
   } catch (err) {
@@ -1486,6 +2363,7 @@ async function htToggle() {
     htDom.btnCenter.disabled = true;
     htSetStatus('Erreur : ' + err.message + ' -- Clavier reste utilisable.', 'dot-err');
     htDom.modelSource.textContent = '';
+    setChip(els.chipInput, 'Mode : souris/tactile (repli)', '');
     console.error('[GazeType] Head tracking error:', err);
   }
 }
@@ -1497,17 +2375,58 @@ function htCalibrate() {
   HT.calibX = last.x;
   HT.calibY = last.y;
   htSetStatus('Centre ! Gardez cette position de tete comme point neutre.', 'dot-ok');
+  showToast('Calibration centree');
+}
+
+/* Advanced calibration */
+function setupAdvancedCalib() {
+  var calibDone = {};
+  var calibData = {};
+
+  document.getElementById('btn-calib-advanced').addEventListener('click', function() {
+    if (!HT.active) { showToast("Activez d'abord le suivi de tete"); return; }
+    els.calibSection.classList.toggle('visible');
+    calibDone = {};
+    calibData = {};
+    els.calibProgress.textContent = 'Regardez un point et cliquez dessus pour l\'enregistrer.';
+    document.querySelectorAll('.calib-point-btn').forEach(function(b) { b.classList.remove('done'); });
+  });
+
+  document.querySelectorAll('.calib-point-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      if (!HT.active || HT.smoothBuf.length === 0) return;
+      var pos = btn.dataset.pos;
+      var last = HT.smoothBuf[HT.smoothBuf.length - 1];
+      calibData[pos] = { x: last.x, y: last.y };
+      calibDone[pos] = true;
+      btn.classList.add('done');
+      var done = Object.keys(calibDone).length;
+      els.calibProgress.textContent = done + '/9 points enregistres.';
+      if (done >= 9) {
+        if (calibData['mc']) {
+          HT.calibX = calibData['mc'].x;
+          HT.calibY = calibData['mc'].y;
+        }
+        els.calibProgress.textContent = 'Calibration complete ! Centre mis a jour.';
+        showToast('Calibration avancee terminee');
+        setTimeout(function() { els.calibSection.classList.remove('visible'); }, 2000);
+      }
+    });
+    attachDwell(btn, function() { btn.click(); });
+  });
 }
 
 /* Wire up head tracking controls */
 function setupHeadTracking() {
   HT.ptrX = window.innerWidth  / 2;
   HT.ptrY = window.innerHeight / 2;
+  HT.SMOOTH_N = state.smoothN;
 
-  htDom.sensSlider.addEventListener('input', () => {
+  htDom.sensSlider.addEventListener('input', function() {
     HT.sensitivity = parseInt(htDom.sensSlider.value);
     htDom.sensVal.textContent = HT.sensitivity;
     htDom.sensSlider.setAttribute('aria-valuenow', HT.sensitivity);
+    lsSet('gt_sensitivity', HT.sensitivity);
   });
 
   htDom.btnToggle.addEventListener('click', htToggle);
@@ -1516,17 +2435,73 @@ function setupHeadTracking() {
   htDom.btnCenter.addEventListener('click', htCalibrate);
 }
 
+/* -------- PWA INSTALL -------- */
+var _deferredInstallPrompt = null;
+function setupPWA() {
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    _deferredInstallPrompt = e;
+    var btn = document.getElementById('btn-install');
+    btn.style.display = 'block';
+    btn.addEventListener('click', function() {
+      if (!_deferredInstallPrompt) return;
+      _deferredInstallPrompt.prompt();
+      _deferredInstallPrompt.userChoice.then(function(result) {
+        if (result.outcome === 'accepted') { btn.style.display = 'none'; }
+        _deferredInstallPrompt = null;
+      });
+    });
+  });
+  window.addEventListener('appinstalled', function() {
+    document.getElementById('btn-install').style.display = 'none';
+    setChip(els.chipSW, 'App installee', 'active');
+  });
+
+  /* Register Service Worker */
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').then(function() {
+      setChip(els.chipSW, 'App web (hors-ligne OK)', 'active');
+    }).catch(function() {
+      setChip(els.chipSW, 'App web', '');
+    });
+  }
+}
+
 /* -------- INIT -------- */
 function init() {
+  loadPersisted();
   initSynth();
+  applyHC(state.hcMode);
+  /* sync UI from loaded state */
+  els.dwellSlider.value = state.dwellMs;
+  els.dwellVal.textContent = (state.dwellMs / 1000).toFixed(1).replace('.', ',') + ' s';
+  els.sizeSlider.value = state.keySize;
+  els.sizeVal.textContent = state.keySize + ' px';
+  els.smoothSlider.value = state.smoothN;
+  els.smoothVal.textContent = state.smoothN;
+  els.rateSlider.value = state.voiceRate;
+  els.rateVal.textContent = state.voiceRate.toFixed(2).replace('.', ',');
+  els.predToggle.checked = state.predEnabled;
+  els.abbrevToggle.checked = state.abbrevEnabled;
+  els.hcToggle.checked = state.hcMode;
+  document.getElementById('ht-sens-slider').value = HT.sensitivity;
+  document.getElementById('ht-sens-val').textContent = HT.sensitivity;
+  document.documentElement.style.setProperty('--key-size', state.keySize + 'px');
+  updateLayoutToggles();
   buildKeyboard();
   setupActions();
   setupQuick();
+  renderQuickPhrases();
   setupSettings();
   setupHeadTracking();
+  setupAdvancedCalib();
+  setupProfiles();
+  setupHistory();
   renderOutput();
   updatePredictions();
-  document.getElementById('honest-banner').open = true;
+  renderHistory();
+  renderProfiles();
+  setupPWA();
 }
 
 document.addEventListener('DOMContentLoaded', init);

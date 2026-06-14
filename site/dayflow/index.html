@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DayFlow — Emploi du temps visuel | LibreA11y</title>
-<meta name="description" content="DayFlow : organisez votre journée étape par étape, avec minuteur et lecture vocale. Démo hors-ligne, aucune donnée envoyée.">
+<meta name="description" content="DayFlow : gérez vos routines quotidiennes avec minuteur, lecture vocale et récompenses. Application installable, 100 % hors-ligne.">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#0F4C81">
 <style>
 /* ===== VARIABLES ===== */
 :root {
@@ -22,6 +24,10 @@
   --border:    #D0D9E8;
   --success:   #1E7F4F;
   --success-bg:#E8F7EF;
+  --danger:    #B91C1C;
+  --danger-bg: #FEF2F2;
+  --warn:      #B45309;
+  --warn-bg:   #FFFBEB;
   --focus:     3px solid #1E63C7;
   --radius:    14px;
   --radius-sm: 8px;
@@ -31,9 +37,10 @@
   --tr:        0.18s ease;
 }
 
+/* ===== RESET ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 html { scroll-behavior: smooth; }
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after {
@@ -58,10 +65,16 @@ body {
   background: var(--marine); color: #fff;
   padding: 10px 20px; z-index: 9999;
   border-radius: 0 0 var(--radius-sm) 0;
-  font-weight: 700;
-  text-decoration: none;
+  font-weight: 700; text-decoration: none;
 }
 .skip-link:focus { left: 0; outline: none; }
+
+/* ===== SR-ONLY ===== */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
 
 /* ===== FOCUS ===== */
 :focus-visible {
@@ -80,10 +93,10 @@ body {
   justify-content: space-between;
   gap: 12px;
   box-shadow: 0 2px 10px rgba(10,58,99,0.3);
-  position: sticky; top: 0; z-index: 100;
+  position: sticky; top: 0; z-index: 200;
   flex-wrap: wrap;
 }
-#header-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+#header-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 #back-link {
   color: var(--or-lt);
   text-decoration: none;
@@ -96,278 +109,502 @@ body {
   transition: background var(--tr);
 }
 #back-link:hover, #back-link:focus-visible { background: rgba(255,255,255,0.15); }
-#app-title { font-size: 1.35rem; font-weight: 800; }
-#header-notice {
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.65);
-  line-height: 1.3;
-  text-align: right;
+#app-title { font-size: 1.25rem; font-weight: 800; }
+#header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn-header {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: var(--radius-sm);
+  font: inherit; font-size: 0.82rem; font-weight: 600;
+  padding: 8px 12px;
+  cursor: pointer;
+  min-height: 44px;
+  display: inline-flex; align-items: center; gap: 5px;
+  transition: background var(--tr);
+  white-space: nowrap;
 }
+.btn-header:hover { background: rgba(255,255,255,0.22); }
+.btn-header.active { background: var(--or); color: var(--marine-dk); border-color: var(--or); }
+#install-btn { display: none; }
 
 /* ===== MAIN ===== */
 #main-content {
-  max-width: 860px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 24px 16px 80px;
+  padding: 20px 14px 100px;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 20px;
 }
+
+/* ===== TOAST ===== */
+#toast-container {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  z-index: 9000;
+  display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none;
+  max-width: 420px; width: 90%;
+}
+.toast {
+  background: var(--encre);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-md);
+  animation: toastIn 0.25s ease forwards;
+  pointer-events: none;
+}
+.toast.success { background: var(--success); }
+.toast.warn { background: var(--warn); }
+.toast.reward { background: var(--or-dk); border: 2px solid var(--or); font-size: 1.05rem; }
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== DIALOG MODAL ===== */
+#modal-backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(15,76,129,0.55);
+  z-index: 500;
+  align-items: center; justify-content: center;
+  padding: 16px;
+}
+#modal-backdrop.open { display: flex; }
+#modal-box {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  max-width: 520px; width: 100%;
+  max-height: 90dvh;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex; flex-direction: column; gap: 16px;
+  position: relative;
+}
+#modal-title { font-size: 1.15rem; font-weight: 800; color: var(--marine); }
+#modal-body { display: flex; flex-direction: column; gap: 14px; }
+#modal-footer { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* ===== SECTION CARD ===== */
+.section-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px 20px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.section-card h2 {
+  font-size: 1rem; font-weight: 700; color: var(--marine);
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* ===== BARRE DE ROUTINES ===== */
+#routines-bar {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 16px;
+}
+#routines-bar h2 {
+  font-size: 0.88rem; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .06em;
+  margin-bottom: 10px;
+}
+#routines-scroll {
+  display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+}
+.routine-tab {
+  background: var(--fond);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-pill);
+  font: inherit; font-size: 0.9rem; font-weight: 600;
+  padding: 9px 16px;
+  cursor: pointer;
+  min-height: 48px;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: background var(--tr), border-color var(--tr), color var(--tr);
+  color: var(--encre-soft);
+}
+.routine-tab:hover { background: var(--marine); color: #fff; border-color: var(--marine); }
+.routine-tab.active {
+  background: var(--marine); color: #fff; border-color: var(--marine);
+  box-shadow: 0 2px 8px rgba(15,76,129,0.3);
+}
+.btn-new-routine {
+  background: var(--or);
+  color: var(--marine-dk);
+  border: none; border-radius: var(--radius-pill);
+  font: inherit; font-size: 0.9rem; font-weight: 700;
+  padding: 9px 16px; cursor: pointer;
+  min-height: 48px;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: background var(--tr);
+  white-space: nowrap;
+}
+.btn-new-routine:hover { background: var(--or-lt); }
+#routines-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.btn-routine-action {
+  background: transparent;
+  color: var(--encre-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font: inherit; font-size: 0.82rem; font-weight: 600;
+  padding: 7px 12px; cursor: pointer;
+  min-height: 40px;
+  display: inline-flex; align-items: center; gap: 5px;
+  transition: background var(--tr), color var(--tr);
+}
+.btn-routine-action:hover { background: var(--marine); color: #fff; border-color: var(--marine); }
+.btn-routine-action.danger:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
 
 /* ===== PANNEAU MAINTENANT / ENSUITE ===== */
 #panel-now {
   background: var(--marine);
   color: #fff;
   border-radius: var(--radius);
-  padding: 20px 24px;
+  padding: 16px 18px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 14px;
 }
-@media (max-width: 540px) { #panel-now { grid-template-columns: 1fr; } }
-
-.now-block { display: flex; flex-direction: column; gap: 6px; }
+@media (max-width: 560px) { #panel-now { grid-template-columns: 1fr; } }
+.now-block { display: flex; flex-direction: column; gap: 5px; }
 .now-label {
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  opacity: .75;
+  font-size: 0.75rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em; opacity: .75;
 }
-.now-emoji { font-size: 2.4rem; line-height: 1; }
-.now-text { font-size: 1.2rem; font-weight: 700; }
-.now-time { font-size: 0.9rem; opacity: .8; }
-
-#block-current { border-right: 1px solid rgba(255,255,255,0.2); padding-right: 16px; }
-@media (max-width: 540px) { #block-current { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.2); padding-right: 0; padding-bottom: 14px; } }
-
+.now-emoji-img {
+  width: 56px; height: 56px;
+  border-radius: var(--radius-sm);
+  object-fit: cover; flex-shrink: 0;
+}
+.now-emoji-txt { font-size: 2.2rem; line-height: 1; }
+.now-text { font-size: 1.15rem; font-weight: 700; }
+.now-time-txt { font-size: 0.88rem; opacity: .8; }
+#block-current { border-right: 1px solid rgba(255,255,255,0.2); padding-right: 14px; }
+@media (max-width: 560px) {
+  #block-current { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.2); padding-right: 0; padding-bottom: 12px; }
+}
 .now-speak-btn {
-  margin-top: 10px;
-  background: var(--or);
-  color: var(--marine-dk);
+  margin-top: 8px;
+  background: var(--or); color: var(--marine-dk);
   border: none; border-radius: var(--radius-pill);
   font: inherit; font-size: 0.9rem; font-weight: 700;
-  padding: 10px 18px;
-  cursor: pointer;
+  padding: 10px 16px; cursor: pointer;
   display: inline-flex; align-items: center; gap: 6px;
-  min-height: 48px;
-  align-self: flex-start;
+  min-height: 48px; align-self: flex-start;
   transition: background var(--tr);
 }
 .now-speak-btn:hover { background: var(--or-lt); }
-
 .none-msg { opacity: .7; font-style: italic; font-size: 1rem; }
 
-/* ===== MINUTEUR ===== */
-#timer-section {
-  background: var(--surface);
-  border-radius: var(--radius);
-  padding: 20px 24px;
-  box-shadow: var(--shadow);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+/* ===== BARRE DE PROGRESSION ===== */
+#progress-bar-section { display: flex; flex-direction: column; gap: 6px; }
+#progress-label { font-size: 0.88rem; font-weight: 600; color: var(--encre-soft); }
+#progress-track {
+  height: 16px;
+  background: var(--border);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
 }
-#timer-section h2 { font-size: 1rem; font-weight: 700; color: var(--marine); }
+#progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--marine), var(--marine-lt));
+  border-radius: var(--radius-pill);
+  transition: width 0.4s ease;
+  min-width: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  #progress-fill { transition: none; }
+}
+#progress-text {
+  font-size: 0.82rem; color: var(--muted); text-align: right;
+}
 
+/* ===== MINUTEUR ===== */
 #timer-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-#timer-controls label { font-size: 0.9rem; color: var(--encre-soft); }
+#timer-controls label { font-size: 0.9rem; color: var(--encre-soft); font-weight: 600; }
 #timer-minutes {
-  width: 72px; padding: 8px 10px;
+  width: 76px; padding: 8px 10px;
   border: 2px solid var(--border); border-radius: var(--radius-sm);
-  font: inherit; font-size: 1rem;
-  color: var(--encre);
-  background: var(--fond);
-  min-height: 48px;
-  text-align: center;
+  font: inherit; font-size: 1rem; color: var(--encre);
+  background: var(--fond); min-height: 48px; text-align: center;
 }
 #timer-minutes:focus { border-color: var(--marine-lt); }
 
-.btn-timer {
-  background: var(--marine);
-  color: #fff;
+.btn-primary {
+  background: var(--marine); color: #fff;
   border: none; border-radius: var(--radius-pill);
   font: inherit; font-size: 0.9rem; font-weight: 700;
-  padding: 10px 18px;
-  cursor: pointer;
-  min-height: 48px;
+  padding: 10px 18px; cursor: pointer; min-height: 48px;
   display: inline-flex; align-items: center; gap: 6px;
   transition: background var(--tr);
 }
-.btn-timer:hover { background: var(--marine-dk); }
-.btn-timer:disabled { opacity: .5; cursor: not-allowed; }
-.btn-timer-stop {
-  background: transparent;
-  color: var(--marine);
-  border: 2px solid var(--marine);
-  border-radius: var(--radius-pill);
+.btn-primary:hover { background: var(--marine-dk); }
+.btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+.btn-outline {
+  background: transparent; color: var(--marine);
+  border: 2px solid var(--marine); border-radius: var(--radius-pill);
   font: inherit; font-size: 0.9rem; font-weight: 700;
-  padding: 10px 18px;
-  cursor: pointer;
-  min-height: 48px;
+  padding: 10px 18px; cursor: pointer; min-height: 48px;
   display: inline-flex; align-items: center; gap: 6px;
-  transition: background var(--tr);
+  transition: background var(--tr), color var(--tr);
 }
-.btn-timer-stop:hover { background: var(--marine); color: #fff; }
+.btn-outline:hover { background: var(--marine); color: #fff; }
+.btn-outline:disabled { opacity: .45; cursor: not-allowed; }
 
-/* Cercle SVG */
-#timer-visual { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+#timer-visual { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
 #timer-svg-wrap { position: relative; width: 120px; height: 120px; flex-shrink: 0; }
 #timer-svg-wrap svg { transform: rotate(-90deg); }
 #circle-bg { fill: none; stroke: var(--border); stroke-width: 10; }
-#circle-prog { fill: none; stroke: var(--or); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
-@media (prefers-reduced-motion: reduce) {
-  #circle-prog { transition: none; }
+#circle-prog {
+  fill: none; stroke: var(--or); stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s linear;
 }
+@media (prefers-reduced-motion: reduce) { #circle-prog { transition: none; } }
 #timer-countdown-text {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  font-size: 1.35rem; font-weight: 800; color: var(--encre);
-  line-height: 1;
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.3rem; font-weight: 800; color: var(--encre); line-height: 1;
 }
 #timer-label { font-size: 0.9rem; color: var(--muted); }
 #timer-status { font-size: 1rem; font-weight: 700; color: var(--success); min-height: 1.5em; }
+#timer-numeric-only { font-size: 2rem; font-weight: 800; color: var(--encre); display: none; }
 
-/* Compte à rebours numérique seul (reduced-motion) */
-#timer-numeric-only {
-  font-size: 2rem; font-weight: 800; color: var(--encre);
-  display: none;
+/* ===== FORMULAIRE ÉTAPE ===== */
+.field-row { display: flex; flex-direction: column; gap: 4px; }
+.field-row label { font-size: 0.9rem; font-weight: 600; color: var(--encre-soft); }
+input[type="text"],
+input[type="time"],
+input[type="number"],
+select,
+textarea {
+  padding: 10px 14px;
+  border: 2px solid var(--border); border-radius: var(--radius-sm);
+  font: inherit; font-size: 1rem; color: var(--encre);
+  background: var(--fond); min-height: 52px;
+  transition: border-color var(--tr);
+  width: 100%;
 }
-
-/* ===== AJOUTER UNE ÉTAPE ===== */
-#add-section {
-  background: var(--surface);
-  border-radius: var(--radius);
-  padding: 20px 24px;
-  box-shadow: var(--shadow);
-}
-#add-section h2 { font-size: 1rem; font-weight: 700; color: var(--marine); margin-bottom: 14px; }
+input:focus, select:focus, textarea:focus { border-color: var(--marine-lt); outline: none; }
+textarea { min-height: 80px; resize: vertical; }
 
 /* Palette emoji */
 #emoji-palette {
-  display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;
+  display: flex; flex-wrap: wrap; gap: 6px;
 }
 .emoji-btn {
-  background: var(--fond);
-  border: 2px solid transparent;
+  background: var(--fond); border: 2px solid transparent;
   border-radius: var(--radius-sm);
-  font-size: 1.6rem;
-  cursor: pointer;
+  font-size: 1.5rem; cursor: pointer;
   width: 52px; height: 52px;
   display: flex; align-items: center; justify-content: center;
-  transition: border-color var(--tr), background var(--tr);
-  line-height: 1;
+  transition: border-color var(--tr), background var(--tr); line-height: 1;
 }
 .emoji-btn:hover { background: var(--or-lt); border-color: var(--or); }
 .emoji-btn.selected { border-color: var(--marine); background: var(--marine); color: #fff; }
-.emoji-btn:focus-visible { outline: var(--focus); }
 
-#add-form { display: flex; flex-direction: column; gap: 12px; }
-#add-form .field-row { display: flex; flex-direction: column; gap: 4px; }
-#add-form label { font-size: 0.9rem; font-weight: 600; color: var(--encre-soft); }
-#add-form input[type="text"],
-#add-form input[type="time"] {
-  padding: 10px 14px;
-  border: 2px solid var(--border);
+/* Photo upload */
+#photo-preview-wrap { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+#photo-preview {
+  width: 64px; height: 64px;
   border-radius: var(--radius-sm);
-  font: inherit; font-size: 1rem;
-  color: var(--encre);
-  background: var(--fond);
-  min-height: 52px;
-  transition: border-color var(--tr);
+  object-fit: cover;
+  border: 2px solid var(--border);
+  display: none;
 }
-#add-form input:focus { border-color: var(--marine-lt); }
-#add-form .form-actions { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
+.btn-upload-label {
+  background: var(--fond); border: 2px dashed var(--border);
+  border-radius: var(--radius-sm);
+  font: inherit; font-size: 0.88rem; font-weight: 600;
+  padding: 10px 16px; cursor: pointer; min-height: 48px;
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--encre-soft);
+  transition: border-color var(--tr), background var(--tr);
+}
+.btn-upload-label:hover { border-color: var(--marine); background: rgba(15,76,129,0.05); }
 
+/* Jours de récurrence */
+#days-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.day-toggle {
+  background: var(--fond); border: 2px solid var(--border);
+  border-radius: var(--radius-pill);
+  font: inherit; font-size: 0.82rem; font-weight: 700;
+  padding: 7px 12px; cursor: pointer; min-height: 44px;
+  display: inline-flex; align-items: center;
+  transition: background var(--tr), border-color var(--tr), color var(--tr);
+  color: var(--encre-soft);
+}
+.day-toggle.on { background: var(--marine); color: #fff; border-color: var(--marine); }
+.day-toggle:hover:not(.on) { border-color: var(--marine-lt); color: var(--marine); }
+
+.form-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
 .btn-add {
-  background: var(--or);
-  color: var(--marine-dk);
+  background: var(--or); color: var(--marine-dk);
   border: none; border-radius: var(--radius-pill);
   font: inherit; font-size: 1rem; font-weight: 700;
-  padding: 12px 24px;
-  cursor: pointer;
-  min-height: 56px;
+  padding: 12px 22px; cursor: pointer; min-height: 56px;
   display: inline-flex; align-items: center; gap: 8px;
   transition: background var(--tr);
 }
 .btn-add:hover { background: var(--or-lt); }
+.form-error {
+  color: var(--danger); font-size: 0.88rem; min-height: 1.4em; margin-top: 4px;
+}
 
 /* ===== LISTE DES ÉTAPES ===== */
-#steps-section h2 { font-size: 1rem; font-weight: 700; color: var(--marine); margin-bottom: 14px; }
-
 #steps-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
 
 .step-card {
   background: var(--surface);
   border-radius: var(--radius);
-  padding: 14px 16px;
+  padding: 12px 14px;
   box-shadow: var(--shadow);
-  display: flex; align-items: center; gap: 14px;
+  display: flex; align-items: center; gap: 12px;
   border: 2px solid transparent;
   transition: border-color var(--tr), opacity var(--tr);
 }
-.step-card.is-current {
-  border-color: var(--or);
-  box-shadow: 0 0 0 3px rgba(244,184,28,0.25);
-}
-.step-card.is-done {
-  opacity: .65;
-}
+.step-card.is-current { border-color: var(--or); box-shadow: 0 0 0 3px rgba(244,184,28,0.25); }
+.step-card.is-done { opacity: .6; }
 .step-card.is-done .step-label { text-decoration: line-through; color: var(--muted); }
-
-.step-emoji-big { font-size: 2rem; flex-shrink: 0; line-height: 1; }
+.step-visual { flex-shrink: 0; }
+.step-img {
+  width: 52px; height: 52px;
+  border-radius: var(--radius-sm); object-fit: cover;
+}
+.step-emoji-big { font-size: 1.9rem; line-height: 1; }
 .step-info { flex: 1; min-width: 0; }
 .step-label { font-size: 1rem; font-weight: 600; word-break: break-word; }
-.step-time { font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
-
-.step-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
-
+.step-meta { font-size: 0.82rem; color: var(--muted); margin-top: 2px; display: flex; gap: 10px; flex-wrap: wrap; }
+.step-actions {
+  display: flex; align-items: center; gap: 5px;
+  flex-shrink: 0; flex-wrap: wrap;
+}
 .step-cb-label {
-  display: flex; align-items: center; gap: 6px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  color: var(--muted);
-  font-weight: 600;
-  padding: 8px;
-  border-radius: var(--radius-sm);
+  display: flex; align-items: center; gap: 5px; cursor: pointer;
+  font-size: 0.85rem; color: var(--muted); font-weight: 600;
+  padding: 8px; border-radius: var(--radius-sm);
 }
 .step-cb-label:hover { background: var(--fond); }
-.step-cb {
-  width: 24px; height: 24px;
-  accent-color: var(--success);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
+.step-cb { width: 28px; height: 28px; accent-color: var(--success); cursor: pointer; flex-shrink: 0; }
 .btn-icon {
-  background: var(--fond);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  font-size: 1.1rem;
-  width: 48px; height: 48px;
+  background: var(--fond); border: 2px solid var(--border);
+  border-radius: var(--radius-sm); cursor: pointer;
+  font-size: 1rem; width: 48px; height: 48px;
   display: flex; align-items: center; justify-content: center;
   transition: background var(--tr), border-color var(--tr);
   color: var(--encre);
 }
 .btn-icon:hover { background: var(--marine); color: #fff; border-color: var(--marine); }
 .btn-icon:disabled { opacity: .3; cursor: not-allowed; }
-.btn-icon-del { border-color: transparent; }
-.btn-icon-del:hover { background: #fdecea; border-color: #c0392b; color: #c0392b; }
+.btn-icon-del:hover { background: var(--danger-bg); border-color: var(--danger); color: var(--danger); }
+.btn-icon-timer { background: var(--warn-bg); border-color: var(--warn); color: var(--warn); }
+.btn-icon-timer:hover { background: var(--warn); color: #fff; border-color: var(--warn); }
 
 /* ===== EMPTY STATE ===== */
-#empty-msg {
+.empty-msg {
   text-align: center; color: var(--muted);
-  padding: 32px; background: var(--surface);
-  border-radius: var(--radius); font-size: 1rem;
-  box-shadow: var(--shadow);
+  padding: 28px; background: var(--surface);
+  border-radius: var(--radius); font-size: 0.95rem;
+  box-shadow: var(--shadow); border: 2px dashed var(--border);
+}
+
+/* ===== MODE AIDANT ===== */
+body.aide-mode .btn-icon:not(.btn-icon-timer),
+body.aide-mode [data-action="del"],
+body.aide-mode [data-action="up"],
+body.aide-mode [data-action="down"],
+body.aide-mode #btn-edit-step,
+body.aide-mode #add-section,
+body.aide-mode #routines-actions {
+  pointer-events: none; opacity: .35;
+}
+body.aide-mode #aide-banner { display: flex; }
+#aide-banner {
+  display: none;
+  background: var(--warn-bg);
+  border: 2px solid var(--warn);
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  align-items: center; gap: 10px;
+  font-size: 0.9rem; font-weight: 600; color: var(--warn);
+}
+#aide-banner button {
+  margin-left: auto;
+  background: var(--warn); color: #fff;
+  border: none; border-radius: var(--radius-sm);
+  font: inherit; font-size: 0.85rem; font-weight: 700;
+  padding: 8px 14px; cursor: pointer; min-height: 44px;
+  white-space: nowrap;
+}
+
+/* ===== RÉCOMPENSES ===== */
+#reward-display {
+  background: linear-gradient(135deg, var(--marine), var(--marine-lt));
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; flex-wrap: wrap;
+}
+#reward-stars { font-size: 1.8rem; letter-spacing: 2px; }
+#reward-msg { font-size: 0.9rem; opacity: .85; }
+#reward-total { font-size: 0.85rem; opacity: .7; }
+
+/* ===== IMPORT / EXPORT ===== */
+#import-export { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ===== NOTIFICATIONS BANNER ===== */
+#notif-banner {
+  background: var(--success-bg); border: 2px solid var(--success);
+  border-radius: var(--radius); padding: 10px 16px;
+  display: none; align-items: center; gap: 10px;
+  font-size: 0.9rem; color: var(--success); font-weight: 600;
+}
+#notif-banner.show { display: flex; }
+#notif-banner button {
+  margin-left: auto; background: var(--success); color: #fff;
+  border: none; border-radius: var(--radius-sm);
+  font: inherit; font-size: 0.85rem; font-weight: 700;
+  padding: 8px 14px; cursor: pointer; min-height: 44px;
+}
+
+/* ===== PARAMÈTRES RÉCOMPENSES ===== */
+#reward-config { display: flex; flex-direction: column; gap: 10px; }
+.checkbox-row {
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer; font-size: 0.92rem; font-weight: 600;
+  padding: 8px 0;
+}
+.checkbox-row input { width: 24px; height: 24px; accent-color: var(--marine); cursor: pointer; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  #main-content { padding: 14px 10px 80px; gap: 14px; }
+  .section-card { padding: 14px 14px; }
 }
 
 /* ===== LIVE REGION ===== */
 #live-region {
   position: absolute; left: -9999px; top: auto;
-  width: 1px; height: 1px;
-  overflow: hidden;
+  width: 1px; height: 1px; overflow: hidden;
 }
+
+/* ===== ANIMATION REWARD ===== */
+@keyframes starPop {
+  0%   { transform: scale(0.3) rotate(-20deg); opacity: 0; }
+  60%  { transform: scale(1.3) rotate(8deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.star-anim { animation: starPop 0.5s ease forwards; display: inline-block; }
+@media (prefers-reduced-motion: reduce) { .star-anim { animation: none; } }
 </style>
 </head>
 <body>
@@ -375,59 +612,103 @@ body {
 <!-- LIEN D'ÉVITEMENT -->
 <a href="#main-content" class="skip-link">Aller au contenu principal</a>
 
-<!-- RÉGION LIVE POUR LECTEURS D'ÉCRAN -->
+<!-- LIVE REGION -->
 <div id="live-region" aria-live="polite" aria-atomic="true" role="status"></div>
+
+<!-- TOASTS -->
+<div id="toast-container" aria-live="polite" aria-atomic="false" role="log" aria-label="Notifications de l'application"></div>
 
 <!-- EN-TÊTE -->
 <header id="app-header" role="banner">
   <div id="header-left">
     <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y">← LibreA11y</a>
-    <span id="app-title">🗓️ DayFlow — démo</span>
+    <span id="app-title">🗓️ DayFlow</span>
   </div>
-  <div id="header-notice" aria-label="Informations sur la démo">
-    démo · 100&nbsp;% hors-ligne<br>aucune donnée envoyée
+  <div id="header-right">
+    <button class="btn-header" id="btn-notif" aria-label="Activer les notifications">🔔 Notifs</button>
+    <button class="btn-header" id="btn-aide-lock" aria-label="Activer le mode aidant (protège l'édition)" aria-pressed="false">🔒 Aidant</button>
+    <button class="btn-header" id="install-btn" aria-label="Installer DayFlow sur cet appareil">⬇ Installer</button>
   </div>
 </header>
 
 <!-- CONTENU PRINCIPAL -->
 <main id="main-content">
 
-  <!-- ── MAINTENANT / ENSUITE ── -->
-  <section aria-labelledby="h-panel" style="margin-bottom:0">
-    <h1 id="h-panel" class="sr-only">Ma journée</h1>
-    <div id="panel-now" role="region" aria-label="Étape actuelle et suivante">
+  <!-- BANNIÈRE MODE AIDANT -->
+  <div id="aide-banner" role="alert" aria-label="Mode aidant actif : édition verrouillée">
+    🔒 Mode aidant actif — l'édition est verrouillée
+    <button id="btn-aide-unlock" aria-label="Déverrouiller le mode aidant">Déverrouiller</button>
+  </div>
+
+  <!-- BANNIÈRE NOTIFICATIONS -->
+  <div id="notif-banner" role="status">
+    🔔 Activez les notifications pour être rappelé·e à chaque étape
+    <button id="btn-req-notif" aria-label="Demander la permission pour les notifications">Activer</button>
+  </div>
+
+  <!-- ── ROUTINES ── -->
+  <nav id="routines-bar" aria-label="Mes routines">
+    <h2>Mes routines</h2>
+    <div id="routines-scroll" role="tablist" aria-label="Sélectionner une routine">
+      <!-- rempli par JS -->
+    </div>
+    <div id="routines-actions">
+      <button class="btn-routine-action" id="btn-dup-routine" aria-label="Dupliquer la routine actuelle">⧉ Dupliquer</button>
+      <button class="btn-routine-action danger" id="btn-del-routine" aria-label="Supprimer la routine actuelle">🗑 Supprimer</button>
+      <button class="btn-routine-action" id="btn-export" aria-label="Exporter toutes les routines en JSON">⤓ Exporter JSON</button>
+      <label class="btn-routine-action" style="cursor:pointer" aria-label="Importer des routines depuis un fichier JSON">
+        ⤒ Importer JSON
+        <input type="file" id="input-import" accept=".json" style="display:none" aria-label="Fichier JSON à importer">
+      </label>
+    </div>
+  </nav>
+
+  <!-- ── MAINTENANT / ENSUITE + PROGRESSION ── -->
+  <section aria-labelledby="h-panel">
+    <h1 id="h-panel" class="sr-only">Ma journée en cours</h1>
+    <div id="panel-now" role="region" aria-label="Étape actuelle et suivante" aria-live="polite">
       <div class="now-block" id="block-current">
-        <span class="now-label">Maintenant</span>
-        <div id="now-emoji" class="now-emoji" aria-hidden="true">—</div>
-        <div id="now-text" class="now-text">
-          <span class="none-msg">Aucune étape en cours</span>
-        </div>
-        <div id="now-time" class="now-time"></div>
-        <button class="now-speak-btn" id="btn-speak-now" aria-label="Lire l'étape actuelle à voix haute">
-          🔊 Lire
-        </button>
+        <span class="now-label">✨ Maintenant</span>
+        <div id="now-visual" aria-hidden="true" style="margin:4px 0"></div>
+        <div id="now-text" class="now-text"><span class="none-msg">Aucune étape en cours</span></div>
+        <div id="now-time-txt" class="now-time-txt"></div>
+        <button class="now-speak-btn" id="btn-speak-now" aria-label="Lire l'étape actuelle à voix haute">🔊 Lire</button>
       </div>
-      <div class="now-block" id="block-next" style="padding-left:16px">
-        <span class="now-label">Ensuite</span>
-        <div id="next-emoji" class="now-emoji" aria-hidden="true">—</div>
-        <div id="next-text" class="now-text">
-          <span class="none-msg">Rien de prévu</span>
-        </div>
-        <div id="next-time" class="now-time"></div>
+      <div class="now-block" id="block-next" style="padding-left:14px">
+        <span class="now-label">→ Ensuite</span>
+        <div id="next-visual" aria-hidden="true" style="margin:4px 0"></div>
+        <div id="next-text" class="now-text"><span class="none-msg">Rien de prévu</span></div>
+        <div id="next-time-txt" class="now-time-txt"></div>
       </div>
+    </div>
+    <!-- Barre de progression -->
+    <div id="progress-bar-section" style="margin-top:10px">
+      <div id="progress-label" aria-hidden="true">Progression de la routine</div>
+      <div id="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Progression de la routine">
+        <div id="progress-fill" style="width:0%"></div>
+      </div>
+      <div id="progress-text" aria-hidden="true">0 / 0 étapes</div>
     </div>
   </section>
 
+  <!-- ── RÉCOMPENSES ── -->
+  <div id="reward-display" role="status" aria-label="Récompenses du jour" aria-live="polite">
+    <div>
+      <div id="reward-stars" aria-hidden="true"></div>
+      <div id="reward-msg">Complète des étapes pour gagner des étoiles !</div>
+    </div>
+    <div id="reward-total" aria-label="Total d'étoiles"></div>
+  </div>
+
   <!-- ── MINUTEUR ── -->
-  <section aria-labelledby="h-timer" id="timer-section">
+  <section class="section-card" aria-labelledby="h-timer" id="timer-section">
     <h2 id="h-timer">⏱ Minuteur pour cette étape</h2>
     <div id="timer-controls">
-      <label for="timer-minutes">Durée (minutes)</label>
-      <input type="number" id="timer-minutes" value="5" min="1" max="180" aria-label="Durée en minutes">
-      <button class="btn-timer" id="btn-timer-start" aria-label="Démarrer le minuteur">▶ Démarrer</button>
-      <button class="btn-timer-stop" id="btn-timer-stop" aria-label="Arrêter le minuteur" disabled>■ Arrêter</button>
+      <label for="timer-minutes">Durée (min)</label>
+      <input type="number" id="timer-minutes" value="5" min="1" max="180" aria-label="Durée du minuteur en minutes">
+      <button class="btn-primary" id="btn-timer-start" aria-label="Démarrer le minuteur">▶ Démarrer</button>
+      <button class="btn-outline" id="btn-timer-stop" aria-label="Arrêter le minuteur" disabled>■ Arrêter</button>
     </div>
-    <!-- Visuel normal -->
     <div id="timer-visual" aria-hidden="true">
       <div id="timer-svg-wrap">
         <svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -441,102 +722,254 @@ body {
         <div id="timer-status" aria-live="polite" aria-atomic="true"></div>
       </div>
     </div>
-    <!-- Compte à rebours numérique (reduced-motion) -->
-    <div id="timer-numeric-only" aria-live="polite" aria-atomic="true" role="timer"></div>
+    <div id="timer-numeric-only" aria-live="polite" aria-atomic="true" role="timer" aria-label="Compte à rebours"></div>
   </section>
 
-  <!-- ── AJOUTER UNE ÉTAPE ── -->
-  <section aria-labelledby="h-add" id="add-section">
+  <!-- ── AJOUTER / MODIFIER UNE ÉTAPE ── -->
+  <section class="section-card" aria-labelledby="h-add" id="add-section">
     <h2 id="h-add">➕ Ajouter une étape</h2>
 
-    <div id="emoji-palette" role="group" aria-label="Choisir un emoji pour l'étape">
-      <!-- rempli par JS -->
+    <!-- Palette emoji -->
+    <div>
+      <p style="font-size:0.88rem;font-weight:600;color:var(--encre-soft);margin-bottom:8px">Choisir un emoji</p>
+      <div id="emoji-palette" role="group" aria-label="Choisir un emoji pour l'étape"><!-- rempli JS --></div>
+    </div>
+
+    <!-- Ou photo -->
+    <div class="field-row">
+      <label>Ou choisir une photo personnelle</label>
+      <div id="photo-preview-wrap">
+        <img id="photo-preview" src="" alt="Aperçu de la photo choisie" aria-hidden="true">
+        <label class="btn-upload-label" for="input-photo" aria-label="Choisir une photo depuis vos fichiers">
+          📷 Choisir une photo
+          <input type="file" id="input-photo" accept="image/*" style="display:none" aria-label="Choisir une photo pour l'étape">
+        </label>
+        <button type="button" class="btn-outline" id="btn-clear-photo" style="font-size:0.85rem;padding:8px 12px;min-height:44px" aria-label="Effacer la photo sélectionnée" hidden>✕ Effacer</button>
+      </div>
     </div>
 
     <form id="add-form" novalidate>
-      <div class="field-row">
-        <label for="input-label">Libellé de l'étape <span aria-hidden="true">*</span></label>
-        <input type="text" id="input-label" placeholder="Ex. : Prendre mon sac" maxlength="80" required autocomplete="off">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="field-row">
+          <label for="input-label">Libellé de l'étape <span aria-hidden="true">*</span></label>
+          <input type="text" id="input-label" placeholder="Ex. : Prendre mon sac" maxlength="80" required autocomplete="off">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="field-row">
+            <label for="input-time">Heure (facultatif)</label>
+            <input type="time" id="input-time" aria-label="Heure de l'étape">
+          </div>
+          <div class="field-row">
+            <label for="input-duration">Durée (min)</label>
+            <input type="number" id="input-duration" placeholder="Ex. : 15" min="1" max="240" aria-label="Durée de l'étape en minutes">
+          </div>
+        </div>
+        <!-- Jours de récurrence -->
+        <div class="field-row">
+          <label>Jours (récurrence)</label>
+          <div id="days-row" role="group" aria-label="Jours de récurrence de l'étape">
+            <!-- rempli JS -->
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-add" id="btn-submit-step" aria-label="Ajouter cette étape à la routine">✅ Ajouter l'étape</button>
+          <button type="button" class="btn-outline" id="btn-cancel-edit" style="display:none" aria-label="Annuler la modification">Annuler</button>
+        </div>
+        <div id="form-error" class="form-error" role="alert" aria-live="assertive"></div>
       </div>
-      <div class="field-row">
-        <label for="input-time">Heure (facultatif)</label>
-        <input type="time" id="input-time" aria-label="Heure de l'étape, facultatif">
-      </div>
-      <div class="form-actions">
-        <button type="submit" class="btn-add" aria-label="Ajouter cette étape à ma journée">
-          ✅ Ajouter l'étape
-        </button>
-      </div>
-      <div id="form-error" role="alert" aria-live="assertive" style="color:#c0392b;font-size:0.9rem;min-height:1.4em;margin-top:4px;"></div>
     </form>
   </section>
 
   <!-- ── LISTE DES ÉTAPES ── -->
   <section aria-labelledby="h-steps" id="steps-section">
-    <h2 id="h-steps">📋 Mes étapes du jour</h2>
-    <div id="empty-msg" hidden>
-      Aucune étape pour l'instant. Ajoutez votre première étape ci-dessus !
+    <h2 id="h-steps" style="font-size:1rem;font-weight:700;color:var(--marine);margin-bottom:10px">📋 Étapes de la routine</h2>
+    <div id="empty-msg" class="empty-msg" hidden>
+      <div style="font-size:1.8rem;margin-bottom:8px" aria-hidden="true">📝</div>
+      Aucune étape pour l'instant.<br>Ajoutez votre première étape ci-dessus !
     </div>
-    <ol id="steps-list" aria-label="Liste des étapes de la journée">
-      <!-- rempli par JS -->
-    </ol>
+    <ol id="steps-list" aria-label="Liste des étapes de la routine"></ol>
+  </section>
+
+  <!-- ── PARAMÈTRES RÉCOMPENSES ── -->
+  <section class="section-card" aria-labelledby="h-rewards">
+    <h2 id="h-rewards">🌟 Récompenses</h2>
+    <div id="reward-config">
+      <label class="checkbox-row">
+        <input type="checkbox" id="pref-reward-enabled" checked aria-label="Activer le système de récompenses">
+        Activer les étoiles et encouragements
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="pref-reward-voice" checked aria-label="Lire les encouragements à voix haute">
+        Lire les encouragements à voix haute
+      </label>
+      <div class="field-row">
+        <label for="pref-reward-msg">Message d'encouragement personnalisé</label>
+        <input type="text" id="pref-reward-msg" placeholder="Ex. : Super travail ! Continue comme ça !" maxlength="120" aria-label="Message d'encouragement personnalisé">
+      </div>
+      <button class="btn-primary" id="btn-save-prefs" aria-label="Enregistrer les préférences">💾 Enregistrer les préférences</button>
+    </div>
   </section>
 
 </main>
 
-<!-- ▓▓▓ SCRIPT ▓▓▓ -->
+<!-- ── MODAL BOÎTE DE DIALOGUE ── -->
+<div id="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
+  <div id="modal-box">
+    <h2 id="modal-title">Dialogue</h2>
+    <div id="modal-body"></div>
+    <div id="modal-footer"></div>
+  </div>
+</div>
+
+<!-- ▓▓▓▓▓▓▓▓▓▓▓▓ SCRIPT PRINCIPAL ▓▓▓▓▓▓▓▓▓▓▓▓ -->
 <script>
 'use strict';
 
-/* ── ÉTAT ── */
-const DEFAULT_STEPS = [
-  { id: uid(), emoji: '⏰', label: 'Se lever', time: '07:00', done: false },
-  { id: uid(), emoji: '🍳', label: 'Petit-déjeuner', time: '07:15', done: false },
-  { id: uid(), emoji: '🪥', label: 'Brosser les dents', time: '07:40', done: false },
-  { id: uid(), emoji: '👕', label: 'S\'habiller', time: '07:50', done: false },
-  { id: uid(), emoji: '🎒', label: 'Partir à l\'école', time: '08:10', done: false },
+/* ════════════════════════════════════════════
+   CONSTANTES ET CONFIGURATION
+════════════════════════════════════════════ */
+const CACHE_KEY   = 'dayflow-v2';
+const DAYS_FR     = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const DAYS_FULL   = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+
+const EMOJIS = [
+  '⏰','😴','🍳','🥣','🧃','🪥','🛁','👕','👟','🎒',
+  '🚌','🏫','📚','✏️','🎨','🎮','🍎','🍽️','🛏️','💊',
+  '🧹','🛒','🏃','🧘','📖','💻','🎵','🌙','🌅','🏋️',
+  '🚿','🧼','🧦','🥤','🎯','🌳','🐶','😊','🤝','📅'
 ];
 
-let steps = load() || DEFAULT_STEPS.map(s => ({ ...s, id: uid() }));
+const REWARD_PHRASES = [
+  'Bravo ! Tu as fait une étape de plus ! ⭐',
+  'Super ! Continue comme ça ! 🌟',
+  'Bien joué ! Tu avances bien ! ✨',
+  'Félicitations ! Un pas de plus vers la réussite ! 🎉',
+  'Excellent travail ! Tu es sur la bonne voie ! 👏',
+  'Parfait ! Chaque étape compte ! ⭐',
+  'Magnifique ! Tu es fort·e ! 💪',
+];
+
+const ROUTINE_TEMPLATES = [
+  {
+    name: '🌅 Matin',
+    steps: [
+      { emoji:'⏰', label:'Se lever', time:'07:00', duration:5, days:[1,2,3,4,5] },
+      { emoji:'🛁', label:'Toilette / douche', time:'07:10', duration:15, days:[1,2,3,4,5] },
+      { emoji:'👕', label:'S\'habiller', time:'07:25', duration:10, days:[1,2,3,4,5] },
+      { emoji:'🍳', label:'Petit-déjeuner', time:'07:35', duration:20, days:[1,2,3,4,5] },
+      { emoji:'🪥', label:'Brosser les dents', time:'07:55', duration:5, days:[1,2,3,4,5] },
+      { emoji:'🎒', label:'Préparer son sac', time:'08:00', duration:10, days:[1,2,3,4,5] },
+    ]
+  },
+  {
+    name: '🏫 École',
+    steps: [
+      { emoji:'🚌', label:'Partir à l\'école', time:'08:10', duration:20, days:[1,2,3,4,5] },
+      { emoji:'📚', label:'Cours du matin', time:'08:30', duration:180, days:[1,2,3,4,5] },
+      { emoji:'🍎', label:'Pause déjeuner', time:'12:00', duration:60, days:[1,2,3,4,5] },
+      { emoji:'📚', label:'Cours de l\'après-midi', time:'13:00', duration:180, days:[1,2,3,4,5] },
+      { emoji:'🚌', label:'Rentrer à la maison', time:'16:30', duration:20, days:[1,2,3,4,5] },
+    ]
+  },
+  {
+    name: '🌙 Soir',
+    steps: [
+      { emoji:'🍽️', label:'Dîner en famille', time:'19:00', duration:30, days:[0,1,2,3,4,5,6] },
+      { emoji:'🧹', label:'Ranger la table', time:'19:30', duration:10, days:[0,1,2,3,4,5,6] },
+      { emoji:'📖', label:'Lecture / devoirs', time:'19:45', duration:30, days:[1,2,3,4] },
+      { emoji:'🛁', label:'Bain / douche du soir', time:'20:15', duration:20, days:[0,1,2,3,4,5,6] },
+      { emoji:'🪥', label:'Brosser les dents', time:'20:35', duration:5, days:[0,1,2,3,4,5,6] },
+      { emoji:'🛏️', label:'Au lit !', time:'21:00', duration:0, days:[0,1,2,3,4,5,6] },
+    ]
+  },
+  {
+    name: '🎉 Week-end',
+    steps: [
+      { emoji:'😴', label:'Grasse matinée', time:'09:00', duration:60, days:[0,6] },
+      { emoji:'🍳', label:'Brunch', time:'10:00', duration:30, days:[0,6] },
+      { emoji:'🌳', label:'Sortie / activité', time:'11:00', duration:120, days:[0,6] },
+      { emoji:'🎮', label:'Temps libre', time:'15:00', duration:90, days:[0,6] },
+    ]
+  }
+];
+
+/* ════════════════════════════════════════════
+   ÉTAT GLOBAL
+════════════════════════════════════════════ */
+let state = {
+  routines:       [],   // [{ id, name, steps:[] }]
+  activeRoutineId: null,
+  prefs: {
+    rewardEnabled: true,
+    rewardVoice: true,
+    rewardMsg: '',
+    aideMode: false,
+    notifGranted: false,
+  },
+  rewards: {
+    total: 0,
+    todayCount: 0,
+    todayDate: '',
+  }
+};
+
+// Étape en cours d'édition
+let editingStepId = null;
 let selectedEmoji = '⭐';
+let selectedPhoto  = null; // data-URL
+let selectedDays   = [];   // indices 0–6
+
+// Timer
 let timerInterval = null;
 let timerEnd = 0;
 let timerTotal = 0;
 let reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-/* Écouter les changements de préférence */
 window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', e => {
   reducedMotion = e.matches;
   applyTimerDisplay();
 });
 
-/* ── EMOJIS PALETTE ── */
-const EMOJIS = [
-  '⏰','😴','🍳','🥣','🧃','🪥','🛁','👕','👟','🎒',
-  '🚌','🏫','📚','✏️','🎨','🎮','🍎','🍽️','🛏️','💊',
-  '🧹','🛒','🏃','🧘','📖','💻','🎵','🌙'
-];
+// PWA Install
+let deferredPrompt = null;
 
-/* ── UTILITAIRES ── */
-function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-}
-
-function save() {
-  try { localStorage.setItem('dayflow-steps', JSON.stringify(steps)); } catch(e) {}
-}
-
-function load() {
+/* ════════════════════════════════════════════
+   PERSISTANCE localStorage
+════════════════════════════════════════════ */
+function saveState() {
   try {
-    const raw = localStorage.getItem('dayflow-steps');
-    return raw ? JSON.parse(raw) : null;
-  } catch(e) { return null; }
+    localStorage.setItem('dayflow-routines', JSON.stringify(state.routines));
+    localStorage.setItem('dayflow-activeId', state.activeRoutineId || '');
+    localStorage.setItem('dayflow-prefs', JSON.stringify(state.prefs));
+    localStorage.setItem('dayflow-rewards', JSON.stringify(state.rewards));
+  } catch(e) {}
 }
 
-function announce(msg) {
-  const el = document.getElementById('live-region');
-  el.textContent = '';
-  requestAnimationFrame(() => { el.textContent = msg; });
+function loadState() {
+  try {
+    const routinesRaw = localStorage.getItem('dayflow-routines');
+    const activeId    = localStorage.getItem('dayflow-activeId');
+    const prefsRaw    = localStorage.getItem('dayflow-prefs');
+    const rewardsRaw  = localStorage.getItem('dayflow-rewards');
+
+    if (routinesRaw) state.routines = JSON.parse(routinesRaw);
+    if (activeId) state.activeRoutineId = activeId;
+    if (prefsRaw)  state.prefs   = { ...state.prefs, ...JSON.parse(prefsRaw) };
+    if (rewardsRaw) state.rewards = { ...state.rewards, ...JSON.parse(rewardsRaw) };
+  } catch(e) {}
+}
+
+/* ════════════════════════════════════════════
+   UTILITAIRES
+════════════════════════════════════════════ */
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function fmt(time) {
@@ -548,14 +981,37 @@ function fmt(time) {
 function padTime(s) {
   const m = Math.floor(s / 60);
   const sec = s % 60;
-  return m + ':' + String(sec).padStart(2, '0');
+  return m + ':' + String(sec).padStart(2,'0');
 }
 
-/* ── TTS ── */
-let voices = [];
-function loadVoices() {
-  voices = speechSynthesis.getVoices();
+function announce(msg) {
+  const el = document.getElementById('live-region');
+  el.textContent = '';
+  requestAnimationFrame(() => { el.textContent = msg; });
 }
+
+/* ════════════════════════════════════════════
+   TOASTS
+════════════════════════════════════════════ */
+function toast(msg, type = '', duration = 3000) {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast' + (type ? ' ' + type : '');
+  t.textContent = msg;
+  t.setAttribute('role','status');
+  c.appendChild(t);
+  setTimeout(() => {
+    t.style.transition = 'opacity 0.3s';
+    t.style.opacity = '0';
+    setTimeout(() => t.remove(), 350);
+  }, duration);
+}
+
+/* ════════════════════════════════════════════
+   SYNTHÈSE VOCALE
+════════════════════════════════════════════ */
+let voices = [];
+function loadVoices() { voices = speechSynthesis.getVoices(); }
 if (typeof speechSynthesis !== 'undefined') {
   loadVoices();
   speechSynthesis.addEventListener('voiceschanged', loadVoices);
@@ -568,169 +1024,367 @@ function speak(text) {
   utt.lang = 'fr-FR';
   const frVoice = voices.find(v => v.lang.startsWith('fr'));
   if (frVoice) utt.voice = frVoice;
-  utt.rate = 0.92;
+  utt.rate = 0.9;
   speechSynthesis.speak(utt);
 }
 
-/* ── RENDU PANNEAU MAINTENANT / ENSUITE ── */
-function getCurrentNext() {
-  const notDone = steps.filter(s => !s.done);
-  return { current: notDone[0] || null, next: notDone[1] || null };
+/* ════════════════════════════════════════════
+   MODAL GÉNÉRIQUE
+════════════════════════════════════════════ */
+let modalResolve = null;
+
+function openModal({ title, bodyHTML, buttons }) {
+  return new Promise(resolve => {
+    modalResolve = resolve;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = bodyHTML || '';
+    const footer = document.getElementById('modal-footer');
+    footer.innerHTML = '';
+    (buttons || []).forEach(b => {
+      const btn = document.createElement('button');
+      btn.textContent = b.label;
+      btn.className = b.primary ? 'btn-add' : (b.danger ? 'btn-outline' : 'btn-outline');
+      if (b.danger) { btn.style.color='var(--danger)'; btn.style.borderColor='var(--danger)'; }
+      btn.style.minHeight = '48px';
+      btn.addEventListener('click', () => {
+        closeModal();
+        resolve(b.value);
+      });
+      footer.appendChild(btn);
+    });
+    const backdrop = document.getElementById('modal-backdrop');
+    backdrop.classList.add('open');
+    backdrop.removeAttribute('hidden');
+    document.getElementById('modal-box').focus();
+  });
 }
 
-function renderPanel() {
-  const { current, next } = getCurrentNext();
-
-  const nowEmoji = document.getElementById('now-emoji');
-  const nowText  = document.getElementById('now-text');
-  const nowTime  = document.getElementById('now-time');
-
-  if (current) {
-    nowEmoji.textContent = current.emoji;
-    nowText.innerHTML = '<strong>' + esc(current.label) + '</strong>';
-    nowTime.textContent = current.time ? fmt(current.time) : '';
-  } else {
-    nowEmoji.textContent = '🎉';
-    nowText.innerHTML = '<strong>Toutes les étapes sont faites !</strong>';
-    nowTime.textContent = '';
-  }
-
-  const nextEmoji = document.getElementById('next-emoji');
-  const nextText  = document.getElementById('next-text');
-  const nextTime  = document.getElementById('next-time');
-
-  if (next) {
-    nextEmoji.textContent = next.emoji;
-    nextText.innerHTML = '<strong>' + esc(next.label) + '</strong>';
-    nextTime.textContent = next.time ? fmt(next.time) : '';
-  } else {
-    nextEmoji.textContent = '—';
-    nextText.innerHTML = '<span class="none-msg">Rien de prévu</span>';
-    nextTime.textContent = '';
-  }
+function closeModal() {
+  const backdrop = document.getElementById('modal-backdrop');
+  backdrop.classList.remove('open');
+  if (modalResolve) { modalResolve(null); modalResolve = null; }
 }
 
-/* ── RENDU LISTE ── */
-function esc(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+document.getElementById('modal-backdrop').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+/* ════════════════════════════════════════════
+   ROUTINES — GESTION
+════════════════════════════════════════════ */
+function activeRoutine() {
+  return state.routines.find(r => r.id === state.activeRoutineId) || state.routines[0] || null;
 }
 
-function renderSteps() {
-  const list = document.getElementById('steps-list');
-  const emptyMsg = document.getElementById('empty-msg');
-  const { current } = getCurrentNext();
+function initDefaultRoutines() {
+  if (state.routines.length > 0) return;
+  ROUTINE_TEMPLATES.forEach(tpl => {
+    state.routines.push({
+      id: uid(),
+      name: tpl.name,
+      steps: tpl.steps.map(s => ({
+        id: uid(),
+        emoji: s.emoji,
+        photo: null,
+        label: s.label,
+        time: s.time || '',
+        duration: s.duration || 0,
+        days: s.days || [],
+        done: false,
+      }))
+    });
+  });
+  state.activeRoutineId = state.routines[0].id;
+}
 
-  if (steps.length === 0) {
-    list.innerHTML = '';
-    emptyMsg.hidden = false;
+function createRoutine(name) {
+  const r = { id: uid(), name, steps: [] };
+  state.routines.push(r);
+  state.activeRoutineId = r.id;
+  saveState();
+  render();
+  toast('Routine "' + name + '" créée !', 'success');
+  announce('Nouvelle routine créée : ' + name);
+}
+
+function duplicateRoutine() {
+  const src = activeRoutine();
+  if (!src) return;
+  const copy = {
+    id: uid(),
+    name: src.name + ' (copie)',
+    steps: src.steps.map(s => ({ ...s, id: uid(), done: false }))
+  };
+  state.routines.push(copy);
+  state.activeRoutineId = copy.id;
+  saveState();
+  render();
+  toast('Routine dupliquée : ' + copy.name, 'success');
+}
+
+async function deleteRoutine() {
+  const r = activeRoutine();
+  if (!r) return;
+  if (state.routines.length <= 1) {
+    toast('Impossible de supprimer la dernière routine.', 'warn');
     return;
   }
-  emptyMsg.hidden = true;
-
-  list.innerHTML = steps.map((step, i) => {
-    const isCurrent = current && current.id === step.id;
-    const isDone = step.done;
-    return `
-      <li class="step-card${isCurrent ? ' is-current' : ''}${isDone ? ' is-done' : ''}"
-          role="listitem"
-          aria-label="${esc(step.label)}${isDone ? ', fait' : ''}${isCurrent ? ', étape en cours' : ''}">
-        <span class="step-emoji-big" aria-hidden="true">${esc(step.emoji)}</span>
-        <div class="step-info">
-          <div class="step-label">${esc(step.label)}</div>
-          ${step.time ? `<div class="step-time">${fmt(step.time)}</div>` : ''}
-        </div>
-        <div class="step-actions">
-          <label class="step-cb-label" title="Marquer comme fait">
-            <input type="checkbox" class="step-cb" data-id="${step.id}" ${isDone ? 'checked' : ''}
-              aria-label="${isDone ? 'Annuler' : 'Marquer comme fait'} : ${esc(step.label)}">
-            <span aria-hidden="true">${isDone ? '✅' : '⬜'}</span>
-          </label>
-          <button class="btn-icon" data-action="up" data-id="${step.id}"
-            aria-label="Monter l'étape : ${esc(step.label)}"
-            ${i === 0 ? 'disabled aria-disabled="true"' : ''}>↑</button>
-          <button class="btn-icon" data-action="down" data-id="${step.id}"
-            aria-label="Descendre l'étape : ${esc(step.label)}"
-            ${i === steps.length - 1 ? 'disabled aria-disabled="true"' : ''}>↓</button>
-          <button class="btn-icon btn-icon-del" data-action="del" data-id="${step.id}"
-            aria-label="Supprimer l'étape : ${esc(step.label)}">🗑</button>
-        </div>
-      </li>`;
-  }).join('');
-
-  /* Délégation d'événements sur la liste */
-  list.querySelectorAll('[data-action]').forEach(btn => {
-    btn.addEventListener('click', onStepAction);
+  const answer = await openModal({
+    title: 'Supprimer « ' + r.name + ' » ?',
+    bodyHTML: '<p>Cette action est irréversible. Toutes les étapes seront perdues.</p>',
+    buttons: [
+      { label: 'Supprimer', value: 'yes', danger: true },
+      { label: 'Annuler', value: 'no' },
+    ]
   });
-  list.querySelectorAll('.step-cb').forEach(cb => {
-    cb.addEventListener('change', onStepCheck);
-  });
+  if (answer !== 'yes') return;
+  const idx = state.routines.findIndex(x => x.id === r.id);
+  state.routines.splice(idx, 1);
+  state.activeRoutineId = state.routines[Math.max(0, idx-1)]?.id || state.routines[0]?.id || null;
+  saveState();
+  render();
+  toast('Routine supprimée.', 'warn');
+  announce('Routine supprimée : ' + r.name);
 }
 
-function onStepAction(e) {
-  const btn = e.currentTarget;
-  const action = btn.dataset.action;
-  const id = btn.dataset.id;
-  const idx = steps.findIndex(s => s.id === id);
-  if (idx < 0) return;
+function renderRoutinesBar() {
+  const container = document.getElementById('routines-scroll');
+  const r = activeRoutine();
 
-  if (action === 'up' && idx > 0) {
-    [steps[idx - 1], steps[idx]] = [steps[idx], steps[idx - 1]];
-    announce('Étape remontée : ' + steps[idx - 1].label);
-  } else if (action === 'down' && idx < steps.length - 1) {
-    [steps[idx + 1], steps[idx]] = [steps[idx], steps[idx + 1]];
-    announce('Étape descendue : ' + steps[idx + 1].label);
-  } else if (action === 'del') {
-    const label = steps[idx].label;
-    if (confirm('Supprimer l\'étape « ' + label + ' » ?')) {
-      steps.splice(idx, 1);
-      announce('Étape supprimée : ' + label);
-    }
+  container.innerHTML = '';
+  state.routines.forEach(routine => {
+    const btn = document.createElement('button');
+    btn.className = 'routine-tab' + (routine.id === (r && r.id) ? ' active' : '');
+    btn.textContent = routine.name;
+    btn.setAttribute('role', 'tab');
+    btn.setAttribute('aria-selected', routine.id === (r && r.id) ? 'true' : 'false');
+    btn.setAttribute('aria-label', 'Sélectionner la routine : ' + routine.name);
+    btn.addEventListener('click', () => {
+      state.activeRoutineId = routine.id;
+      saveState();
+      render();
+    });
+    container.appendChild(btn);
+  });
+
+  // Bouton nouvelle routine
+  const newBtn = document.createElement('button');
+  newBtn.className = 'btn-new-routine';
+  newBtn.setAttribute('aria-label', 'Créer une nouvelle routine');
+  newBtn.innerHTML = '＋ Nouvelle routine';
+  newBtn.addEventListener('click', () => promptNewRoutine());
+  container.appendChild(newBtn);
+}
+
+async function promptNewRoutine() {
+  const names = ROUTINE_TEMPLATES.map(t => t.name);
+  const customLabel = '✏️ Nom personnalisé…';
+  names.push(customLabel);
+
+  let bodyHTML = '<div style="display:flex;flex-direction:column;gap:8px">';
+  names.forEach((n, i) => {
+    bodyHTML += `<button class="btn-outline" data-idx="${i}" style="min-height:52px;font-size:1rem;text-align:left;padding:12px 16px">${n}</button>`;
+  });
+  bodyHTML += '</div>';
+
+  const answer = await openModal({
+    title: 'Créer une nouvelle routine',
+    bodyHTML,
+    buttons: [{ label: 'Annuler', value: null }]
+  });
+  // Si answer est l'index via les boutons inline :
+  // (L'interaction se passe dans le modal body)
+}
+
+// Remplacement : on utilise un flow simplifié avec prompt natif
+document.getElementById('routines-scroll').addEventListener('click', async e => {
+  if (e.target.classList.contains('btn-new-routine')) return;
+  // handled above
+});
+
+async function promptNewRoutineFlow() {
+  // Choisir un modèle ou nom libre
+  const buttons = ROUTINE_TEMPLATES.map((t,i) => ({
+    label: t.name, value: 'template:' + i
+  }));
+  buttons.push({ label: '✏️ Nom libre', value: 'custom' });
+  buttons.push({ label: 'Annuler', value: null });
+
+  const choice = await openModal({
+    title: 'Nouvelle routine',
+    bodyHTML: '<p style="color:var(--muted);font-size:0.95rem">Choisissez un modèle ou créez une routine vide :</p>',
+    buttons
+  });
+
+  if (!choice) return;
+
+  if (choice.startsWith('template:')) {
+    const tpl = ROUTINE_TEMPLATES[parseInt(choice.split(':')[1])];
+    const r = {
+      id: uid(),
+      name: tpl.name,
+      steps: tpl.steps.map(s => ({
+        id: uid(), emoji: s.emoji, photo: null,
+        label: s.label, time: s.time||'', duration: s.duration||0,
+        days: s.days||[], done: false
+      }))
+    };
+    state.routines.push(r);
+    state.activeRoutineId = r.id;
+    saveState(); render();
+    toast('Routine « ' + tpl.name + ' » ajoutée !', 'success');
+  } else {
+    const name = window.prompt('Nom de la nouvelle routine :', 'Ma routine');
+    if (name && name.trim()) createRoutine(name.trim());
   }
-  save(); render();
 }
 
-function onStepCheck(e) {
-  const id = e.currentTarget.dataset.id;
-  const step = steps.find(s => s.id === id);
-  if (!step) return;
-  step.done = e.currentTarget.checked;
-  announce(step.done ? 'Fait : ' + step.label : 'Non fait : ' + step.label);
-  save(); render();
-}
+// Override du bouton "Nouvelle routine"
+document.getElementById('routines-scroll').addEventListener('click', e => {
+  if (e.target.classList.contains('btn-new-routine')) {
+    e.preventDefault();
+    promptNewRoutineFlow();
+  }
+});
 
-/* ── RENDU GLOBAL ── */
-function render() {
-  renderPanel();
-  renderSteps();
-}
+document.getElementById('btn-dup-routine').addEventListener('click', duplicateRoutine);
+document.getElementById('btn-del-routine').addEventListener('click', deleteRoutine);
 
-/* ── PALETTE EMOJI ── */
+/* ════════════════════════════════════════════
+   ÉTAPES — FORMULAIRE
+════════════════════════════════════════════ */
 function renderPalette() {
   const palette = document.getElementById('emoji-palette');
   palette.innerHTML = EMOJIS.map(em => `
-    <button type="button" class="emoji-btn${em === selectedEmoji ? ' selected' : ''}"
+    <button type="button" class="emoji-btn${em === selectedEmoji && !selectedPhoto ? ' selected' : ''}"
       data-emoji="${em}"
       aria-label="${em}"
-      aria-pressed="${em === selectedEmoji}"
-      title="${em}">
-      ${em}
-    </button>`).join('');
-
+      aria-pressed="${em === selectedEmoji && !selectedPhoto}">${em}</button>`
+  ).join('');
   palette.querySelectorAll('.emoji-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       selectedEmoji = btn.dataset.emoji;
+      selectedPhoto = null;
+      document.getElementById('photo-preview').style.display = 'none';
+      document.getElementById('btn-clear-photo').hidden = true;
       renderPalette();
     });
   });
 }
 
-/* ── FORMULAIRE ── */
+function renderDaysRow() {
+  const row = document.getElementById('days-row');
+  row.innerHTML = DAYS_FR.map((d, i) => `
+    <button type="button" class="day-toggle${selectedDays.includes(i) ? ' on' : ''}"
+      data-day="${i}"
+      aria-pressed="${selectedDays.includes(i)}"
+      aria-label="${DAYS_FULL[i]}">${d}</button>`
+  ).join('');
+  row.querySelectorAll('.day-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.day);
+      if (selectedDays.includes(idx)) {
+        selectedDays = selectedDays.filter(d => d !== idx);
+      } else {
+        selectedDays = [...selectedDays, idx].sort();
+      }
+      renderDaysRow();
+    });
+  });
+}
+
+// Upload photo
+document.getElementById('input-photo').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    selectedPhoto = ev.target.result;
+    const preview = document.getElementById('photo-preview');
+    preview.src = selectedPhoto;
+    preview.style.display = 'block';
+    document.getElementById('btn-clear-photo').hidden = false;
+    renderPalette(); // désélectionner emoji visuellement
+    announce('Photo chargée');
+  };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById('btn-clear-photo').addEventListener('click', () => {
+  selectedPhoto = null;
+  document.getElementById('photo-preview').src = '';
+  document.getElementById('photo-preview').style.display = 'none';
+  document.getElementById('btn-clear-photo').hidden = true;
+  document.getElementById('input-photo').value = '';
+  renderPalette();
+  announce('Photo effacée');
+});
+
+function resetForm() {
+  editingStepId = null;
+  selectedEmoji = '⭐';
+  selectedPhoto = null;
+  selectedDays  = [];
+  document.getElementById('input-label').value = '';
+  document.getElementById('input-time').value  = '';
+  document.getElementById('input-duration').value = '';
+  document.getElementById('photo-preview').src = '';
+  document.getElementById('photo-preview').style.display = 'none';
+  document.getElementById('btn-clear-photo').hidden = true;
+  document.getElementById('input-photo').value = '';
+  document.getElementById('form-error').textContent = '';
+  document.getElementById('btn-submit-step').textContent = '✅ Ajouter l\'étape';
+  document.getElementById('btn-submit-step').setAttribute('aria-label','Ajouter cette étape à la routine');
+  document.getElementById('btn-cancel-edit').style.display = 'none';
+  document.getElementById('h-add').textContent = '➕ Ajouter une étape';
+  renderPalette();
+  renderDaysRow();
+}
+
+function populateFormForEdit(step) {
+  editingStepId = step.id;
+  selectedEmoji = step.emoji || '⭐';
+  selectedPhoto  = step.photo || null;
+  selectedDays   = step.days ? [...step.days] : [];
+
+  document.getElementById('input-label').value    = step.label || '';
+  document.getElementById('input-time').value     = step.time || '';
+  document.getElementById('input-duration').value = step.duration || '';
+
+  if (selectedPhoto) {
+    const preview = document.getElementById('photo-preview');
+    preview.src = selectedPhoto;
+    preview.style.display = 'block';
+    document.getElementById('btn-clear-photo').hidden = false;
+  }
+
+  document.getElementById('btn-submit-step').textContent = '💾 Enregistrer les modifications';
+  document.getElementById('btn-submit-step').setAttribute('aria-label','Enregistrer les modifications de l\'étape');
+  document.getElementById('btn-cancel-edit').style.display = '';
+  document.getElementById('h-add').textContent = '✏️ Modifier l\'étape';
+
+  renderPalette();
+  renderDaysRow();
+  document.getElementById('add-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('input-label').focus();
+}
+
+document.getElementById('btn-cancel-edit').addEventListener('click', () => {
+  resetForm();
+  announce('Modification annulée');
+});
+
+// Soumission du formulaire
 document.getElementById('add-form').addEventListener('submit', e => {
   e.preventDefault();
-  const labelInput = document.getElementById('input-label');
-  const timeInput  = document.getElementById('input-time');
-  const errEl      = document.getElementById('form-error');
-  const label = labelInput.value.trim();
+  const labelInput    = document.getElementById('input-label');
+  const timeInput     = document.getElementById('input-time');
+  const durationInput = document.getElementById('input-duration');
+  const errEl         = document.getElementById('form-error');
+  const label         = labelInput.value.trim();
 
   if (!label) {
     errEl.textContent = 'Le libellé est obligatoire.';
@@ -739,26 +1393,338 @@ document.getElementById('add-form').addEventListener('submit', e => {
   }
   errEl.textContent = '';
 
-  const step = { id: uid(), emoji: selectedEmoji, label, time: timeInput.value || '', done: false };
-  steps.push(step);
-  save();
-  announce('Étape ajoutée : ' + label);
-  labelInput.value = '';
-  timeInput.value  = '';
+  const r = activeRoutine();
+  if (!r) return;
+
+  const stepData = {
+    emoji:    selectedPhoto ? '' : selectedEmoji,
+    photo:    selectedPhoto || null,
+    label,
+    time:     timeInput.value || '',
+    duration: parseInt(durationInput.value) || 0,
+    days:     [...selectedDays],
+    done:     false,
+  };
+
+  if (editingStepId) {
+    // Mode modification
+    const idx = r.steps.findIndex(s => s.id === editingStepId);
+    if (idx >= 0) {
+      r.steps[idx] = { ...r.steps[idx], ...stepData };
+      announce('Étape modifiée : ' + label);
+      toast('Étape modifiée : ' + label, 'success');
+    }
+  } else {
+    // Ajout
+    const step = { id: uid(), ...stepData };
+    r.steps.push(step);
+    announce('Étape ajoutée : ' + label);
+    toast('Étape ajoutée !', 'success');
+    // Auto-timer si durée renseignée
+    if (stepData.duration > 0) {
+      document.getElementById('timer-minutes').value = stepData.duration;
+    }
+  }
+
+  // Planifier notifications si permises
+  if (Notification.permission === 'granted' && stepData.time) {
+    scheduleStepNotif({ ...stepData, id: editingStepId || uid() }, r.name);
+  }
+
+  saveState();
+  resetForm();
   render();
-  /* Scroll vers la liste */
-  document.getElementById('steps-list').lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  // Scroll vers l'étape ajoutée
+  requestAnimationFrame(() => {
+    document.getElementById('steps-list').lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
 });
 
-/* ── BOUTON LIRE ── */
-document.getElementById('btn-speak-now').addEventListener('click', () => {
+/* ════════════════════════════════════════════
+   ÉTAPES — RENDU LISTE
+════════════════════════════════════════════ */
+function getVisualHTML(step, size = '52px') {
+  if (step.photo) {
+    return `<img class="step-img" src="${esc(step.photo)}" alt="Photo de l'étape ${esc(step.label)}" width="52" height="52" style="width:${size};height:${size}">`;
+  }
+  return `<span class="step-emoji-big" aria-hidden="true" style="font-size:1.9rem">${esc(step.emoji || '⭐')}</span>`;
+}
+
+function getCurrentNext() {
+  const r = activeRoutine();
+  if (!r) return { current: null, next: null };
+  const notDone = r.steps.filter(s => !s.done);
+  return { current: notDone[0] || null, next: notDone[1] || null };
+}
+
+function renderSteps() {
+  const list     = document.getElementById('steps-list');
+  const emptyMsg = document.getElementById('empty-msg');
+  const r = activeRoutine();
+
+  if (!r || r.steps.length === 0) {
+    list.innerHTML = '';
+    emptyMsg.hidden = false;
+    return;
+  }
+  emptyMsg.hidden = true;
+
   const { current } = getCurrentNext();
-  if (!current) { speak('Toutes les étapes sont faites !'); return; }
-  const msg = 'Maintenant : ' + current.label + (current.time ? ', à ' + fmt(current.time) : '');
-  speak(msg);
-});
 
-/* ── MINUTEUR ── */
+  list.innerHTML = r.steps.map((step, i) => {
+    const isCurrent = current && current.id === step.id;
+    const isDone    = step.done;
+    const daysStr   = step.days && step.days.length > 0
+      ? step.days.map(d => DAYS_FR[d]).join(', ')
+      : '';
+
+    const visualEl = getVisualHTML(step);
+
+    return `
+      <li class="step-card${isCurrent ? ' is-current' : ''}${isDone ? ' is-done' : ''}"
+          role="listitem"
+          aria-label="${esc(step.label)}${isDone ? ', fait' : ''}${isCurrent ? ', étape en cours' : ''}">
+        <div class="step-visual">${visualEl}</div>
+        <div class="step-info">
+          <div class="step-label">${esc(step.label)}</div>
+          <div class="step-meta">
+            ${step.time ? `<span>🕐 ${fmt(step.time)}</span>` : ''}
+            ${step.duration ? `<span>⏱ ${step.duration} min</span>` : ''}
+            ${daysStr ? `<span>📅 ${esc(daysStr)}</span>` : ''}
+          </div>
+        </div>
+        <div class="step-actions">
+          <label class="step-cb-label" title="${isDone ? 'Annuler' : 'Marquer comme fait'}">
+            <input type="checkbox" class="step-cb" data-id="${step.id}"
+              ${isDone ? 'checked' : ''}
+              aria-label="${isDone ? 'Annuler' : 'Marquer comme fait'} : ${esc(step.label)}">
+            <span aria-hidden="true" style="font-size:1.4rem">${isDone ? '✅' : '⬜'}</span>
+          </label>
+          <button class="btn-icon btn-icon-timer" data-action="timer" data-id="${step.id}"
+            data-dur="${step.duration || 5}"
+            aria-label="Démarrer le minuteur pour : ${esc(step.label)}"
+            title="Minuteur">⏱</button>
+          <button class="btn-icon" data-action="edit" data-id="${step.id}"
+            aria-label="Modifier l'étape : ${esc(step.label)}" title="Modifier">✏️</button>
+          <button class="btn-icon" data-action="up" data-id="${step.id}"
+            aria-label="Monter l'étape : ${esc(step.label)}"
+            ${i === 0 ? 'disabled aria-disabled="true"' : ''}>↑</button>
+          <button class="btn-icon" data-action="down" data-id="${step.id}"
+            aria-label="Descendre l'étape : ${esc(step.label)}"
+            ${i === r.steps.length - 1 ? 'disabled aria-disabled="true"' : ''}>↓</button>
+          <button class="btn-icon btn-icon-del" data-action="del" data-id="${step.id}"
+            aria-label="Supprimer l'étape : ${esc(step.label)}" title="Supprimer">🗑</button>
+        </div>
+      </li>`;
+  }).join('');
+
+  list.querySelectorAll('[data-action]').forEach(btn => {
+    btn.addEventListener('click', onStepAction);
+  });
+  list.querySelectorAll('.step-cb').forEach(cb => {
+    cb.addEventListener('change', onStepCheck);
+  });
+}
+
+async function onStepAction(e) {
+  const btn    = e.currentTarget;
+  const action = btn.dataset.action;
+  const id     = btn.dataset.id;
+  const r      = activeRoutine();
+  if (!r) return;
+  const idx = r.steps.findIndex(s => s.id === id);
+  if (idx < 0) return;
+
+  if (action === 'up' && idx > 0) {
+    [r.steps[idx-1], r.steps[idx]] = [r.steps[idx], r.steps[idx-1]];
+    announce('Étape remontée : ' + r.steps[idx-1].label);
+    saveState(); render();
+  } else if (action === 'down' && idx < r.steps.length - 1) {
+    [r.steps[idx+1], r.steps[idx]] = [r.steps[idx], r.steps[idx+1]];
+    announce('Étape descendue : ' + r.steps[idx+1].label);
+    saveState(); render();
+  } else if (action === 'del') {
+    const label = r.steps[idx].label;
+    const answer = await openModal({
+      title: 'Supprimer cette étape ?',
+      bodyHTML: `<p>Supprimer « <strong>${esc(label)}</strong> » ? Cette action est irréversible.</p>`,
+      buttons: [
+        { label: 'Supprimer', value: 'yes', danger: true },
+        { label: 'Annuler', value: 'no' },
+      ]
+    });
+    if (answer !== 'yes') return;
+    r.steps.splice(idx, 1);
+    announce('Étape supprimée : ' + label);
+    toast('Étape supprimée.', 'warn');
+    saveState(); render();
+  } else if (action === 'edit') {
+    populateFormForEdit(r.steps[idx]);
+  } else if (action === 'timer') {
+    const dur = parseInt(btn.dataset.dur) || 5;
+    document.getElementById('timer-minutes').value = dur;
+    startTimer();
+    document.getElementById('timer-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    announce('Minuteur démarré : ' + dur + ' minutes pour ' + r.steps[idx].label);
+    speak('Minuteur démarré pour ' + r.steps[idx].label + '. ' + dur + ' minutes.');
+  }
+}
+
+function onStepCheck(e) {
+  const id = e.currentTarget.dataset.id;
+  const r  = activeRoutine();
+  if (!r) return;
+  const step = r.steps.find(s => s.id === id);
+  if (!step) return;
+  const wasDone = step.done;
+  step.done = e.currentTarget.checked;
+  announce(step.done ? 'Fait : ' + step.label : 'Non fait : ' + step.label);
+
+  if (step.done && !wasDone) {
+    handleReward(step, r);
+  }
+
+  // Transition vocale vers étape suivante
+  if (step.done) {
+    const { current } = getCurrentNext();
+    if (current) {
+      setTimeout(() => {
+        speak('Bien ! Maintenant : ' + current.label + (current.time ? ', à ' + fmt(current.time) : ''));
+      }, 600);
+    }
+  }
+
+  saveState(); render();
+}
+
+/* ════════════════════════════════════════════
+   PANNEAU MAINTENANT / ENSUITE
+════════════════════════════════════════════ */
+function renderPanel() {
+  const { current, next } = getCurrentNext();
+  const r = activeRoutine();
+
+  // MAINTENANT
+  const nowVisual = document.getElementById('now-visual');
+  const nowText   = document.getElementById('now-text');
+  const nowTime   = document.getElementById('now-time-txt');
+
+  if (current) {
+    if (current.photo) {
+      nowVisual.innerHTML = `<img class="now-emoji-img" src="${esc(current.photo)}" alt="" aria-hidden="true">`;
+    } else {
+      nowVisual.innerHTML = `<span class="now-emoji-txt" aria-hidden="true">${esc(current.emoji || '⭐')}</span>`;
+    }
+    nowText.innerHTML = '<strong>' + esc(current.label) + '</strong>';
+    nowTime.textContent = current.time ? fmt(current.time) + (current.duration ? ' · ' + current.duration + ' min' : '') : '';
+  } else if (r && r.steps.length > 0) {
+    nowVisual.innerHTML = '<span class="now-emoji-txt" aria-hidden="true">🎉</span>';
+    nowText.innerHTML = '<strong>Toutes les étapes sont faites !</strong>';
+    nowTime.textContent = '';
+  } else {
+    nowVisual.innerHTML = '<span class="now-emoji-txt" aria-hidden="true">📝</span>';
+    nowText.innerHTML = '<span class="none-msg">Aucune étape en cours</span>';
+    nowTime.textContent = '';
+  }
+
+  // ENSUITE
+  const nextVisual = document.getElementById('next-visual');
+  const nextText   = document.getElementById('next-text');
+  const nextTime   = document.getElementById('next-time-txt');
+
+  if (next) {
+    if (next.photo) {
+      nextVisual.innerHTML = `<img class="now-emoji-img" src="${esc(next.photo)}" alt="" aria-hidden="true">`;
+    } else {
+      nextVisual.innerHTML = `<span class="now-emoji-txt" aria-hidden="true">${esc(next.emoji || '⭐')}</span>`;
+    }
+    nextText.innerHTML = '<strong>' + esc(next.label) + '</strong>';
+    nextTime.textContent = next.time ? fmt(next.time) + (next.duration ? ' · ' + next.duration + ' min' : '') : '';
+  } else {
+    nextVisual.innerHTML = '<span class="now-emoji-txt" aria-hidden="true">—</span>';
+    nextText.innerHTML = '<span class="none-msg">Rien de prévu</span>';
+    nextTime.textContent = '';
+  }
+}
+
+/* ════════════════════════════════════════════
+   BARRE DE PROGRESSION
+════════════════════════════════════════════ */
+function renderProgress() {
+  const r = activeRoutine();
+  const steps = r ? r.steps : [];
+  const total = steps.length;
+  const done  = steps.filter(s => s.done).length;
+  const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = done + ' / ' + total + ' étapes';
+  const track = document.getElementById('progress-track');
+  track.setAttribute('aria-valuenow', pct);
+  track.setAttribute('aria-valuetext', done + ' étapes sur ' + total + ' (' + pct + '%)');
+}
+
+/* ════════════════════════════════════════════
+   RÉCOMPENSES
+════════════════════════════════════════════ */
+function handleReward(step, routine) {
+  if (!state.prefs.rewardEnabled) return;
+
+  // Reset journalier
+  const today = new Date().toDateString();
+  if (state.rewards.todayDate !== today) {
+    state.rewards.todayDate  = today;
+    state.rewards.todayCount = 0;
+  }
+  state.rewards.todayCount++;
+  state.rewards.total++;
+  saveState();
+
+  const r = activeRoutine();
+  const allDone = r && r.steps.length > 0 && r.steps.every(s => s.done);
+  let msg;
+
+  if (allDone) {
+    msg = '🎉 Félicitations ! Routine complète ! Tu as tout réussi aujourd\'hui !';
+    if (state.prefs.rewardMsg) msg = '🎉 ' + state.prefs.rewardMsg;
+    toast(msg, 'reward', 5000);
+  } else {
+    msg = REWARD_PHRASES[state.rewards.todayCount % REWARD_PHRASES.length];
+    toast(msg, 'success', 3500);
+  }
+
+  announce(msg);
+  if (state.prefs.rewardVoice) speak(msg.replace(/[⭐🌟✨🎉👏💪]/g,''));
+
+  renderRewards();
+}
+
+function renderRewards() {
+  const today = new Date().toDateString();
+  if (state.rewards.todayDate !== today) { state.rewards.todayCount = 0; }
+
+  const count = state.rewards.todayCount;
+  const stars = '⭐'.repeat(Math.min(count, 10));
+
+  const starsEl = document.getElementById('reward-stars');
+  starsEl.innerHTML = stars
+    ? stars.split('').map(s => `<span class="star-anim">${s}</span>`).join('')
+    : '<span style="opacity:.5">—</span>';
+
+  document.getElementById('reward-msg').textContent =
+    count === 0 ? 'Complète des étapes pour gagner des étoiles !'
+    : count < 3  ? 'Bien démarré·e ! Continue !'
+    : count < 6  ? 'Super progression ! Tu y es presque !'
+    : '🌟 Excellente journée ! Bravo !';
+
+  document.getElementById('reward-total').textContent =
+    'Total : ' + state.rewards.total + ' ⭐';
+}
+
+/* ════════════════════════════════════════════
+   MINUTEUR
+════════════════════════════════════════════ */
 function applyTimerDisplay() {
   const svgWrap = document.getElementById('timer-svg-wrap');
   const numOnly = document.getElementById('timer-numeric-only');
@@ -777,46 +1743,42 @@ function startTimer() {
 
   clearInterval(timerInterval);
   timerTotal = minVal * 60;
-  timerEnd = Date.now() + timerTotal * 1000;
+  timerEnd   = Date.now() + timerTotal * 1000;
 
   document.getElementById('btn-timer-start').disabled = true;
-  document.getElementById('btn-timer-stop').disabled = false;
-  document.getElementById('timer-label').textContent = 'Minuteur en cours…';
+  document.getElementById('btn-timer-stop').disabled  = false;
+  document.getElementById('timer-label').textContent  = 'Minuteur en cours…';
   document.getElementById('timer-status').textContent = '';
 
-  const CIRCUM = 314.16; /* 2π × 50 */
+  const CIRCUM = 314.16;
   const prog = document.getElementById('circle-prog');
 
   timerInterval = setInterval(() => {
     const remaining = Math.max(0, Math.round((timerEnd - Date.now()) / 1000));
-    const ratio = remaining / timerTotal;
+    const ratio  = remaining / timerTotal;
     const offset = CIRCUM * (1 - ratio);
 
-    /* Affichage SVG */
     prog.style.strokeDashoffset = offset;
     document.getElementById('timer-countdown-text').textContent = padTime(remaining);
-
-    /* Affichage numérique (reduced-motion) */
-    document.getElementById('timer-numeric-only').textContent = padTime(remaining);
-
-    /* Label */
-    document.getElementById('timer-label').textContent = padTime(remaining) + ' restante' + (remaining <= 60 ? 's' : '');
+    document.getElementById('timer-numeric-only').textContent   = padTime(remaining);
+    document.getElementById('timer-label').textContent =
+      padTime(remaining) + ' restante' + (remaining <= 60 ? 's' : '');
 
     if (remaining <= 0) {
       clearInterval(timerInterval);
       timerInterval = null;
-      document.getElementById('timer-status').textContent = '✅ Temps écoulé !';
-      document.getElementById('timer-label').textContent = 'Temps écoulé';
-      document.getElementById('btn-timer-start').disabled = false;
-      document.getElementById('btn-timer-stop').disabled = true;
+      document.getElementById('timer-status').textContent  = '✅ Temps écoulé !';
+      document.getElementById('timer-label').textContent   = 'Temps écoulé';
+      document.getElementById('btn-timer-start').disabled  = false;
+      document.getElementById('btn-timer-stop').disabled   = true;
       document.getElementById('timer-countdown-text').textContent = '0:00';
-      document.getElementById('timer-numeric-only').textContent = '0:00';
+      document.getElementById('timer-numeric-only').textContent   = '0:00';
 
-      /* Annonce vocale — pas de son strident */
       const { current } = getCurrentNext();
       const stepLabel = current ? current.label : 'l\'étape';
       speak('Le temps est écoulé pour ' + stepLabel + '. Bravo !');
       announce('Temps écoulé pour ' + stepLabel);
+      toast('⏱ Temps écoulé pour : ' + stepLabel, 'success', 5000);
     }
   }, 500);
 }
@@ -824,32 +1786,310 @@ function startTimer() {
 function stopTimer() {
   clearInterval(timerInterval);
   timerInterval = null;
-  document.getElementById('btn-timer-start').disabled = false;
-  document.getElementById('btn-timer-stop').disabled = true;
-  document.getElementById('timer-label').textContent = 'Minuteur arrêté';
-  document.getElementById('timer-status').textContent = '';
+  document.getElementById('btn-timer-start').disabled  = false;
+  document.getElementById('btn-timer-stop').disabled   = true;
+  document.getElementById('timer-label').textContent   = 'Minuteur arrêté';
+  document.getElementById('timer-status').textContent  = '';
   document.getElementById('timer-countdown-text').textContent = '—';
-  document.getElementById('timer-numeric-only').textContent = '';
+  document.getElementById('timer-numeric-only').textContent   = '';
   announce('Minuteur arrêté');
 }
 
 document.getElementById('btn-timer-start').addEventListener('click', startTimer);
 document.getElementById('btn-timer-stop').addEventListener('click', stopTimer);
 
-/* ── INIT ── */
-renderPalette();
-applyTimerDisplay();
-render();
-</script>
+/* ════════════════════════════════════════════
+   LECTURE VOCALE
+════════════════════════════════════════════ */
+document.getElementById('btn-speak-now').addEventListener('click', () => {
+  const { current } = getCurrentNext();
+  if (!current) {
+    speak('Toutes les étapes sont faites ! Bravo !');
+    return;
+  }
+  const msg = 'Maintenant : ' + current.label
+    + (current.time ? ', à ' + fmt(current.time) : '')
+    + (current.duration ? ', pendant ' + current.duration + ' minutes' : '');
+  speak(msg);
+});
 
-<!-- sr-only helper inline (sans dépendance) -->
-<style>
-.sr-only {
-  position: absolute; width: 1px; height: 1px;
-  padding: 0; margin: -1px; overflow: hidden;
-  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+/* ════════════════════════════════════════════
+   NOTIFICATIONS
+════════════════════════════════════════════ */
+function checkNotifPermission() {
+  if (!('Notification' in window)) return;
+  const banner = document.getElementById('notif-banner');
+  if (Notification.permission === 'default') {
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+    if (Notification.permission === 'granted') {
+      document.getElementById('btn-notif').classList.add('active');
+      document.getElementById('btn-notif').setAttribute('aria-label','Notifications activées');
+    }
+  }
 }
-</style>
+
+document.getElementById('btn-req-notif').addEventListener('click', async () => {
+  try {
+    const perm = await Notification.requestPermission();
+    state.prefs.notifGranted = perm === 'granted';
+    saveState();
+    checkNotifPermission();
+    if (perm === 'granted') {
+      toast('Notifications activées !', 'success');
+      announce('Notifications activées');
+    } else {
+      toast('Notifications refusées. Vous pouvez changer cela dans les réglages du navigateur.', 'warn', 5000);
+    }
+  } catch(e) {
+    toast('Impossible d\'activer les notifications.', 'warn');
+  }
+});
+
+document.getElementById('btn-notif').addEventListener('click', async () => {
+  if (Notification.permission !== 'granted') {
+    document.getElementById('btn-req-notif').click();
+  } else {
+    toast('Les notifications sont déjà activées.', 'success');
+  }
+});
+
+function scheduleStepNotif(step, routineName) {
+  if (!('serviceWorker' in navigator) || Notification.permission !== 'granted') return;
+  if (!step.time) return;
+
+  const [h, m] = step.time.split(':').map(Number);
+  const now = new Date();
+  const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+  const delay = target - now;
+  if (delay < 0) return; // heure passée aujourd'hui
+
+  navigator.serviceWorker.ready.then(reg => {
+    if (reg.active) {
+      reg.active.postMessage({
+        type:  'SCHEDULE_NOTIF',
+        title: '🗓️ DayFlow · ' + routineName,
+        body:  step.label + (step.duration ? ' (' + step.duration + ' min)' : ''),
+        tag:   'step-' + step.id,
+        delay
+      });
+    }
+  }).catch(() => {});
+}
+
+/* ════════════════════════════════════════════
+   MODE AIDANT
+════════════════════════════════════════════ */
+function applyAideMode() {
+  document.body.classList.toggle('aide-mode', !!state.prefs.aideMode);
+  const btn = document.getElementById('btn-aide-lock');
+  btn.classList.toggle('active', !!state.prefs.aideMode);
+  btn.setAttribute('aria-pressed', state.prefs.aideMode ? 'true' : 'false');
+  btn.setAttribute('aria-label', state.prefs.aideMode ? 'Désactiver le mode aidant' : 'Activer le mode aidant');
+}
+
+document.getElementById('btn-aide-lock').addEventListener('click', async () => {
+  if (!state.prefs.aideMode) {
+    // Activer
+    const answer = await openModal({
+      title: 'Activer le mode aidant ?',
+      bodyHTML: '<p>En mode aidant, l\'édition des routines et des étapes est verrouillée. Seule la case à cocher reste accessible.</p><p style="margin-top:8px">Pour désactiver : cliquez sur « Déverrouiller ».</p>',
+      buttons: [
+        { label: 'Activer', value: 'yes', primary: true },
+        { label: 'Annuler', value: 'no' },
+      ]
+    });
+    if (answer !== 'yes') return;
+    state.prefs.aideMode = true;
+  } else {
+    state.prefs.aideMode = false;
+  }
+  saveState();
+  applyAideMode();
+  announce(state.prefs.aideMode ? 'Mode aidant activé' : 'Mode aidant désactivé');
+});
+
+document.getElementById('btn-aide-unlock').addEventListener('click', () => {
+  state.prefs.aideMode = false;
+  saveState();
+  applyAideMode();
+  announce('Mode aidant désactivé');
+  toast('Mode aidant désactivé.', 'success');
+});
+
+/* ════════════════════════════════════════════
+   IMPORT / EXPORT JSON
+════════════════════════════════════════════ */
+document.getElementById('btn-export').addEventListener('click', () => {
+  const data = { version: 2, routines: state.routines };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'dayflow-routines-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Routines exportées !', 'success');
+  announce('Fichier JSON exporté');
+});
+
+document.getElementById('input-import').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+
+    let routines = [];
+    if (Array.isArray(data)) {
+      routines = data;
+    } else if (data.routines) {
+      routines = data.routines;
+    }
+
+    if (!routines.length) throw new Error('Aucune routine trouvée');
+
+    const answer = await openModal({
+      title: 'Importer ' + routines.length + ' routine(s) ?',
+      bodyHTML: `<p>Cette action <strong>remplacera</strong> toutes vos routines actuelles par celles du fichier importé.</p>`,
+      buttons: [
+        { label: 'Importer', value: 'yes', primary: true },
+        { label: 'Annuler', value: 'no' },
+      ]
+    });
+
+    if (answer !== 'yes') { e.target.value = ''; return; }
+
+    // Normaliser et ré-indexer
+    state.routines = routines.map(r => ({
+      id: r.id || uid(),
+      name: r.name || 'Routine',
+      steps: (r.steps || []).map(s => ({
+        id: s.id || uid(),
+        emoji: s.emoji || '⭐',
+        photo: s.photo || null,
+        label: s.label || '',
+        time: s.time || '',
+        duration: s.duration || 0,
+        days: s.days || [],
+        done: false,
+      }))
+    }));
+    state.activeRoutineId = state.routines[0]?.id || null;
+    saveState();
+    render();
+    toast(routines.length + ' routine(s) importée(s) !', 'success');
+    announce(routines.length + ' routines importées');
+  } catch(err) {
+    toast('Erreur lors de l\'import : ' + err.message, 'warn', 5000);
+    announce('Erreur d\'import');
+  }
+  e.target.value = '';
+});
+
+/* ════════════════════════════════════════════
+   PRÉFÉRENCES RÉCOMPENSES
+════════════════════════════════════════════ */
+function applyPrefsToForm() {
+  document.getElementById('pref-reward-enabled').checked = !!state.prefs.rewardEnabled;
+  document.getElementById('pref-reward-voice').checked   = !!state.prefs.rewardVoice;
+  document.getElementById('pref-reward-msg').value       = state.prefs.rewardMsg || '';
+}
+
+document.getElementById('btn-save-prefs').addEventListener('click', () => {
+  state.prefs.rewardEnabled = document.getElementById('pref-reward-enabled').checked;
+  state.prefs.rewardVoice   = document.getElementById('pref-reward-voice').checked;
+  state.prefs.rewardMsg     = document.getElementById('pref-reward-msg').value.trim();
+  saveState();
+  toast('Préférences enregistrées !', 'success');
+  announce('Préférences enregistrées');
+});
+
+/* ════════════════════════════════════════════
+   RENDU GLOBAL
+════════════════════════════════════════════ */
+function render() {
+  renderRoutinesBar();
+  renderPanel();
+  renderSteps();
+  renderProgress();
+  renderRewards();
+}
+
+/* ════════════════════════════════════════════
+   PWA — INSTALL PROMPT
+════════════════════════════════════════════ */
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-btn').style.display = '';
+});
+
+document.getElementById('install-btn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  if (outcome === 'accepted') {
+    document.getElementById('install-btn').style.display = 'none';
+    toast('DayFlow installé ! 🎉', 'success', 5000);
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  document.getElementById('install-btn').style.display = 'none';
+  toast('DayFlow est installé avec succès !', 'success', 5000);
+});
+
+/* ════════════════════════════════════════════
+   SERVICE WORKER
+════════════════════════════════════════════ */
+if ('serviceWorker' in navigator) {
+  try {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      console.log('[DayFlow] SW enregistré, scope:', reg.scope);
+    }).catch(err => {
+      console.warn('[DayFlow] SW échec:', err);
+    });
+  } catch(e) {
+    console.warn('[DayFlow] SW non disponible:', e);
+  }
+}
+
+/* ════════════════════════════════════════════
+   INITIALISATION
+════════════════════════════════════════════ */
+function init() {
+  loadState();
+  initDefaultRoutines();
+
+  // Vérifier reset journalier des "done"
+  const today = new Date().toDateString();
+  if (state.rewards.todayDate !== today) {
+    // Nouveau jour : reset les étapes cochées
+    state.routines.forEach(r => r.steps.forEach(s => { s.done = false; }));
+    state.rewards.todayDate  = today;
+    state.rewards.todayCount = 0;
+    saveState();
+  }
+
+  renderPalette();
+  renderDaysRow();
+  applyTimerDisplay();
+  applyAideMode();
+  applyPrefsToForm();
+  checkNotifPermission();
+  render();
+
+  // Auto-scroll smooth supprimé (réduit les mouvements)
+}
+
+init();
+</script>
 
 </body>
 </html>

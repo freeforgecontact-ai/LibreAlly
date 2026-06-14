@@ -4,9 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DysReader — Lecture adaptée | LibreA11y</title>
-<meta name="description" content="Lecture adaptée à la dyslexie : taille, espacement, coloration syllabique, règle de lecture et lecture vocale. Démo hors-ligne, aucune donnée envoyée.">
+<meta name="description" content="Application de lecture adaptée à la dyslexie : karaoké vocal, bionic reading, syllabes, overlays, profils. 100 % hors-ligne.">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#0F4C81">
 <style>
-/* ===== VARIABLES & RESET ===== */
+/* ===== VARIABLES ===== */
 :root {
   --marine:    #0F4C81;
   --marine-dk: #0A3A63;
@@ -16,22 +18,26 @@
   --fond:      #F7F9FC;
   --surface:   #FFFFFF;
   --border:    #D0D9E8;
-  --focus-ring: #F4B81C;
+  --focus-ring:#F4B81C;
   --radius:    12px;
   --radius-sm: 8px;
   --shadow:    0 2px 8px rgba(15,76,129,0.12);
   --shadow-hv: 0 4px 16px rgba(15,76,129,0.22);
-  --tr:        0.15s ease;
+  --tr:        0.18s ease;
+  /* Overlay / thème */
+  --overlay-bg: transparent;
+  --text-bg:    #FFFFFF;
+  --text-color: #16202E;
 }
 @media (prefers-reduced-motion: reduce) {
   :root { --tr: 0ms; }
-  * { animation: none !important; transition: none !important; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { height: 100%; }
+html { height: 100%; scroll-behavior: smooth; }
 body {
   min-height: 100%;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-family, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);
   background: var(--fond);
   color: var(--encre);
   font-size: 16px;
@@ -41,174 +47,166 @@ body {
 }
 
 /* ===== FOCUS ===== */
-:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 3px;
-}
+:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 
 /* ===== SKIP LINK ===== */
 #skip-link {
-  position: absolute;
-  top: -999px;
-  left: 8px;
-  background: var(--or);
-  color: var(--encre);
-  font-weight: 700;
-  padding: 8px 16px;
-  border-radius: var(--radius-sm);
-  z-index: 1000;
-  text-decoration: none;
-  font-size: 0.95rem;
+  position: absolute; top: -999px; left: 8px;
+  background: var(--or); color: var(--encre); font-weight: 700;
+  padding: 8px 16px; border-radius: var(--radius-sm); z-index: 2000;
+  text-decoration: none; font-size: 0.95rem;
 }
 #skip-link:focus { top: 8px; }
 
+/* ===== ARIA LIVE ===== */
+#aria-live {
+  position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;
+}
+
 /* ===== HEADER ===== */
 #app-header {
-  background: var(--marine);
-  color: #fff;
-  padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  box-shadow: 0 2px 8px rgba(10,58,99,0.3);
-  flex-shrink: 0;
+  background: var(--marine); color: #fff;
+  padding: 10px 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  box-shadow: 0 2px 8px rgba(10,58,99,0.3); flex-shrink: 0; z-index: 100;
 }
-#header-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+#header-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 #back-link {
-  color: var(--or-lt);
-  text-decoration: none;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-  transition: background var(--tr);
-  min-height: 40px;
+  color: var(--or-lt); text-decoration: none; font-size: 0.88rem;
+  display: flex; align-items: center; gap: 4px;
+  padding: 6px 10px; border-radius: var(--radius-sm);
+  white-space: nowrap; transition: background var(--tr); min-height: 44px;
 }
 #back-link:hover, #back-link:focus-visible { background: rgba(255,255,255,0.15); color: #fff; }
-h1#app-title {
-  font-size: 1.3rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+h1#app-title { font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+#header-badges {
+  display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
 }
-#header-notice {
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.65);
-  text-align: right;
-  line-height: 1.4;
-  flex-shrink: 0;
+.badge {
+  font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+  background: rgba(255,255,255,0.18); color: rgba(255,255,255,0.9);
+  letter-spacing: 0.04em; white-space: nowrap;
 }
+.badge-or { background: var(--or); color: var(--encre); }
 
 /* ===== TTS WARNING ===== */
 #tts-warning {
-  background: #fff3cd;
-  color: #7d5000;
-  padding: 10px 20px;
-  font-size: 0.85rem;
-  border-bottom: 1px solid #f4d56a;
-  display: none;
-  align-items: center;
-  gap: 8px;
+  background: #fff3cd; color: #7d5000; padding: 10px 20px;
+  font-size: 0.85rem; border-bottom: 1px solid #f4d56a;
+  display: none; align-items: center; gap: 8px;
 }
 #tts-warning.visible { display: flex; }
 
+/* ===== TOAST ===== */
+#toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--marine); color: #fff; padding: 12px 22px;
+  border-radius: var(--radius); box-shadow: var(--shadow-hv);
+  font-size: 0.9rem; font-weight: 600; z-index: 9999;
+  transition: transform 0.3s ease, opacity 0.3s ease; opacity: 0; pointer-events: none;
+  max-width: 90vw; text-align: center;
+}
+#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+/* ===== MODAL ===== */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(15,76,129,0.45);
+  z-index: 500; display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-backdrop.hidden { display: none; }
+.modal-box {
+  background: var(--surface); border-radius: var(--radius);
+  box-shadow: var(--shadow-hv); max-width: 520px; width: 100%;
+  max-height: 80vh; overflow-y: auto; padding: 28px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.modal-title { font-size: 1.15rem; font-weight: 700; color: var(--marine); }
+.modal-close {
+  position: absolute; top: 12px; right: 14px;
+  background: none; border: none; font-size: 1.4rem; cursor: pointer;
+  color: var(--marine); padding: 6px; border-radius: 6px; line-height: 1;
+  min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;
+}
+.modal-close:hover { background: var(--fond); }
+.modal-header { position: relative; }
+
 /* ===== LAYOUT MAIN ===== */
 main#main-content {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 16px;
-  max-width: 1400px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 20px;
-  align-items: start;
+  flex: 1; display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 16px; max-width: 1400px; width: 100%;
+  margin: 0 auto; padding: 16px; align-items: start;
 }
-@media (max-width: 860px) {
+@media (max-width: 900px) {
   main#main-content { grid-template-columns: 1fr; }
 }
 
+/* ===== TABS (settings panel) ===== */
+.tab-bar {
+  display: flex; gap: 2px; background: var(--fond);
+  border-radius: var(--radius-sm); padding: 3px; flex-wrap: wrap;
+}
+.tab-btn {
+  flex: 1; min-width: 0; padding: 7px 6px; border: none; background: none;
+  border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer;
+  color: #5a6a7e; transition: background var(--tr), color var(--tr);
+  white-space: nowrap; min-height: 40px;
+}
+.tab-btn.active { background: var(--marine); color: #fff; }
+.tab-btn:hover:not(.active) { background: var(--border); color: var(--encre); }
+.tab-panel { display: none; flex-direction: column; gap: 12px; }
+.tab-panel.active { display: flex; }
+
 /* ===== PANEL REGLAGES ===== */
 #panel-settings {
-  background: var(--surface);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  position: sticky;
-  top: 16px;
+  background: var(--surface); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 16px;
+  display: flex; flex-direction: column; gap: 14px;
+  position: sticky; top: 16px; max-height: calc(100vh - 80px); overflow-y: auto;
 }
 .settings-section { display: flex; flex-direction: column; gap: 10px; }
 .settings-section-title {
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--marine);
-  padding-bottom: 6px;
-  border-bottom: 2px solid var(--border);
+  font-size: 0.74rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--marine);
+  padding-bottom: 5px; border-bottom: 2px solid var(--border);
 }
 
 /* Sliders */
 .slider-row { display: flex; flex-direction: column; gap: 4px; }
-.slider-label {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.88rem;
-  font-weight: 600;
+.slider-label { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; }
+.slider-label span { font-weight: 400; color: var(--marine); min-width: 50px; text-align: right; }
+input[type="range"] { width: 100%; accent-color: var(--marine); cursor: pointer; height: 6px; }
+
+/* Selects */
+select.ctrl-select {
+  width: 100%; padding: 8px 10px; border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); font-size: 0.88rem; background: var(--fond);
+  color: var(--encre); cursor: pointer; min-height: 44px;
 }
-.slider-label span { font-weight: 400; color: var(--marine); }
-input[type="range"] {
-  width: 100%;
-  accent-color: var(--marine);
-  cursor: pointer;
-  height: 6px;
-}
+select.ctrl-select:focus { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
 
 /* Checkboxes */
 .check-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  cursor: pointer;
-  padding: 4px 0;
+  display: flex; align-items: flex-start; gap: 10px; cursor: pointer; padding: 3px 0;
 }
 .check-row input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  min-width: 20px;
-  accent-color: var(--marine);
-  cursor: pointer;
-  margin-top: 1px;
+  width: 20px; height: 20px; min-width: 20px;
+  accent-color: var(--marine); cursor: pointer; margin-top: 2px;
 }
-.check-label { font-size: 0.88rem; line-height: 1.4; }
-.check-desc { font-size: 0.78rem; color: #5a6a7e; margin-top: 1px; }
+.check-label { font-size: 0.85rem; line-height: 1.4; font-weight: 600; }
+.check-desc { font-size: 0.76rem; color: #5a6a7e; margin-top: 1px; font-weight: 400; }
 
 /* Boutons */
 .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.92rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background var(--tr), box-shadow var(--tr), transform var(--tr);
-  min-height: 48px;
-  padding: 0 18px;
-  line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border: none; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 600;
+  cursor: pointer; transition: background var(--tr), box-shadow var(--tr), transform var(--tr);
+  min-height: 48px; padding: 0 18px; line-height: 1; white-space: nowrap;
 }
 .btn:active:not(:disabled) { transform: scale(0.97); }
-.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn:disabled { opacity: 0.42; cursor: not-allowed; }
 .btn-primary { background: var(--marine); color: #fff; }
 .btn-primary:hover:not(:disabled), .btn-primary:focus-visible:not(:disabled) {
   background: var(--marine-dk); box-shadow: var(--shadow-hv);
@@ -219,134 +217,281 @@ input[type="range"] {
 }
 .btn-ghost { background: var(--fond); color: var(--encre); border: 1.5px solid var(--border); }
 .btn-ghost:hover:not(:disabled), .btn-ghost:focus-visible:not(:disabled) { background: var(--border); }
-.btn-sm { min-height: 40px; font-size: 0.85rem; padding: 0 14px; }
+.btn-danger { background: #d32f2f; color: #fff; }
+.btn-danger:hover:not(:disabled) { background: #b71c1c; }
+.btn-sm { min-height: 40px; font-size: 0.82rem; padding: 0 12px; }
+.btn-xs { min-height: 36px; font-size: 0.78rem; padding: 0 10px; }
+
+/* Overlays colorés */
+.overlay-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.overlay-swatch {
+  aspect-ratio: 1; border-radius: 6px; border: 2.5px solid transparent;
+  cursor: pointer; min-height: 36px; transition: border-color var(--tr), transform var(--tr);
+}
+.overlay-swatch:hover { transform: scale(1.1); }
+.overlay-swatch.active { border-color: var(--encre); }
+.overlay-swatch:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
 
 /* ===== ZONE LECTURE ===== */
 #panel-reading { display: flex; flex-direction: column; gap: 12px; }
 
 /* Barre TTS */
 #tts-bar {
-  background: var(--surface);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 14px 18px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  background: var(--surface); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 12px 16px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
 }
-#tts-bar .btn { min-height: 52px; }
-#tts-status {
-  font-size: 0.82rem;
-  color: #5a6a7e;
-  margin-left: auto;
-  min-width: 120px;
-  text-align: right;
+#tts-bar .btn { min-height: 48px; }
+#tts-status { font-size: 0.8rem; color: #5a6a7e; margin-left: auto; min-width: 100px; text-align: right; }
+
+/* Stats bar */
+#stats-bar {
+  background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 10px 16px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
 }
+.stat-item { display: flex; flex-direction: column; align-items: center; }
+.stat-val { font-size: 1.1rem; font-weight: 700; color: var(--marine); }
+.stat-lbl { font-size: 0.7rem; color: #5a6a7e; text-transform: uppercase; letter-spacing: 0.05em; }
+#stats-message { font-size: 0.82rem; color: #3a7d44; font-weight: 600; margin-left: auto; }
+
+/* Barre sources texte */
+#source-bar {
+  background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 10px 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+#source-bar-label { font-size: 0.82rem; font-weight: 700; color: var(--marine); white-space: nowrap; }
 
 /* Zone texte */
 #text-container {
-  background: var(--surface);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  overflow: hidden;
+  background: var(--text-bg, var(--surface));
+  border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+  position: relative;
 }
 #text-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-  gap: 8px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 6px;
+  background: var(--surface);
 }
-#text-toolbar-label { font-size: 0.82rem; font-weight: 600; color: var(--marine); }
-#text-toolbar-hint { font-size: 0.78rem; color: #6b7a8d; }
+#text-toolbar-label { font-size: 0.8rem; font-weight: 700; color: var(--marine); }
+#text-toolbar-right { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+/* Pagination */
+#pagination-bar {
+  display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+  border-top: 1px solid var(--border); background: var(--surface); flex-wrap: wrap;
+}
+#page-info { font-size: 0.82rem; color: #5a6a7e; }
 
 /* Zone editable */
 #text-edit-area {
-  width: 100%;
-  min-height: 360px;
-  max-height: 540px;
-  overflow-y: auto;
-  padding: 24px;
-  border: none;
-  font-family: inherit;
-  font-size: inherit;
-  resize: vertical;
-  background: var(--surface);
-  color: var(--encre);
-  outline: none;
-  display: block;
+  width: 100%; min-height: 400px; max-height: 60vh; overflow-y: auto;
+  padding: 24px; border: none; font-family: inherit; font-size: inherit;
+  resize: vertical; background: transparent; color: var(--text-color, var(--encre));
+  outline: none; display: block;
 }
 #text-edit-area:focus { box-shadow: inset 0 0 0 2px var(--marine); }
 
 /* Zone de rendu */
 #text-render-area {
-  display: none;
-  width: 100%;
-  min-height: 360px;
-  max-height: 540px;
-  overflow-y: auto;
-  padding: 24px;
-  background: var(--surface);
-  color: var(--encre);
-  white-space: pre-wrap;
-  word-break: break-word;
-  outline: none;
+  display: none; width: 100%; min-height: 400px; max-height: 60vh;
+  overflow-y: auto; padding: 24px;
+  background: transparent; color: var(--text-color, var(--encre));
+  white-space: pre-wrap; word-break: break-word; outline: none;
 }
 #text-render-area:focus { box-shadow: inset 0 0 0 2px var(--marine); }
 
+/* Overlay coloré sur la zone texte */
+#color-overlay {
+  position: absolute; inset: 0; pointer-events: none;
+  background: var(--overlay-bg); border-radius: var(--radius);
+  mix-blend-mode: multiply; z-index: 5;
+}
+
 /* Lignes render */
 .render-line {
-  display: block;
-  padding: 3px 6px;
-  border-radius: 4px;
-  transition: background var(--tr), opacity var(--tr);
-  line-height: inherit;
+  display: block; padding: 3px 6px; border-radius: 4px;
+  transition: background var(--tr), opacity var(--tr); line-height: inherit;
 }
-.render-line.line-dimmed { opacity: 0.28; }
-.render-line.line-active { background: rgba(244,184,28,0.18); opacity: 1 !important; }
-.render-line.line-speaking { background: rgba(244,184,28,0.32); opacity: 1 !important; }
+.render-line.line-dimmed { opacity: 0.25; }
+.render-line.line-active { background: rgba(244,184,28,0.2); opacity: 1 !important; }
+.render-line.line-speaking { background: rgba(244,184,28,0.38); opacity: 1 !important; }
 
 /* Syllabes */
 .syl-a { color: var(--marine); font-weight: 600; }
 .syl-b { color: #005f5f; font-weight: 600; }
 
-/* Surbrillance TTS */
-.word-hi { background: var(--or); color: var(--encre); border-radius: 3px; padding: 0 2px; }
+/* Sons complexes */
+.son-hi { background: rgba(244,184,28,0.35); border-radius: 2px; }
+
+/* Bionic */
+.bio-b { font-weight: 900; }
+
+/* Surbrillance TTS mot */
+.word-hi {
+  background: var(--or); color: var(--encre);
+  border-radius: 3px; padding: 0 2px; box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* Mode focus mot */
+#focus-word-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(15,76,129,0.82);
+  z-index: 400; align-items: center; justify-content: center;
+  flex-direction: column; gap: 20px;
+}
+#focus-word-overlay.active { display: flex; }
+#focus-word-display {
+  font-size: clamp(3rem, 10vw, 6rem); font-weight: 700;
+  color: #fff; text-align: center; padding: 20px;
+  font-family: var(--font-family, system-ui);
+  letter-spacing: 0.08em;
+}
+#focus-word-actions { display: flex; gap: 12px; }
+
+/* Règle / masque */
+#reading-mask {
+  display: none; position: absolute; left: 0; right: 0; z-index: 10;
+  pointer-events: none;
+}
+#reading-mask-top, #reading-mask-bottom {
+  position: absolute; left: 0; right: 0; background: rgba(15,76,129,0.18);
+}
+
+/* Dictionnaire popup */
+#dict-popup {
+  position: fixed; z-index: 800; background: var(--surface);
+  border-radius: var(--radius); box-shadow: var(--shadow-hv);
+  padding: 14px 18px; max-width: 280px; min-width: 180px;
+  border-left: 4px solid var(--or); display: none;
+}
+#dict-popup.visible { display: block; }
+#dict-word { font-size: 1rem; font-weight: 700; color: var(--marine); margin-bottom: 6px; }
+#dict-def { font-size: 0.85rem; line-height: 1.5; color: var(--encre); }
+#dict-close {
+  position: absolute; top: 6px; right: 8px; background: none; border: none;
+  font-size: 1rem; cursor: pointer; color: #5a6a7e; min-width: 32px; min-height: 32px;
+  display: flex; align-items: center; justify-content: center; border-radius: 4px;
+}
+#dict-close:hover { background: var(--fond); }
+
+/* Marque-pages */
+.bookmark-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+  border-radius: var(--radius-sm); border: 1px solid var(--border);
+  cursor: pointer; transition: background var(--tr);
+  font-size: 0.85rem;
+}
+.bookmark-item:hover { background: var(--fond); }
+.bookmark-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bookmark-del { background: none; border: none; color: #d32f2f; cursor: pointer; font-size: 1rem; min-width: 32px; min-height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+.bookmark-del:hover { background: #fdecea; }
+
+/* Profils */
+.profile-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+  border-radius: var(--radius-sm); border: 1.5px solid var(--border);
+  font-size: 0.85rem; font-weight: 600;
+}
+.profile-item.active-profile { border-color: var(--marine); background: rgba(15,76,129,0.06); }
+.profile-name { flex: 1; cursor: pointer; }
+.profile-actions { display: flex; gap: 4px; }
+
+/* Thèmes */
+body.theme-sepia {
+  --fond: #F5ECD7; --surface: #FDF5E6; --border: #D4C5A0; --text-bg: #FDF5E6;
+  --text-color: #3D2B1F; --encre: #3D2B1F;
+}
+body.theme-dark {
+  --fond: #1a1a2e; --surface: #16213e; --border: #2a3a5e; --encre: #E8EAF0;
+  --text-bg: #16213e; --text-color: #E8EAF0;
+}
+body.theme-cream {
+  --fond: #FAFAF5; --surface: #FFFFFE; --border: #E8E8D8; --text-bg: #FFFFFE;
+  --text-color: #2C2C2C; --encre: #2C2C2C;
+}
 
 /* ===== FOOTER ===== */
 footer#app-footer {
-  text-align: center;
-  font-size: 0.78rem;
-  color: #6b7a8d;
-  padding: 16px 20px;
-  border-top: 1px solid var(--border);
-  flex-shrink: 0;
+  text-align: center; font-size: 0.76rem; color: #6b7a8d;
+  padding: 14px 20px; border-top: 1px solid var(--border); flex-shrink: 0;
 }
 footer a { color: var(--marine); }
-
-/* ===== LIVE REGION ===== */
-#aria-live {
-  position: absolute; width: 1px; height: 1px;
-  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;
-}
 </style>
 </head>
 <body>
 
 <a href="#main-content" id="skip-link">Aller au contenu principal</a>
 <div id="aria-live" aria-live="polite" aria-atomic="true"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- Dictionnaire popup -->
+<div id="dict-popup" role="dialog" aria-labelledby="dict-word" aria-modal="false">
+  <button id="dict-close" aria-label="Fermer le dictionnaire">&#10005;</button>
+  <div id="dict-word"></div>
+  <div id="dict-def"></div>
+</div>
+
+<!-- Mode focus mot -->
+<div id="focus-word-overlay" role="dialog" aria-modal="true" aria-label="Mode focus mot">
+  <div id="focus-word-display" aria-live="polite"></div>
+  <div id="focus-word-actions">
+    <button class="btn btn-ghost" id="btn-focus-prev" aria-label="Mot précédent">&#8592; Préc.</button>
+    <button class="btn btn-accent" id="btn-focus-speak" aria-label="Écouter ce mot">&#128266; Écouter</button>
+    <button class="btn btn-ghost" id="btn-focus-next" aria-label="Mot suivant">Suiv. &#8594;</button>
+    <button class="btn btn-primary" id="btn-focus-close" aria-label="Quitter le mode focus">&#10005; Quitter</button>
+  </div>
+</div>
+
+<!-- Modal marque-pages -->
+<div id="modal-bookmarks" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-bk-title">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-bk-title">&#128278; Marque-pages</div>
+      <button class="modal-close" id="modal-bk-close" aria-label="Fermer">&#10005;</button>
+    </div>
+    <div id="bookmarks-list" aria-label="Liste des marque-pages"></div>
+    <button class="btn btn-primary" id="btn-add-bookmark">&#43; Ajouter un marque-page ici</button>
+  </div>
+</div>
+
+<!-- Modal profils -->
+<div id="modal-profiles" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-pr-title">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-pr-title">&#128100; Profils de réglages</div>
+      <button class="modal-close" id="modal-pr-close" aria-label="Fermer">&#10005;</button>
+    </div>
+    <div id="profiles-list" aria-label="Liste des profils"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <input type="text" id="profile-name-input" placeholder="Nom du profil…"
+             aria-label="Nom du nouveau profil" style="flex:1;min-width:120px;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:0.88rem;min-height:44px;">
+      <button class="btn btn-primary" id="btn-save-profile">&#128190; Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal statistiques -->
+<div id="modal-stats" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-st-title">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-st-title">&#127942; Mes progrès</div>
+      <button class="modal-close" id="modal-st-close" aria-label="Fermer">&#10005;</button>
+    </div>
+    <div id="stats-detail" style="display:flex;flex-direction:column;gap:14px;"></div>
+    <button class="btn btn-ghost btn-sm" id="btn-reset-stats">Remettre les stats à zéro</button>
+  </div>
+</div>
 
 <!-- HEADER -->
 <header id="app-header" role="banner">
   <div id="header-left">
-    <a href="../index.html" id="back-link" aria-label="Retour a LibreA11y">&#8592; LibreA11y</a>
-    <h1 id="app-title">&#128218; DysReader &#8212; demo</h1>
+    <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y">&#8592; LibreA11y</a>
+    <h1 id="app-title">&#128218; DysReader</h1>
   </div>
-  <div id="header-notice" aria-label="Informations sur la demo">
-    demo &middot; 100&nbsp;% hors-ligne<br>aucune donnee envoyee
+  <div id="header-badges">
+    <span class="badge">100&nbsp;% hors-ligne</span>
+    <span class="badge">aucune donnée envoyée</span>
+    <span class="badge badge-or" id="pwa-badge" aria-live="polite">PWA</span>
   </div>
 </header>
 
@@ -359,77 +504,173 @@ footer a { color: var(--marine); }
 <!-- MAIN -->
 <main id="main-content" tabindex="-1">
 
-  <!-- PANNEAU REGLAGES -->
-  <aside id="panel-settings" aria-label="Reglages d'affichage">
+  <!-- PANNEAU RÉGLAGES -->
+  <aside id="panel-settings" aria-label="Réglages d'affichage et d'accessibilité">
 
-    <div class="settings-section">
-      <div class="settings-section-title" aria-hidden="true">Typographie</div>
+    <div class="tab-bar" role="tablist" aria-label="Catégories de réglages">
+      <button class="tab-btn active" role="tab" aria-selected="true"  data-tab="typo"     aria-controls="tab-typo">Police</button>
+      <button class="tab-btn"        role="tab" aria-selected="false" data-tab="aides"    aria-controls="tab-aides">Aides</button>
+      <button class="tab-btn"        role="tab" aria-selected="false" data-tab="overlay"  aria-controls="tab-overlay">Couleur</button>
+      <button class="tab-btn"        role="tab" aria-selected="false" data-tab="voix"     aria-controls="tab-voix">Voix</button>
+    </div>
 
-      <div class="slider-row">
-        <label class="slider-label" for="sl-fontsize">
-          Taille de police <span id="sl-fontsize-val">20 px</span>
-        </label>
-        <input type="range" id="sl-fontsize" min="14" max="40" value="20" step="1"
-               aria-valuemin="14" aria-valuemax="40" aria-valuenow="20" aria-label="Taille de police, en pixels">
+    <!-- TAB : Typographie -->
+    <div class="tab-panel active" id="tab-typo" role="tabpanel" aria-labelledby="">
+
+      <div class="settings-section">
+        <div class="settings-section-title">Police</div>
+        <div class="slider-row">
+          <label class="slider-label" for="sl-fontfamily">Famille</label>
+          <select class="ctrl-select" id="sl-fontfamily" aria-label="Famille de police">
+            <option value="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">Système (défaut)</option>
+            <option value="'Arial',sans-serif">Arial</option>
+            <option value="'Verdana',sans-serif">Verdana (larges)</option>
+            <option value="'Trebuchet MS',sans-serif">Trebuchet MS</option>
+            <option value="'Georgia',serif">Georgia (serif)</option>
+            <option value="'Courier New',monospace">Courier (monospace)</option>
+            <option value="'Comic Sans MS','Chalkboard SE',sans-serif">Comic Sans (lisible)</option>
+            <option value="OpenDyslexic,sans-serif" id="od-option">OpenDyslexic &#9888;</option>
+          </select>
+        </div>
+        <div class="slider-row">
+          <label class="slider-label" for="sl-fontsize">Taille <span id="sl-fontsize-val">20 px</span></label>
+          <input type="range" id="sl-fontsize" min="14" max="44" value="20" step="1"
+                 aria-valuemin="14" aria-valuemax="44" aria-valuenow="20" aria-label="Taille de police en pixels">
+        </div>
+        <div class="slider-row">
+          <label class="slider-label" for="sl-letterspacing">Espacement lettres <span id="sl-letterspacing-val">0.05 em</span></label>
+          <input type="range" id="sl-letterspacing" min="0" max="0.30" value="0.05" step="0.01"
+                 aria-valuemin="0" aria-valuemax="0.3" aria-valuenow="0.05" aria-label="Espacement entre lettres en em">
+        </div>
+        <div class="slider-row">
+          <label class="slider-label" for="sl-wordspacing">Espacement mots <span id="sl-wordspacing-val">0.15 em</span></label>
+          <input type="range" id="sl-wordspacing" min="0" max="0.80" value="0.15" step="0.01"
+                 aria-valuemin="0" aria-valuemax="0.8" aria-valuenow="0.15" aria-label="Espacement entre mots en em">
+        </div>
+        <div class="slider-row">
+          <label class="slider-label" for="sl-lineheight">Interligne <span id="sl-lineheight-val">1.8</span></label>
+          <input type="range" id="sl-lineheight" min="1.2" max="3.2" value="1.8" step="0.1"
+                 aria-valuemin="1.2" aria-valuemax="3.2" aria-valuenow="1.8" aria-label="Hauteur de ligne">
+        </div>
+        <div class="slider-row">
+          <label class="slider-label" for="sl-colwidth">Largeur colonne <span id="sl-colwidth-val">680 px</span></label>
+          <input type="range" id="sl-colwidth" min="320" max="1100" value="680" step="20"
+                 aria-valuemin="320" aria-valuemax="1100" aria-valuenow="680" aria-label="Largeur maximale de la colonne de texte en pixels">
+        </div>
+        <div class="slider-row">
+          <label class="slider-label" for="sl-padding">Marge intérieure <span id="sl-padding-val">24 px</span></label>
+          <input type="range" id="sl-padding" min="8" max="60" value="24" step="4"
+                 aria-valuemin="8" aria-valuemax="60" aria-valuenow="24" aria-label="Marge intérieure en pixels">
+        </div>
       </div>
 
-      <div class="slider-row">
-        <label class="slider-label" for="sl-letterspacing">
-          Espacement lettres <span id="sl-letterspacing-val">0.05 em</span>
-        </label>
-        <input type="range" id="sl-letterspacing" min="0" max="0.30" value="0.05" step="0.01"
-               aria-valuemin="0" aria-valuemax="0.3" aria-valuenow="0.05" aria-label="Espacement entre les lettres, en em">
-      </div>
-
-      <div class="slider-row">
-        <label class="slider-label" for="sl-wordspacing">
-          Espacement mots <span id="sl-wordspacing-val">0.15 em</span>
-        </label>
-        <input type="range" id="sl-wordspacing" min="0" max="0.80" value="0.15" step="0.01"
-               aria-valuemin="0" aria-valuemax="0.8" aria-valuenow="0.15" aria-label="Espacement entre les mots, en em">
-      </div>
-
-      <div class="slider-row">
-        <label class="slider-label" for="sl-lineheight">
-          Interligne <span id="sl-lineheight-val">1.8</span>
-        </label>
-        <input type="range" id="sl-lineheight" min="1.2" max="3.0" value="1.8" step="0.1"
-               aria-valuemin="1.2" aria-valuemax="3.0" aria-valuenow="1.8" aria-label="Hauteur de ligne">
+      <div class="settings-section">
+        <div class="settings-section-title">Préréglages</div>
+        <button class="btn btn-ghost btn-sm" id="btn-preset-dys" type="button">Dyslexie confort</button>
+        <button class="btn btn-ghost btn-sm" id="btn-preset-reset" type="button">Réinitialiser</button>
       </div>
     </div>
 
-    <div class="settings-section">
-      <div class="settings-section-title" aria-hidden="true">Aides visuelles</div>
+    <!-- TAB : Aides -->
+    <div class="tab-panel" id="tab-aides" role="tabpanel">
+      <div class="settings-section">
+        <div class="settings-section-title">Aides de lecture</div>
 
-      <label class="check-row" for="chk-dyspreset">
-        <input type="checkbox" id="chk-dyspreset">
-        <span>
-          <span class="check-label">Espacement dyslexie</span><br>
-          <span class="check-desc">Applique un preréglage généreux (lettres, mots, interligne)</span>
-        </span>
-      </label>
+        <label class="check-row" for="chk-syllables">
+          <input type="checkbox" id="chk-syllables">
+          <span><span class="check-label">Coloration syllabique</span><br>
+          <span class="check-desc">Alterne deux couleurs sur chaque syllabe</span></span>
+        </label>
 
-      <label class="check-row" for="chk-syllables">
-        <input type="checkbox" id="chk-syllables">
-        <span>
-          <span class="check-label">Coloration syllabique</span><br>
-          <span class="check-desc">Alterne les couleurs sur chaque syllabe</span>
-        </span>
-      </label>
+        <label class="check-row" for="chk-bionic">
+          <input type="checkbox" id="chk-bionic">
+          <span><span class="check-label">Lecture Bionic</span><br>
+          <span class="check-desc">Met en gras le début de chaque mot</span></span>
+        </label>
 
-      <label class="check-row" for="chk-ruler">
-        <input type="checkbox" id="chk-ruler">
-        <span>
-          <span class="check-label">Regle de lecture</span><br>
-          <span class="check-desc">Surligne la ligne courante ; Fleche Haut / Bas pour naviguer</span>
-        </span>
-      </label>
+        <label class="check-row" for="chk-sounds">
+          <input type="checkbox" id="chk-sounds">
+          <span><span class="check-label">Sons complexes</span><br>
+          <span class="check-desc">Surligne ch, ph, ou, gn, eau, ai…</span></span>
+        </label>
+
+        <label class="check-row" for="chk-ruler">
+          <input type="checkbox" id="chk-ruler">
+          <span><span class="check-label">Règle de lecture</span><br>
+          <span class="check-desc">Surligne la ligne — ↑↓ pour naviguer</span></span>
+        </label>
+
+        <label class="check-row" for="chk-focus-mode">
+          <input type="checkbox" id="chk-focus-mode">
+          <span><span class="check-label">Mode focus mot</span><br>
+          <span class="check-desc">Affiche un mot à la fois en plein écran</span></span>
+        </label>
+
+        <label class="check-row" for="chk-dict">
+          <input type="checkbox" id="chk-dict" checked>
+          <span><span class="check-label">Dictionnaire au clic</span><br>
+          <span class="check-desc">Cliquez un mot pour le définir / l'écouter</span></span>
+        </label>
+      </div>
     </div>
 
-    <div class="settings-section">
-      <button class="btn btn-ghost btn-sm" id="btn-reset" type="button">
-        Reinitialiser le texte
-      </button>
+    <!-- TAB : Couleur / overlay -->
+    <div class="tab-panel" id="tab-overlay" role="tabpanel">
+      <div class="settings-section">
+        <div class="settings-section-title">Thème</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" data-theme="" id="theme-default" aria-pressed="true">Défaut</button>
+          <button class="btn btn-ghost btn-sm" data-theme="theme-sepia" id="theme-sepia" aria-pressed="false">Sépia</button>
+          <button class="btn btn-ghost btn-sm" data-theme="theme-cream" id="theme-cream" aria-pressed="false">Crème</button>
+          <button class="btn btn-ghost btn-sm" data-theme="theme-dark" id="theme-dark" aria-pressed="false">Sombre</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">Filtre Irlen (overlay)</div>
+        <p style="font-size:0.78rem;color:#5a6a7e;line-height:1.5;">Appliquez une teinte légère sur la zone de lecture pour réduire la fatigue visuelle.</p>
+        <div class="overlay-grid" role="group" aria-label="Couleurs d'overlay">
+          <button class="overlay-swatch active" data-overlay="" style="background:#e0e0e0;" aria-label="Aucun filtre" title="Aucun"></button>
+          <button class="overlay-swatch" data-overlay="rgba(255,255,150,0.30)" style="background:rgba(255,255,150,0.8);" aria-label="Filtre jaune" title="Jaune"></button>
+          <button class="overlay-swatch" data-overlay="rgba(255,220,120,0.28)" style="background:rgba(255,220,120,0.8);" aria-label="Filtre ambre" title="Ambre"></button>
+          <button class="overlay-swatch" data-overlay="rgba(180,230,180,0.28)" style="background:rgba(180,230,180,0.8);" aria-label="Filtre vert" title="Vert"></button>
+          <button class="overlay-swatch" data-overlay="rgba(180,210,255,0.28)" style="background:rgba(180,210,255,0.8);" aria-label="Filtre bleu" title="Bleu"></button>
+          <button class="overlay-swatch" data-overlay="rgba(230,180,255,0.25)" style="background:rgba(230,180,255,0.8);" aria-label="Filtre violet" title="Violet"></button>
+          <button class="overlay-swatch" data-overlay="rgba(255,180,180,0.25)" style="background:rgba(255,180,180,0.8);" aria-label="Filtre rose" title="Rose"></button>
+          <button class="overlay-swatch" data-overlay="rgba(180,240,230,0.28)" style="background:rgba(180,240,230,0.8);" aria-label="Filtre turquoise" title="Turquoise"></button>
+          <button class="overlay-swatch" data-overlay="rgba(230,220,180,0.28)" style="background:rgba(230,220,180,0.8);" aria-label="Filtre sépia" title="Sépia clair"></button>
+          <button class="overlay-swatch" data-overlay="rgba(200,200,200,0.22)" style="background:rgba(200,200,200,0.8);" aria-label="Filtre gris" title="Gris"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB : Voix -->
+    <div class="tab-panel" id="tab-voix" role="tabpanel">
+      <div class="settings-section">
+        <div class="settings-section-title">Synthèse vocale</div>
+        <div class="slider-row">
+          <label class="slider-label" for="sl-tts-rate">Vitesse <span id="sl-tts-rate-val">1.0×</span></label>
+          <input type="range" id="sl-tts-rate" min="0.5" max="2.0" value="1.0" step="0.05"
+                 aria-label="Vitesse de lecture">
+        </div>
+        <div class="slider-row">
+          <label class="slider-label" for="sl-tts-pitch">Hauteur <span id="sl-tts-pitch-val">1.0</span></label>
+          <input type="range" id="sl-tts-pitch" min="0.5" max="2.0" value="1.0" step="0.05"
+                 aria-label="Hauteur de la voix">
+        </div>
+        <div class="slider-row">
+          <label class="slider-label" for="sel-tts-voice">Voix</label>
+          <select class="ctrl-select" id="sel-tts-voice" aria-label="Choix de la voix">
+            <option value="">Voix par défaut (FR)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Actions</div>
+        <button class="btn btn-ghost btn-sm" id="btn-show-bookmarks" type="button">&#128278; Marque-pages</button>
+        <button class="btn btn-ghost btn-sm" id="btn-show-profiles" type="button">&#128100; Profils</button>
+        <button class="btn btn-ghost btn-sm" id="btn-show-stats" type="button">&#127942; Mes progrès</button>
+      </div>
     </div>
 
   </aside>
@@ -438,44 +679,69 @@ footer a { color: var(--marine); }
   <div id="panel-reading">
 
     <!-- Barre TTS -->
-    <div id="tts-bar" role="group" aria-label="Controles de lecture vocale">
-      <button class="btn btn-accent" id="btn-play" type="button" aria-label="Lire le texte a voix haute">
+    <div id="tts-bar" role="group" aria-label="Contrôles de lecture vocale">
+      <button class="btn btn-accent" id="btn-play" type="button" aria-label="Lire le texte à voix haute">
         &#128266; Lire
       </button>
       <button class="btn btn-ghost" id="btn-pause" type="button" disabled aria-label="Pause">
         &#9208; Pause
       </button>
-      <button class="btn btn-ghost" id="btn-stop" type="button" disabled aria-label="Arreter la lecture">
+      <button class="btn btn-ghost" id="btn-stop" type="button" disabled aria-label="Arrêter la lecture">
         &#9209; Stop
       </button>
       <div id="tts-status" aria-live="polite" aria-atomic="true">En attente</div>
+    </div>
+
+    <!-- Stats bar -->
+    <div id="stats-bar" aria-label="Statistiques de lecture de cette session">
+      <div class="stat-item">
+        <div class="stat-val" id="stat-words">0</div>
+        <div class="stat-lbl">mots lus</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val" id="stat-time">0 min</div>
+        <div class="stat-lbl">temps total</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val" id="stat-sessions">0</div>
+        <div class="stat-lbl">sessions</div>
+      </div>
+      <div id="stats-message" aria-live="polite"></div>
+    </div>
+
+    <!-- Sources de texte -->
+    <div id="source-bar" role="group" aria-label="Sources de texte">
+      <span id="source-bar-label">Texte&nbsp;:</span>
+      <button class="btn btn-ghost btn-sm" id="btn-paste-clip" type="button">&#128203; Coller</button>
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+        &#128196; Importer .txt
+        <input type="file" id="file-input" accept=".txt,text/plain" style="display:none;" aria-label="Importer un fichier texte">
+      </label>
+      <button class="btn btn-ghost btn-sm" id="btn-clear-text" type="button">&#128465; Vider</button>
+      <button class="btn btn-ghost btn-sm" id="btn-reset-default" type="button">&#8635; Texte démo</button>
     </div>
 
     <!-- Zone texte -->
     <div id="text-container">
       <div id="text-toolbar">
         <span id="text-toolbar-label">Zone de texte</span>
-        <span id="text-toolbar-hint">Cliquez pour editer</span>
+        <div id="text-toolbar-right">
+          <button class="btn btn-ghost btn-xs" id="btn-focus-mode-toggle" type="button" aria-pressed="false">Focus mot</button>
+          <button class="btn btn-ghost btn-xs" id="btn-page-prev" type="button" aria-label="Page précédente" disabled>&#8592;</button>
+          <span id="page-info" aria-live="polite">Page 1/1</span>
+          <button class="btn btn-ghost btn-xs" id="btn-page-next" type="button" aria-label="Page suivante" disabled>&#8594;</button>
+        </div>
       </div>
 
+      <div id="color-overlay" aria-hidden="true"></div>
+
       <textarea id="text-edit-area"
-                aria-label="Zone de texte editable"
-                spellcheck="false"
-                autocorrect="off"
-                autocapitalize="off">La dyslexie est une particularite neurologique qui affecte la facon dont le cerveau traite les mots ecrits. Elle concerne environ 10 % de la population mondiale, independamment de l'intelligence ou de la motivation.
-
-Les personnes dyslexiques peuvent avoir des difficultes a reconnaitre les lettres, a les associer aux sons correspondants, ou a lire couramment. Ces difficultes varient d'une personne a l'autre : certains confondent des lettres similaires comme b et d, d'autres lisent les syllabes dans le desordre.
-
-Des adaptations simples peuvent considerablement faciliter la lecture : agrandir le texte, augmenter l'espacement entre les lettres et les mots, choisir un interligne confortable, ou encore colorer les syllabes pour aider l'oeil a segmenter les mots.
-
-La regle de lecture permet de se concentrer sur une seule ligne a la fois, en attenuant les autres. La lecture vocale peut accompagner la lecture visuelle pour renforcer la comprehension.
-
-Chaque lecteur est unique. Ces outils sont la pour s'adapter a vous, pas l'inverse.</textarea>
+                aria-label="Zone de texte éditable. Collez ou saisissez votre texte ici."
+                spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
 
       <div id="text-render-area"
-           tabindex="0"
-           role="document"
-           aria-label="Texte avec mise en forme adaptee. Utilisez Fleche Haut et Bas pour naviguer entre les lignes quand la regle de lecture est activee.">
+           tabindex="0" role="document"
+           aria-label="Texte avec mise en forme adaptée. Utilisez Flèche Haut et Bas pour naviguer entre les lignes quand la règle de lecture est activée.">
       </div>
     </div>
 
@@ -483,168 +749,322 @@ Chaque lecteur est unique. Ces outils sont la pour s'adapter a vous, pas l'inver
 </main>
 
 <footer id="app-footer" role="contentinfo">
-  <a href="../index.html">LibreA11y</a> &mdash; DysReader &middot; Demo open source &middot; 100&nbsp;% hors-ligne &middot;
+  <a href="../index.html">LibreA11y</a> &mdash; DysReader &middot; Application open source &middot; 100&nbsp;% hors-ligne &middot;
   <span id="footer-year"></span>
 </footer>
 
 <script>
-/* ============================================================
-   DysReader — Logique applicative
-   100 % hors-ligne, aucune dependance externe
-   ============================================================ */
 'use strict';
+/* ============================================================
+   DysReader — Application complète
+   100 % hors-ligne · Aucune dépendance externe
+   ============================================================ */
 
 /* ---- Utilitaires ---- */
 function eid(id) { return document.getElementById(id); }
+
 function announce(msg) {
   var el = eid('aria-live');
   el.textContent = '';
   setTimeout(function() { el.textContent = msg; }, 60);
 }
+
+function showToast(msg, duration) {
+  var t = eid('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function() { t.classList.remove('show'); }, duration || 2800);
+}
+
 function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-/* ---- Texte par defaut ---- */
-var DEFAULT_TEXT = eid('text-edit-area').value;
+function ls_get(key, def) {
+  try { var v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : def; }
+  catch(e) { return def; }
+}
+function ls_set(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+}
 
-/* ---- Footer annee ---- */
+/* ---- Footer année ---- */
 eid('footer-year').textContent = new Date().getFullYear();
 
-/* ---- Etat global ---- */
+/* ---- Texte démo ---- */
+var DEFAULT_TEXT = [
+  'La dyslexie est une particularité neurologique qui affecte la façon dont le cerveau traite les mots écrits.',
+  'Elle concerne environ 10 % de la population mondiale, indépendamment de l\'intelligence ou de la motivation.',
+  '',
+  'Les personnes dyslexiques peuvent avoir des difficultés à reconnaître les lettres, à les associer aux sons correspondants, ou à lire couramment.',
+  'Ces difficultés varient d\'une personne à l\'autre : certains confondent des lettres similaires comme b et d, d\'autres lisent les syllabes dans le désordre.',
+  '',
+  'Des adaptations simples peuvent considérablement faciliter la lecture : agrandir le texte, augmenter l\'espacement entre les lettres et les mots,',
+  'choisir un interligne confortable, ou encore colorer les syllabes pour aider l\'œil à segmenter les mots.',
+  '',
+  'La règle de lecture permet de se concentrer sur une seule ligne à la fois, en atténuant les autres.',
+  'La lecture vocale peut accompagner la lecture visuelle pour renforcer la compréhension.',
+  '',
+  'Chaque lecteur est unique. Ces outils sont là pour s\'adapter à vous, pas l\'inverse.'
+].join('\n');
+
+/* ============================================================
+   ÉTAT GLOBAL
+   ============================================================ */
 var S = {
+  /* Typo */
+  fontFamily:    "system-ui,-apple-system,'Segoe UI',Roboto,sans-serif",
   fontSize:      20,
   letterSpacing: 0.05,
   wordSpacing:   0.15,
   lineHeight:    1.8,
-  syllables:     false,
-  ruler:         false,
-  rulerIdx:      0,
-  ttsReady:      false,
-  ttsPlaying:    false,
-  ttsPaused:     false
+  colWidth:      680,
+  padding:       24,
+  /* Aides */
+  syllables:   false,
+  bionic:      false,
+  sounds:      false,
+  ruler:       false,
+  rulerIdx:    0,
+  focusMode:   false,
+  focusIdx:    0,
+  dictEnabled: true,
+  /* Couleur */
+  theme:   '',
+  overlay: '',
+  /* TTS */
+  ttsRate:  1.0,
+  ttsPitch: 1.0,
+  ttsVoiceURI: '',
+  ttsReady:    false,
+  ttsPlaying:  false,
+  ttsPaused:   false,
+  /* Pagination */
+  pageSize:    2000,  /* chars par page */
+  currentPage: 0,
+  pages:       [],
+  /* Stats */
+  statsWordsSession: 0,
+  statsTimeSession:  0,   /* ms */
+  statsReadStart:    null,
 };
 
 /* ============================================================
-   PERSISTANCE localStorage
+   PERSISTANCE
    ============================================================ */
+var PREFS_KEYS = [
+  'fontFamily','fontSize','letterSpacing','wordSpacing','lineHeight',
+  'colWidth','padding','syllables','bionic','sounds','ruler',
+  'dictEnabled','theme','overlay','ttsRate','ttsPitch','ttsVoiceURI'
+];
+
 function savePrefs() {
-  try {
-    localStorage.setItem('dys_prefs', JSON.stringify({
-      fontSize:      S.fontSize,
-      letterSpacing: S.letterSpacing,
-      wordSpacing:   S.wordSpacing,
-      lineHeight:    S.lineHeight,
-      syllables:     S.syllables,
-      ruler:         S.ruler
-    }));
-  } catch(e) {}
+  var p = {};
+  PREFS_KEYS.forEach(function(k) { p[k] = S[k]; });
+  ls_set('dys_prefs', p);
 }
+
 function loadPrefs() {
-  try {
-    var p = JSON.parse(localStorage.getItem('dys_prefs') || 'null');
-    if (!p) return;
-    if (p.fontSize      !== undefined) S.fontSize      = p.fontSize;
-    if (p.letterSpacing !== undefined) S.letterSpacing = p.letterSpacing;
-    if (p.wordSpacing   !== undefined) S.wordSpacing   = p.wordSpacing;
-    if (p.lineHeight    !== undefined) S.lineHeight    = p.lineHeight;
-    if (p.syllables     !== undefined) S.syllables     = p.syllables;
-    if (p.ruler         !== undefined) S.ruler         = p.ruler;
-  } catch(e) {}
+  var p = ls_get('dys_prefs', null);
+  if (!p) return;
+  PREFS_KEYS.forEach(function(k) {
+    if (p[k] !== undefined) S[k] = p[k];
+  });
 }
+
 function saveText() {
-  try { localStorage.setItem('dys_text', eid('text-edit-area').value); } catch(e) {}
+  ls_set('dys_text', eid('text-edit-area').value);
 }
+
 function loadText() {
-  try {
-    var t = localStorage.getItem('dys_text');
-    if (t) eid('text-edit-area').value = t;
-  } catch(e) {}
+  var t = ls_get('dys_text', null);
+  if (t !== null) eid('text-edit-area').value = t;
+  else eid('text-edit-area').value = DEFAULT_TEXT;
 }
 
 /* ============================================================
-   SYLLABATION — heuristique francaise simplifiee
+   MINI-DICTIONNAIRE (mots courants français)
    ============================================================ */
-var VOWELS = 'aeiouyaaeeiouoeae';  /* inclut lettres accentuees courantes */
-var VOWEL_SET = 'aeiouyaàâäéèêëîïôöùûüœæ';
+var DICT = {
+  'dyslexie': 'Difficulté d\'apprentissage de la lecture et de l\'écriture, d\'origine neurologique, non liée à l\'intelligence.',
+  'neurologique': 'Qui concerne le système nerveux et le cerveau.',
+  'adaptation': 'Modification permettant de mieux s\'ajuster à une situation ou un besoin.',
+  'syllabe': 'Unité sonore d\'un mot, formée d\'une ou plusieurs lettres prononcées ensemble.',
+  'interligne': 'Espace vertical entre les lignes de texte.',
+  'espacement': 'Distance entre les lettres ou les mots dans un texte.',
+  'compréhension': 'Capacité à saisir le sens d\'un texte ou d\'une information.',
+  'lecture': 'Action de lire, de décoder et de comprendre un texte écrit.',
+  'cerveau': 'Organe principal du système nerveux, situé dans le crâne.',
+  'motivation': 'Ensemble des raisons qui poussent une personne à agir ou à apprendre.',
+  'intelligence': 'Capacité à comprendre, apprendre, raisonner et s\'adapter.',
+  'population': 'Ensemble des personnes vivant dans un lieu ou un groupe.',
+  'attention': 'Capacité à se concentrer sur une information ou une tâche.',
+  'mémoire': 'Faculté de retenir et de rappeler des informations passées.',
+  'concentration': 'Action de focaliser son esprit sur un sujet précis.',
+  'alphabet': 'Ensemble ordonné des lettres d\'une langue.',
+  'phonologie': 'Étude des sons du langage et de leur organisation.',
+  'conscience': 'Perception que l\'on a de soi-même et du monde.',
+  'segmenter': 'Diviser en parties distinctes, comme un mot en syllabes.',
+  'particularité': 'Caractéristique propre à quelqu\'un ou quelque chose.',
+};
 
-function isVowel(ch) {
-  return VOWEL_SET.indexOf(ch.toLowerCase()) >= 0;
+function lookupWord(word) {
+  var clean = word.toLowerCase().replace(/[^a-zàâäéèêëîïôöùûüœæç]/g, '');
+  if (DICT[clean]) return DICT[clean];
+  /* Épelle le mot si pas dans le dico */
+  return 'Prononciation : ' + clean.split('').join(' · ');
 }
 
-/* Digrammes consonantiques inséparables */
+/* ============================================================
+   SYLLABATION (heuristique française)
+   ============================================================ */
+var VOWEL_SET = 'aeiouyàâäéèêëîïôöùûüœæ';
+function isVowel(ch) { return VOWEL_SET.indexOf(ch.toLowerCase()) >= 0; }
 var DIGRAPHS = ['ch','ph','gn','bl','br','cl','cr','dr','fl','fr','gl','gr','pl','pr','tr','vr','th','qu','sc','sp','st','ck'];
-
-function isDiGraph(a, b) {
-  if (!a || !b) return false;
-  return DIGRAPHS.indexOf((a+b).toLowerCase()) >= 0;
-}
+function isDiGraph(a, b) { return DIGRAPHS.indexOf((a+b).toLowerCase()) >= 0; }
 
 function syllabify(word) {
   if (word.length <= 2) return [word];
-  var n = word.length;
-  var cuts = [0];
-  var i = 0;
-
+  var n = word.length, cuts = [0], i = 0;
   while (i < n) {
     if (!isVowel(word[i])) { i++; continue; }
-    /* on est sur une voyelle, avancer sur les voyelles consécutives */
     var j = i + 1;
     while (j < n && isVowel(word[j])) j++;
-    /* j = premiere consonne apres voyelle(s), ou fin */
     if (j >= n) break;
-    /* chercher fin du bloc consonantique */
     var k = j;
     while (k < n && !isVowel(word[k])) k++;
-    /* k = prochaine voyelle ou fin */
     if (k >= n) break;
-    var nbC = k - j;
-    var cut;
-    if (nbC === 1) {
-      cut = j; /* V|CV */
-    } else if (nbC === 2) {
-      if (isDiGraph(word[j], word[j+1])) {
-        cut = j;   /* V|DGV */
-      } else {
-        cut = j + 1; /* VC|CV */
-      }
-    } else {
-      /* >= 3 consonnes */
-      if (isDiGraph(word[j+1], word[j+2])) {
-        cut = j + 1;
-      } else if (isDiGraph(word[j], word[j+1])) {
-        cut = j + 2;
-      } else {
-        cut = j + 1;
-      }
+    var nbC = k - j, cut;
+    if (nbC === 1) { cut = j; }
+    else if (nbC === 2) { cut = isDiGraph(word[j], word[j+1]) ? j : j + 1; }
+    else {
+      if (isDiGraph(word[j+1], word[j+2])) cut = j + 1;
+      else if (isDiGraph(word[j], word[j+1])) cut = j + 2;
+      else cut = j + 1;
     }
     if (cut > cuts[cuts.length - 1]) cuts.push(cut);
     i = k;
   }
-
   var syls = [];
   for (var s = 0; s < cuts.length; s++) {
-    var st = cuts[s];
-    var en = (s + 1 < cuts.length) ? cuts[s+1] : n;
-    syls.push(word.slice(st, en));
+    syls.push(word.slice(cuts[s], cuts[s+1] || n));
   }
   return syls.length ? syls : [word];
 }
 
-/* Colore un mot ; retourne {html, count} */
-function colorWord(raw, baseIdx) {
-  /* Separe ponctuation pre/post du noyau */
-  var m = raw.match(/^([\W_]*)([\wÀ-ɏ''-]+)([\W_]*)$/);
-  if (!m) return { html: escHtml(raw), count: 0 };
+/* Sons complexes à surligner */
+var COMPLEX_SOUNDS = ['eau','ain','ein','oin','oui','gne','ail','eil','euil','ouil',
+  'ou','ai','au','oi','eu','ei','an','en','in','on','un','ch','ph','gn','qu'];
+
+function highlightSounds(text) {
+  /* Tri par longueur décroissante pour matcher les plus longs d'abord */
+  var sounds = COMPLEX_SOUNDS.slice().sort(function(a,b){return b.length-a.length;});
+  var html = '', i = 0;
+  text = text.toLowerCase();
+  var original = text; /* on travaille sur le texte original */
+  /* Reconstituons depuis l'original fourni (qui peut avoir majuscules) */
+  /* Re-receive le texte brut */
+  return text; /* placeholder — intégré dans colorWord */
+}
+
+function colorWord(raw, baseIdx, opts) {
+  var m = raw.match(/^([\W_]*)([\wÀ-ɏ''ʼ-]+)([\W_]*)$/);
+  if (!m) return { html: escHtml(raw), count: 0, plain: raw };
   var pre = m[1], core = m[2], post = m[3];
-  var syls = syllabify(core);
   var html = escHtml(pre);
-  for (var i = 0; i < syls.length; i++) {
-    var cls = ((baseIdx + i) % 2 === 0) ? 'syl-a' : 'syl-b';
-    html += '<span class="' + cls + '">' + escHtml(syls[i]) + '</span>';
+
+  if (opts.bionic) {
+    var half = Math.max(1, Math.ceil(core.length / 2));
+    var boldPart = escHtml(core.slice(0, half));
+    var restPart = escHtml(core.slice(half));
+    if (opts.sounds) {
+      boldPart = applySounds(core.slice(0, half));
+      restPart = applySounds(core.slice(half));
+    }
+    html += '<span class="bio-b">' + boldPart + '</span>' + restPart;
+    html += escHtml(post);
+    return { html: html, count: 1, plain: core };
   }
-  html += escHtml(post);
-  return { html: html, count: syls.length };
+
+  if (opts.syllables) {
+    var syls = syllabify(core);
+    for (var i = 0; i < syls.length; i++) {
+      var cls = ((baseIdx + i) % 2 === 0) ? 'syl-a' : 'syl-b';
+      var sylContent = opts.sounds ? applySounds(syls[i]) : escHtml(syls[i]);
+      html += '<span class="' + cls + '">' + sylContent + '</span>';
+    }
+    html += escHtml(post);
+    return { html: html, count: syls.length, plain: core };
+  }
+
+  if (opts.sounds) {
+    html += applySounds(core);
+    html += escHtml(post);
+    return { html: html, count: 1, plain: core };
+  }
+
+  html += escHtml(core) + escHtml(post);
+  return { html: html, count: 1, plain: core };
+}
+
+function applySounds(text) {
+  /* Surligne les sons complexes dans un fragment de texte */
+  var sounds = COMPLEX_SOUNDS.slice().sort(function(a,b){return b.length-a.length;});
+  var low = text.toLowerCase();
+  var result = '';
+  var i = 0;
+  while (i < text.length) {
+    var matched = false;
+    for (var s = 0; s < sounds.length; s++) {
+      var snd = sounds[s];
+      if (low.slice(i, i + snd.length) === snd) {
+        result += '<span class="son-hi">' + escHtml(text.slice(i, i + snd.length)) + '</span>';
+        i += snd.length;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) { result += escHtml(text[i]); i++; }
+  }
+  return result;
+}
+
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+function buildPages(text) {
+  if (text.length <= S.pageSize) {
+    S.pages = [text];
+  } else {
+    var pages = [];
+    var start = 0;
+    while (start < text.length) {
+      var end = start + S.pageSize;
+      if (end < text.length) {
+        /* Coupe sur un retour à la ligne si possible */
+        var nl = text.lastIndexOf('\n', end);
+        if (nl > start) end = nl + 1;
+      }
+      pages.push(text.slice(start, end));
+      start = end;
+    }
+    S.pages = pages;
+  }
+  if (S.currentPage >= S.pages.length) S.currentPage = 0;
+  updatePageUI();
+}
+
+function updatePageUI() {
+  var total = S.pages.length;
+  eid('page-info').textContent = 'Page ' + (S.currentPage + 1) + '/' + total;
+  eid('btn-page-prev').disabled = S.currentPage === 0;
+  eid('btn-page-next').disabled = S.currentPage >= total - 1;
+}
+
+function currentPageText() {
+  if (!S.pages.length) return '';
+  return S.pages[S.currentPage] || '';
 }
 
 /* ============================================================
@@ -652,179 +1072,698 @@ function colorWord(raw, baseIdx) {
    ============================================================ */
 var editArea   = eid('text-edit-area');
 var renderArea = eid('text-render-area');
-var hintEl     = eid('text-toolbar-hint');
 
 function applyTypo(el) {
   el.style.fontSize      = S.fontSize + 'px';
   el.style.letterSpacing = S.letterSpacing + 'em';
   el.style.wordSpacing   = S.wordSpacing + 'em';
   el.style.lineHeight    = S.lineHeight;
+  el.style.maxWidth      = S.colWidth + 'px';
+  el.style.padding       = S.padding + 'px';
+  el.style.margin        = '0 auto';
+  el.style.fontFamily    = S.fontFamily;
 }
 
 function renderText() {
-  var useRender = S.syllables || S.ruler;
+  var needRender = S.syllables || S.ruler || S.bionic || S.sounds || S.dictEnabled;
+  var text = currentPageText();
 
-  if (!useRender) {
+  if (!needRender) {
     editArea.style.display   = 'block';
     renderArea.style.display = 'none';
-    hintEl.textContent = 'Cliquez pour editer';
     applyTypo(editArea);
     return;
   }
 
   editArea.style.display   = 'none';
   renderArea.style.display = 'block';
-  hintEl.textContent = 'Cliquez "Reinitialiser" pour editer a nouveau';
   applyTypo(renderArea);
 
-  var lines = editArea.value.split('\n');
-  var total = lines.length;
+  var lines = text.split('\n');
   var html  = '';
+  var opts  = { syllables: S.syllables, bionic: S.bionic, sounds: S.sounds };
 
-  for (var li = 0; li < total; li++) {
+  for (var li = 0; li < lines.length; li++) {
     var line = lines[li];
-    var cls  = 'render-line';
+    var cls = 'render-line';
     if (S.ruler) {
-      if (li === S.rulerIdx)  cls += ' line-active';
-      else                    cls += ' line-dimmed';
+      cls += (li === S.rulerIdx) ? ' line-active' : ' line-dimmed';
     }
     var lineContent;
     if (line.trim() === '') {
       lineContent = '&nbsp;';
-    } else if (S.syllables) {
+    } else {
       var words = line.split(/(\s+)/);
-      var sylIdx = 0;
-      var lh = '';
+      var sylIdx = 0, lh = '';
       for (var wi = 0; wi < words.length; wi++) {
         if (/^\s+$/.test(words[wi])) {
           lh += escHtml(words[wi]);
         } else {
-          var res = colorWord(words[wi], sylIdx);
-          lh += res.html;
+          var res = colorWord(words[wi], sylIdx, opts);
+          /* Wrap chaque mot pour dictionnaire */
+          if (S.dictEnabled) {
+            lh += '<span class="dict-word" tabindex="0" role="button" aria-label="' + escHtml(res.plain || words[wi]) + '">' + res.html + '</span>';
+          } else {
+            lh += res.html;
+          }
           sylIdx += res.count;
         }
       }
       lineContent = lh;
-    } else {
-      lineContent = escHtml(line);
     }
-    html += '<span class="render-line ' + (S.ruler ? (li === S.rulerIdx ? 'line-active' : 'line-dimmed') : '') + '" data-li="' + li + '">' + lineContent + '</span>';
+    html += '<span class="' + cls + '" data-li="' + li + '">' + lineContent + '</span>';
   }
 
   renderArea.innerHTML = html;
 }
 
 /* ============================================================
-   REGLE DE LECTURE
+   FOCUS MOT
+   ============================================================ */
+var focusWords = [];
+
+function buildFocusWords() {
+  var text = editArea.value;
+  focusWords = text.match(/[\wÀ-ɏ''ʼ-]+/g) || [];
+}
+
+function showFocusWord(idx) {
+  if (!focusWords.length) return;
+  idx = Math.max(0, Math.min(focusWords.length - 1, idx));
+  S.focusIdx = idx;
+  eid('focus-word-display').textContent = focusWords[idx];
+  eid('btn-focus-prev').disabled = (idx === 0);
+  eid('btn-focus-next').disabled = (idx === focusWords.length - 1);
+}
+
+function openFocusMode() {
+  buildFocusWords();
+  S.focusIdx = 0;
+  showFocusWord(0);
+  eid('focus-word-overlay').classList.add('active');
+  eid('btn-focus-close').focus();
+  announce('Mode focus mot activé. ' + focusWords.length + ' mots. Utilisez les flèches pour naviguer.');
+}
+
+function closeFocusMode() {
+  eid('focus-word-overlay').classList.remove('active');
+  eid('chk-focus-mode').checked = false;
+  S.focusMode = false;
+  eid('btn-focus-mode-toggle').setAttribute('aria-pressed', 'false');
+  announce('Mode focus mot désactivé');
+}
+
+eid('btn-focus-prev').addEventListener('click', function() { showFocusWord(S.focusIdx - 1); });
+eid('btn-focus-next').addEventListener('click', function() { showFocusWord(S.focusIdx + 1); });
+eid('btn-focus-close').addEventListener('click', closeFocusMode);
+eid('btn-focus-speak').addEventListener('click', function() {
+  if (!window.speechSynthesis || !focusWords[S.focusIdx]) return;
+  var u = new SpeechSynthesisUtterance(focusWords[S.focusIdx]);
+  u.lang = 'fr-FR';
+  if (ttsVoiceFR) u.voice = ttsVoiceFR;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+});
+
+eid('focus-word-overlay').addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); showFocusWord(S.focusIdx + 1); }
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { e.preventDefault(); showFocusWord(S.focusIdx - 1); }
+  if (e.key === 'Escape') closeFocusMode();
+});
+
+/* ============================================================
+   RÈGLE DE LECTURE + CLAVIER RENDU
    ============================================================ */
 renderArea.addEventListener('keydown', function(e) {
-  if (!S.ruler) return;
-  if (e.key === 'ArrowDown') {
-    e.preventDefault();
-    var count = editArea.value.split('\n').length;
-    S.rulerIdx = Math.min(count - 1, S.rulerIdx + 1);
-    renderText();
-    announce('Ligne ' + (S.rulerIdx + 1) + ' sur ' + count);
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault();
-    S.rulerIdx = Math.max(0, S.rulerIdx - 1);
-    var total2 = editArea.value.split('\n').length;
-    renderText();
-    announce('Ligne ' + (S.rulerIdx + 1) + ' sur ' + total2);
+  if (S.ruler) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      var count = currentPageText().split('\n').length;
+      S.rulerIdx = Math.min(count - 1, S.rulerIdx + 1);
+      renderText();
+      announce('Ligne ' + (S.rulerIdx + 1) + ' sur ' + count);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      S.rulerIdx = Math.max(0, S.rulerIdx - 1);
+      renderText();
+      announce('Ligne ' + (S.rulerIdx + 1));
+    }
   }
 });
 
 /* ============================================================
-   CONTROLES UI
+   DICTIONNAIRE AU CLIC
    ============================================================ */
-function syncControls() {
-  eid('sl-fontsize').value          = S.fontSize;
-  eid('sl-fontsize-val').textContent = S.fontSize + ' px';
-  eid('sl-letterspacing').value     = S.letterSpacing;
-  eid('sl-letterspacing-val').textContent = S.letterSpacing.toFixed(2) + ' em';
-  eid('sl-wordspacing').value       = S.wordSpacing;
-  eid('sl-wordspacing-val').textContent   = S.wordSpacing.toFixed(2) + ' em';
-  eid('sl-lineheight').value        = S.lineHeight;
-  eid('sl-lineheight-val').textContent    = S.lineHeight.toFixed(1);
-  eid('chk-syllables').checked = S.syllables;
-  eid('chk-ruler').checked     = S.ruler;
+var dictPopup = eid('dict-popup');
+
+function showDict(word, x, y) {
+  var def = lookupWord(word);
+  eid('dict-word').textContent = word;
+  eid('dict-def').textContent = def;
+  dictPopup.style.display = 'block';
+  dictPopup.classList.add('visible');
+  /* Positionnement */
+  var vw = window.innerWidth, vh = window.innerHeight;
+  var left = Math.min(x + 8, vw - 300);
+  var top  = y + 12;
+  if (top + 120 > vh) top = y - 130;
+  dictPopup.style.left = left + 'px';
+  dictPopup.style.top  = top + 'px';
+  /* Lecture vocale du mot */
+  if (window.speechSynthesis) {
+    var u = new SpeechSynthesisUtterance(word);
+    u.lang = 'fr-FR';
+    if (ttsVoiceFR) u.voice = ttsVoiceFR;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }
 }
 
-function sliderSetup(sliderId, valId, unit, decimals, prop, multiplier) {
-  var sl = eid(sliderId);
-  var vl = eid(valId);
+function hideDict() {
+  dictPopup.classList.remove('visible');
+  dictPopup.style.display = 'none';
+}
+
+eid('dict-close').addEventListener('click', hideDict);
+
+renderArea.addEventListener('click', function(e) {
+  if (!S.dictEnabled) return;
+  var t = e.target.closest('.dict-word');
+  if (!t) { hideDict(); return; }
+  var word = t.textContent.replace(/[^\wÀ-ɏ''ʼ-]/g, '').trim();
+  if (word) showDict(word, e.clientX, e.clientY);
+});
+
+renderArea.addEventListener('keydown', function(e) {
+  if (!S.dictEnabled) return;
+  if (e.key === 'Enter' || e.key === ' ') {
+    var t = e.target.closest('.dict-word');
+    if (!t) return;
+    e.preventDefault();
+    var word = t.textContent.replace(/[^\wÀ-ɏ''ʼ-]/g, '').trim();
+    if (word) {
+      var rect = t.getBoundingClientRect();
+      showDict(word, rect.left, rect.bottom);
+    }
+  }
+  if (e.key === 'Escape') hideDict();
+});
+
+document.addEventListener('click', function(e) {
+  if (!dictPopup.contains(e.target) && !e.target.closest('.dict-word')) hideDict();
+});
+
+/* ============================================================
+   MARQUE-PAGES
+   ============================================================ */
+function getBookmarks() { return ls_get('dys_bookmarks', []); }
+function saveBookmarks(bks) { ls_set('dys_bookmarks', bks); }
+
+function renderBookmarks() {
+  var bks = getBookmarks();
+  var cont = eid('bookmarks-list');
+  if (!bks.length) {
+    cont.innerHTML = '<p style="color:#5a6a7e;font-size:0.85rem;padding:12px 0;">Aucun marque-page. Cliquez « Ajouter » pour enregistrer votre position.</p>';
+    return;
+  }
+  cont.innerHTML = '';
+  bks.forEach(function(bk, i) {
+    var item = document.createElement('div');
+    item.className = 'bookmark-item';
+    item.innerHTML =
+      '<span class="bookmark-text" title="' + escHtml(bk.preview) + '">&#128278; ' + escHtml(bk.label) + '</span>' +
+      '<button class="bookmark-del" aria-label="Supprimer le marque-page ' + escHtml(bk.label) + '" data-idx="' + i + '">&#10005;</button>';
+    item.querySelector('.bookmark-text').addEventListener('click', function() {
+      /* Restore le texte et le position */
+      if (bk.text) editArea.value = bk.text;
+      buildPages(editArea.value);
+      S.currentPage = bk.page || 0;
+      S.rulerIdx = bk.rulerIdx || 0;
+      renderText();
+      closeModal('modal-bookmarks');
+      showToast('Marque-page restauré');
+    });
+    item.querySelector('.bookmark-del').addEventListener('click', function(e) {
+      e.stopPropagation();
+      var idx = parseInt(this.getAttribute('data-idx'), 10);
+      var arr = getBookmarks();
+      arr.splice(idx, 1);
+      saveBookmarks(arr);
+      renderBookmarks();
+    });
+    cont.appendChild(item);
+  });
+}
+
+eid('btn-add-bookmark').addEventListener('click', function() {
+  var text = editArea.value;
+  var preview = text.trim().slice(0, 60).replace(/\s+/g, ' ');
+  var label = preview.slice(0, 40) + (text.length > 40 ? '…' : '');
+  var bks = getBookmarks();
+  bks.push({ label: label, preview: preview, text: text, page: S.currentPage, rulerIdx: S.rulerIdx, date: Date.now() });
+  if (bks.length > 20) bks.shift(); /* max 20 */
+  saveBookmarks(bks);
+  renderBookmarks();
+  showToast('Marque-page ajouté');
+});
+
+/* ============================================================
+   PROFILS
+   ============================================================ */
+function getProfiles() { return ls_get('dys_profiles', []); }
+function saveProfiles(pr) { ls_set('dys_profiles', pr); }
+
+function currentSettingsSnap() {
+  var snap = {};
+  PREFS_KEYS.forEach(function(k) { snap[k] = S[k]; });
+  return snap;
+}
+
+function applyProfile(snap) {
+  PREFS_KEYS.forEach(function(k) {
+    if (snap[k] !== undefined) S[k] = snap[k];
+  });
+  syncControls();
+  applyTheme();
+  applyOverlay();
+  renderText();
+  savePrefs();
+}
+
+function renderProfiles() {
+  var profiles = getProfiles();
+  var cont = eid('profiles-list');
+  var active = ls_get('dys_active_profile', null);
+  if (!profiles.length) {
+    cont.innerHTML = '<p style="color:#5a6a7e;font-size:0.85rem;padding:12px 0;">Aucun profil. Configurez vos réglages puis enregistrez-les.</p>';
+    return;
+  }
+  cont.innerHTML = '';
+  profiles.forEach(function(pr, i) {
+    var item = document.createElement('div');
+    item.className = 'profile-item' + (active === pr.name ? ' active-profile' : '');
+    item.innerHTML =
+      '<span class="profile-name" tabindex="0" role="button" aria-label="Charger le profil ' + escHtml(pr.name) + '">' + escHtml(pr.name) + '</span>' +
+      '<div class="profile-actions">' +
+        '<button class="btn btn-ghost btn-xs" data-action="load" data-idx="' + i + '" aria-label="Charger">&#8617;</button>' +
+        '<button class="btn btn-danger btn-xs" data-action="del" data-idx="' + i + '" aria-label="Supprimer le profil ' + escHtml(pr.name) + '">&#10005;</button>' +
+      '</div>';
+    item.querySelector('[data-action="load"]').addEventListener('click', function() {
+      var idx = parseInt(this.getAttribute('data-idx'), 10);
+      var p = getProfiles()[idx];
+      applyProfile(p.settings);
+      ls_set('dys_active_profile', p.name);
+      renderProfiles();
+      showToast('Profil « ' + p.name + ' » chargé');
+    });
+    item.querySelector('[data-action="del"]').addEventListener('click', function() {
+      var idx = parseInt(this.getAttribute('data-idx'), 10);
+      var arr = getProfiles();
+      arr.splice(idx, 1);
+      saveProfiles(arr);
+      renderProfiles();
+    });
+    item.querySelector('.profile-name').addEventListener('click', function() {
+      var idx = parseInt(item.querySelector('[data-action="load"]').getAttribute('data-idx'), 10);
+      var p = getProfiles()[idx];
+      applyProfile(p.settings);
+      ls_set('dys_active_profile', p.name);
+      renderProfiles();
+      showToast('Profil « ' + p.name + ' » chargé');
+    });
+    cont.appendChild(item);
+  });
+}
+
+eid('btn-save-profile').addEventListener('click', function() {
+  var name = eid('profile-name-input').value.trim();
+  if (!name) { eid('profile-name-input').focus(); return; }
+  var profiles = getProfiles();
+  var existing = profiles.findIndex(function(p) { return p.name === name; });
+  var newPr = { name: name, settings: currentSettingsSnap(), date: Date.now() };
+  if (existing >= 0) profiles[existing] = newPr;
+  else profiles.push(newPr);
+  saveProfiles(profiles);
+  ls_set('dys_active_profile', name);
+  renderProfiles();
+  eid('profile-name-input').value = '';
+  showToast('Profil « ' + name + ' » enregistré');
+});
+
+/* ============================================================
+   STATISTIQUES
+   ============================================================ */
+function getStats() {
+  return ls_get('dys_stats', { totalWords: 0, totalTimeMs: 0, sessions: 0 });
+}
+function saveStats(st) { ls_set('dys_stats', st); }
+
+function startReadingTimer() {
+  if (!S.statsReadStart) S.statsReadStart = Date.now();
+}
+function stopReadingTimer() {
+  if (!S.statsReadStart) return;
+  var elapsed = Date.now() - S.statsReadStart;
+  S.statsTimeSession += elapsed;
+  S.statsReadStart = null;
+  /* Persist */
+  var st = getStats();
+  st.totalTimeMs += elapsed;
+  saveStats(st);
+}
+
+function countWordsInText() {
+  return (editArea.value.match(/\S+/g) || []).length;
+}
+
+function updateSessionStats() {
+  eid('stat-words').textContent = S.statsWordsSession;
+  var mins = Math.round(S.statsTimeSession / 60000);
+  eid('stat-time').textContent = mins + ' min';
+  var st = getStats();
+  eid('stat-sessions').textContent = st.sessions || 0;
+  /* Message encourageant */
+  var msg = '';
+  if (S.statsWordsSession >= 500) msg = 'Excellent travail !';
+  else if (S.statsWordsSession >= 200) msg = 'Bonne lecture !';
+  else if (S.statsWordsSession >= 50)  msg = 'Continuez !';
+  eid('stats-message').textContent = msg;
+}
+
+function renderStatsDetail() {
+  var st = getStats();
+  var mins = Math.round((st.totalTimeMs || 0) / 60000);
+  var cont = eid('stats-detail');
+  cont.innerHTML = [
+    '<div><strong>Total mots lus (toutes sessions) :</strong> ' + (st.totalWords || 0) + '</div>',
+    '<div><strong>Temps total de lecture :</strong> ' + mins + ' minute' + (mins > 1 ? 's' : '') + '</div>',
+    '<div><strong>Nombre de sessions :</strong> ' + (st.sessions || 0) + '</div>',
+    '<hr style="border:none;border-top:1px solid var(--border);">',
+    '<p style="font-size:0.85rem;color:#3a7d44;">Chaque session est un pas de plus. Vous progressez à votre rythme, et c\'est ce qui compte.</p>'
+  ].join('');
+}
+
+eid('btn-reset-stats').addEventListener('click', function() {
+  if (!confirm('Remettre les statistiques à zéro ?')) return;
+  saveStats({ totalWords: 0, totalTimeMs: 0, sessions: 0 });
+  S.statsWordsSession = 0;
+  S.statsTimeSession = 0;
+  updateSessionStats();
+  renderStatsDetail();
+  showToast('Statistiques remises à zéro');
+});
+
+/* ============================================================
+   CONTRÔLES UI — sync
+   ============================================================ */
+function syncControls() {
+  eid('sl-fontfamily').value = S.fontFamily;
+  eid('sl-fontsize').value = S.fontSize;
+  eid('sl-fontsize-val').textContent = S.fontSize + ' px';
+  eid('sl-letterspacing').value = S.letterSpacing;
+  eid('sl-letterspacing-val').textContent = S.letterSpacing.toFixed(2) + ' em';
+  eid('sl-wordspacing').value = S.wordSpacing;
+  eid('sl-wordspacing-val').textContent = S.wordSpacing.toFixed(2) + ' em';
+  eid('sl-lineheight').value = S.lineHeight;
+  eid('sl-lineheight-val').textContent = S.lineHeight.toFixed(1);
+  eid('sl-colwidth').value = S.colWidth;
+  eid('sl-colwidth-val').textContent = S.colWidth + ' px';
+  eid('sl-padding').value = S.padding;
+  eid('sl-padding-val').textContent = S.padding + ' px';
+  eid('chk-syllables').checked = S.syllables;
+  eid('chk-bionic').checked    = S.bionic;
+  eid('chk-sounds').checked    = S.sounds;
+  eid('chk-ruler').checked     = S.ruler;
+  eid('chk-focus-mode').checked = S.focusMode;
+  eid('chk-dict').checked      = S.dictEnabled;
+  eid('sl-tts-rate').value = S.ttsRate;
+  eid('sl-tts-rate-val').textContent = S.ttsRate.toFixed(2) + '×';
+  eid('sl-tts-pitch').value = S.ttsPitch;
+  eid('sl-tts-pitch-val').textContent = S.ttsPitch.toFixed(2);
+}
+
+function sliderSetup(sliderId, valId, unit, decimals, prop) {
+  var sl = eid(sliderId), vl = eid(valId);
   sl.addEventListener('input', function() {
     S[prop] = parseFloat(this.value);
-    vl.textContent = S[prop].toFixed(decimals) + ' ' + unit;
+    if (vl) vl.textContent = S[prop].toFixed(decimals) + (unit ? ' ' + unit : '');
     sl.setAttribute('aria-valuenow', S[prop]);
     renderText();
     savePrefs();
   });
 }
-sliderSetup('sl-fontsize',      'sl-fontsize-val',      'px', 0, 'fontSize',      1);
-sliderSetup('sl-letterspacing', 'sl-letterspacing-val', 'em', 2, 'letterSpacing', 1);
-sliderSetup('sl-wordspacing',   'sl-wordspacing-val',   'em', 2, 'wordSpacing',   1);
-sliderSetup('sl-lineheight',    'sl-lineheight-val',    '',   1, 'lineHeight',    1);
 
-/* Preréglage dyslexie — c'est un déclencheur, pas un état persisté comme booléen */
-eid('chk-dyspreset').addEventListener('change', function() {
-  if (this.checked) {
-    S.fontSize      = 22;
-    S.letterSpacing = 0.12;
-    S.wordSpacing   = 0.25;
-    S.lineHeight    = 2.2;
-    syncControls();
-    renderText();
-    savePrefs();
-    announce('Preréglage dyslexie appliqué');
-  }
-  this.checked = false; /* toujours décoché : c'est un bouton déguisé */
+sliderSetup('sl-fontsize',      'sl-fontsize-val',      'px', 0, 'fontSize');
+sliderSetup('sl-letterspacing', 'sl-letterspacing-val', 'em', 2, 'letterSpacing');
+sliderSetup('sl-wordspacing',   'sl-wordspacing-val',   'em', 2, 'wordSpacing');
+sliderSetup('sl-lineheight',    'sl-lineheight-val',    '',   1, 'lineHeight');
+sliderSetup('sl-colwidth',      'sl-colwidth-val',      'px', 0, 'colWidth');
+sliderSetup('sl-padding',       'sl-padding-val',       'px', 0, 'padding');
+sliderSetup('sl-tts-rate',      'sl-tts-rate-val',      '×',  2, 'ttsRate');
+sliderSetup('sl-tts-pitch',     'sl-tts-pitch-val',     '',   2, 'ttsPitch');
+
+/* Police */
+eid('sl-fontfamily').addEventListener('change', function() {
+  S.fontFamily = this.value;
+  renderText();
+  applyTypo(editArea);
+  savePrefs();
+  announce('Police changée');
 });
 
-eid('chk-syllables').addEventListener('change', function() {
-  S.syllables = this.checked;
-  renderText();
-  announce(S.syllables ? 'Coloration syllabique activée' : 'Coloration syllabique désactivée');
-  savePrefs();
+/* Checkboxes */
+[
+  { id: 'chk-syllables', prop: 'syllables', on: 'Coloration syllabique activée', off: 'Coloration syllabique désactivée' },
+  { id: 'chk-bionic',    prop: 'bionic',    on: 'Lecture Bionic activée',        off: 'Lecture Bionic désactivée' },
+  { id: 'chk-sounds',    prop: 'sounds',    on: 'Sons complexes activés',        off: 'Sons complexes désactivés' },
+  { id: 'chk-dict',      prop: 'dictEnabled', on: 'Dictionnaire activé',         off: 'Dictionnaire désactivé' },
+].forEach(function(cfg) {
+  eid(cfg.id).addEventListener('change', function() {
+    S[cfg.prop] = this.checked;
+    renderText();
+    announce(this.checked ? cfg.on : cfg.off);
+    savePrefs();
+  });
 });
 
 eid('chk-ruler').addEventListener('change', function() {
-  S.ruler    = this.checked;
+  S.ruler = this.checked;
   S.rulerIdx = 0;
   renderText();
   if (S.ruler) {
     renderArea.focus();
-    announce('Regle de lecture activée. Utilisez Fleche Haut et Bas pour naviguer entre les lignes.');
+    announce('Règle de lecture activée. Utilisez Flèche Haut et Bas pour naviguer.');
   } else {
-    announce('Regle de lecture desactivée');
+    announce('Règle de lecture désactivée');
   }
   savePrefs();
 });
 
-editArea.addEventListener('input', function() {
-  S.rulerIdx = 0;
-  saveText();
-  renderText();
+eid('chk-focus-mode').addEventListener('change', function() {
+  S.focusMode = this.checked;
+  eid('btn-focus-mode-toggle').setAttribute('aria-pressed', this.checked ? 'true' : 'false');
+  if (S.focusMode) openFocusMode();
+  else closeFocusMode();
+  savePrefs();
 });
 
-eid('btn-reset').addEventListener('click', function() {
-  editArea.value = DEFAULT_TEXT;
-  S.rulerIdx = 0;
-  saveText();
-  renderText();
-  announce('Texte réinitialisé');
+eid('btn-focus-mode-toggle').addEventListener('click', function() {
+  S.focusMode = !S.focusMode;
+  eid('chk-focus-mode').checked = S.focusMode;
+  this.setAttribute('aria-pressed', S.focusMode ? 'true' : 'false');
+  if (S.focusMode) openFocusMode();
+  else closeFocusMode();
+  savePrefs();
+});
+
+/* Préréglages */
+eid('btn-preset-dys').addEventListener('click', function() {
+  S.fontSize = 22; S.letterSpacing = 0.12; S.wordSpacing = 0.25;
+  S.lineHeight = 2.2; S.colWidth = 620; S.padding = 28;
+  syncControls(); renderText(); savePrefs();
+  announce('Préréglage dyslexie confort appliqué');
+  showToast('Préréglage dyslexie appliqué');
+});
+
+eid('btn-preset-reset').addEventListener('click', function() {
+  S.fontFamily = "system-ui,-apple-system,'Segoe UI',Roboto,sans-serif";
+  S.fontSize = 20; S.letterSpacing = 0.05; S.wordSpacing = 0.15;
+  S.lineHeight = 1.8; S.colWidth = 680; S.padding = 24;
+  syncControls(); renderText(); savePrefs();
+  announce('Réglages réinitialisés');
+  showToast('Réglages réinitialisés');
 });
 
 /* ============================================================
-   SYNTHESE VOCALE
+   THÈMES
    ============================================================ */
-var ttsUtt           = null;
-var ttsBoundaryOk    = false;
-var ttsVoiceFR       = null;
-var ttsPhraseTimer   = null;
-var ttsPhraseList    = [];
-var ttsPhraseIdx     = 0;
-var ttsSpeakLine     = -1; /* ligne en cours de lecture */
+function applyTheme() {
+  document.body.classList.remove('theme-sepia','theme-dark','theme-cream');
+  if (S.theme) document.body.classList.add(S.theme);
+  document.querySelectorAll('[data-theme]').forEach(function(btn) {
+    var active = btn.getAttribute('data-theme') === S.theme;
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    btn.classList.toggle('btn-primary', active);
+    btn.classList.toggle('btn-ghost', !active);
+  });
+}
+
+document.querySelectorAll('[data-theme]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    S.theme = this.getAttribute('data-theme');
+    applyTheme(); savePrefs();
+    announce('Thème ' + (S.theme || 'défaut') + ' activé');
+  });
+});
+
+/* ============================================================
+   OVERLAYS
+   ============================================================ */
+function applyOverlay() {
+  var overlay = eid('color-overlay');
+  overlay.style.background = S.overlay || 'transparent';
+  document.querySelectorAll('.overlay-swatch').forEach(function(sw) {
+    var val = sw.getAttribute('data-overlay');
+    sw.classList.toggle('active', val === S.overlay);
+  });
+}
+
+document.querySelectorAll('.overlay-swatch').forEach(function(sw) {
+  sw.addEventListener('click', function() {
+    S.overlay = this.getAttribute('data-overlay') || '';
+    applyOverlay(); savePrefs();
+    announce('Filtre couleur ' + (S.overlay ? 'activé' : 'désactivé'));
+  });
+  sw.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.click(); }
+  });
+  sw.setAttribute('tabindex', '0');
+});
+
+/* ============================================================
+   SOURCES DE TEXTE
+   ============================================================ */
+eid('btn-paste-clip').addEventListener('click', function() {
+  if (!navigator.clipboard || !navigator.clipboard.readText) {
+    showToast('Presse-papier non disponible — utilisez Ctrl+V dans la zone de texte');
+    return;
+  }
+  navigator.clipboard.readText().then(function(text) {
+    if (!text.trim()) { showToast('Le presse-papier est vide'); return; }
+    editArea.value = text;
+    buildPages(text); saveText(); renderText();
+    announce('Texte collé depuis le presse-papier');
+    showToast('Texte importé depuis le presse-papier');
+  }).catch(function() {
+    showToast('Permission presse-papier refusée — utilisez Ctrl+V');
+  });
+});
+
+eid('file-input').addEventListener('change', function() {
+  var file = this.files && this.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var text = e.target.result;
+    editArea.value = text;
+    buildPages(text); saveText(); renderText();
+    announce('Fichier importé : ' + file.name);
+    showToast('Fichier importé : ' + file.name);
+  };
+  reader.onerror = function() { showToast('Erreur lors de la lecture du fichier'); };
+  reader.readAsText(file, 'UTF-8');
+  this.value = '';
+});
+
+eid('btn-clear-text').addEventListener('click', function() {
+  if (!confirm('Vider la zone de texte ?')) return;
+  editArea.value = '';
+  buildPages(''); saveText(); renderText();
+  announce('Zone de texte vidée');
+});
+
+eid('btn-reset-default').addEventListener('click', function() {
+  editArea.value = DEFAULT_TEXT;
+  buildPages(DEFAULT_TEXT); saveText(); renderText();
+  announce('Texte de démonstration restauré');
+  showToast('Texte démo restauré');
+});
+
+editArea.addEventListener('input', function() {
+  S.rulerIdx = 0;
+  var text = this.value;
+  buildPages(text);
+  saveText();
+  renderText();
+});
+
+/* ============================================================
+   PAGINATION UI
+   ============================================================ */
+eid('btn-page-prev').addEventListener('click', function() {
+  if (S.currentPage > 0) { S.currentPage--; S.rulerIdx = 0; renderText(); announce('Page ' + (S.currentPage+1)); }
+});
+eid('btn-page-next').addEventListener('click', function() {
+  if (S.currentPage < S.pages.length - 1) { S.currentPage++; S.rulerIdx = 0; renderText(); announce('Page ' + (S.currentPage+1)); }
+});
+
+/* ============================================================
+   TABS
+   ============================================================ */
+document.querySelectorAll('.tab-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var tabId = this.getAttribute('data-tab');
+    document.querySelectorAll('.tab-btn').forEach(function(b) {
+      var active = b.getAttribute('data-tab') === tabId;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    document.querySelectorAll('.tab-panel').forEach(function(p) {
+      p.classList.toggle('active', p.id === 'tab-' + tabId);
+    });
+  });
+  btn.addEventListener('keydown', function(e) {
+    var tabs = Array.from(document.querySelectorAll('.tab-btn'));
+    var idx = tabs.indexOf(this);
+    if (e.key === 'ArrowRight') { e.preventDefault(); tabs[(idx+1)%tabs.length].click(); tabs[(idx+1)%tabs.length].focus(); }
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); tabs[(idx-1+tabs.length)%tabs.length].click(); tabs[(idx-1+tabs.length)%tabs.length].focus(); }
+  });
+});
+
+/* ============================================================
+   MODALS
+   ============================================================ */
+function openModal(id) {
+  eid(id).classList.remove('hidden');
+  var focusable = eid(id).querySelector('button, [tabindex="0"], input');
+  if (focusable) setTimeout(function() { focusable.focus(); }, 50);
+}
+function closeModal(id) { eid(id).classList.add('hidden'); }
+
+eid('btn-show-bookmarks').addEventListener('click', function() { renderBookmarks(); openModal('modal-bookmarks'); });
+eid('modal-bk-close').addEventListener('click', function() { closeModal('modal-bookmarks'); });
+eid('btn-show-profiles').addEventListener('click', function() { renderProfiles(); openModal('modal-profiles'); });
+eid('modal-pr-close').addEventListener('click', function() { closeModal('modal-profiles'); });
+eid('btn-show-stats').addEventListener('click', function() { renderStatsDetail(); openModal('modal-stats'); });
+eid('modal-st-close').addEventListener('click', function() { closeModal('modal-stats'); });
+
+/* Fermer modal sur Escape ou clic backdrop */
+document.querySelectorAll('.modal-backdrop').forEach(function(m) {
+  m.addEventListener('click', function(e) { if (e.target === this) closeModal(this.id); });
+  m.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(this.id); });
+});
+
+/* ============================================================
+   SYNTHÈSE VOCALE
+   ============================================================ */
+var ttsUtt         = null;
+var ttsBoundaryOk  = false;
+var ttsVoiceFR     = null;
+var ttsPhraseTimer = null;
+var ttsPhraseList  = [];
+var ttsPhraseIdx   = 0;
+var ttsWordSpans   = null;
+var ttsWordIdx     = 0;
 
 function ttsStatus(msg) { eid('tts-status').textContent = msg; }
 
@@ -843,29 +1782,76 @@ function updateTTSBtns() {
 }
 
 function clearTTSHighlight() {
-  /* Retire surbrillance de la zone de rendu */
-  var els = renderArea.querySelectorAll('.line-speaking');
-  els.forEach(function(e) { e.classList.remove('line-speaking'); });
-  ttsSpeakLine = -1;
+  renderArea.querySelectorAll('.word-hi').forEach(function(e) { e.classList.remove('word-hi'); });
+  renderArea.querySelectorAll('.line-speaking').forEach(function(e) { e.classList.remove('line-speaking'); });
+}
+
+function highlightWordByChar(charIndex, text) {
+  /* Trouve le mot correspondant au charIndex dans le texte */
+  if (renderArea.style.display === 'none') return;
+  var before = text.slice(0, charIndex);
+  var lineIdx = (before.match(/\n/g) || []).length;
+  /* Surligne la ligne */
+  clearTTSHighlight();
+  var lineSpan = renderArea.querySelector('[data-li="' + lineIdx + '"]');
+  if (lineSpan) lineSpan.classList.add('line-speaking');
+  /* Surligne le mot précis si possible */
+  /* Trouve le mot à charIndex dans la ligne */
+  var lineStart = before.lastIndexOf('\n');
+  lineStart = (lineStart === -1) ? 0 : lineStart + 1;
+  var posInLine = charIndex - lineStart;
+  var lineText = text.split('\n')[lineIdx] || '';
+  var wordMatch = lineText.slice(0, posInLine).match(/\S+\s*$/);
+  /* Cherche le span dict-word correspondant */
+  if (lineSpan && wordMatch) {
+    var spans = lineSpan.querySelectorAll('.dict-word');
+    var cumLen = 0;
+    for (var i = 0; i < spans.length; i++) {
+      cumLen += spans[i].textContent.length;
+      if (cumLen >= posInLine) {
+        spans[i].classList.add('word-hi');
+        break;
+      }
+    }
+  }
 }
 
 function highlightLine(lineIdx) {
   clearTTSHighlight();
   if (renderArea.style.display === 'none') return;
   var span = renderArea.querySelector('[data-li="' + lineIdx + '"]');
-  if (span) { span.classList.add('line-speaking'); ttsSpeakLine = lineIdx; }
+  if (span) span.classList.add('line-speaking');
 }
 
 function findVoiceFR() {
   if (!window.speechSynthesis) return;
   var vs = window.speechSynthesis.getVoices();
   ttsVoiceFR = null;
-  for (var i = 0; i < vs.length; i++) {
-    if (vs[i].lang && vs[i].lang.toLowerCase().slice(0,2) === 'fr') {
-      ttsVoiceFR = vs[i]; break;
-    }
-  }
+  var voiceSel = eid('sel-tts-voice');
+  var selectedURI = S.ttsVoiceURI;
+  /* Remplir le select */
+  voiceSel.innerHTML = '<option value="">Voix par défaut (FR)</option>';
+  var frVoices = vs.filter(function(v) { return v.lang && v.lang.toLowerCase().slice(0,2) === 'fr'; });
+  if (!frVoices.length) frVoices = vs; /* fallback : toutes */
+  frVoices.forEach(function(v) {
+    var opt = document.createElement('option');
+    opt.value = v.voiceURI;
+    opt.textContent = v.name + ' (' + v.lang + ')';
+    voiceSel.appendChild(opt);
+  });
+  if (selectedURI) voiceSel.value = selectedURI;
+  /* Voix FR par défaut */
+  var found = vs.find(function(v) { return v.voiceURI === selectedURI; });
+  if (!found) found = frVoices[0] || null;
+  ttsVoiceFR = found;
 }
+
+eid('sel-tts-voice').addEventListener('change', function() {
+  S.ttsVoiceURI = this.value;
+  var vs = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+  ttsVoiceFR = vs.find(function(v) { return v.voiceURI === S.ttsVoiceURI; }) || ttsVoiceFR;
+  savePrefs();
+});
 
 function initTTS() {
   if (!window.speechSynthesis) {
@@ -880,13 +1866,10 @@ function initTTS() {
   }
 }
 
-/* Découpe en phrases */
 function splitPhrases(text) {
-  var raw = text.match(/[^\n.!?]+[\n.!?]?/g) || [text];
-  return raw.filter(function(p) { return p.trim().length > 0; });
+  return (text.match(/[^\n.!?]+[\n.!?]?/g) || [text]).filter(function(p) { return p.trim().length > 0; });
 }
 
-/* Surlignage phrase par phrase (repli si boundary absent) */
 function startPhraseFallback(text) {
   ttsPhraseList = splitPhrases(text);
   ttsPhraseIdx  = 0;
@@ -896,15 +1879,19 @@ function startPhraseFallback(text) {
     if (!S.ttsPlaying || S.ttsPaused) return;
     if (ttsPhraseIdx >= ttsPhraseList.length) return;
     var phrase = ttsPhraseList[ttsPhraseIdx];
-    /* Chercher la ligne qui contient cette phrase */
     for (var li = 0; li < lines.length; li++) {
-      if (lines[li].indexOf(phrase.trim()) >= 0 || phrase.trim().indexOf(lines[li].trim()) >= 0) {
-        highlightLine(li);
-        break;
+      if (lines[li].indexOf(phrase.trim().slice(0, 20)) >= 0) {
+        highlightLine(li); break;
       }
     }
     var wc = phrase.split(/\s+/).filter(Boolean).length || 1;
-    var ms = Math.max(500, (wc / 2.8) * 1000); /* ~2.8 mots/sec */
+    var ms = Math.max(400, (wc / (S.ttsRate * 2.5)) * 1000);
+    /* Stats */
+    S.statsWordsSession += wc;
+    updateSessionStats();
+    var st = getStats();
+    st.totalWords = (st.totalWords || 0) + wc;
+    saveStats(st);
     ttsPhraseIdx++;
     ttsPhraseTimer = setTimeout(nextPhrase, ms);
   }
@@ -914,33 +1901,32 @@ function startPhraseFallback(text) {
 function stopTTS(silent) {
   if (ttsPhraseTimer) { clearTimeout(ttsPhraseTimer); ttsPhraseTimer = null; }
   if (window.speechSynthesis) window.speechSynthesis.cancel();
+  stopReadingTimer();
   S.ttsPlaying = false;
   S.ttsPaused  = false;
   clearTTSHighlight();
   if (!silent) {
     ttsStatus('En attente');
-    announce('Lecture arrêtee');
+    announce('Lecture arrêtée');
   }
   updateTTSBtns();
 }
 
 function startTTS() {
   if (!S.ttsReady) return;
-
-  /* Reprise après pause */
   if (S.ttsPaused && window.speechSynthesis.paused) {
     window.speechSynthesis.resume();
     S.ttsPaused  = false;
     S.ttsPlaying = true;
+    startReadingTimer();
     ttsStatus('Lecture en cours…');
     updateTTSBtns();
-    /* relancer le repli si nécessaire */
     if (!ttsBoundaryOk) startPhraseFallback(editArea.value);
     return;
   }
-
   stopTTS(true);
 
+  /* Si le render est visible, s'assurer qu'il l'est (dictEnabled déclenche render) */
   var text = editArea.value.trim();
   if (!text) { announce('La zone de texte est vide.'); return; }
 
@@ -948,33 +1934,40 @@ function startTTS() {
   ttsUtt = new SpeechSynthesisUtterance(text);
   ttsUtt.lang  = 'fr-FR';
   if (ttsVoiceFR) ttsUtt.voice = ttsVoiceFR;
-  ttsUtt.rate  = 0.95;
-  ttsUtt.pitch = 1.0;
+  ttsUtt.rate  = S.ttsRate;
+  ttsUtt.pitch = S.ttsPitch;
 
   ttsUtt.addEventListener('boundary', function(ev) {
     if (ev.name !== 'word') return;
     ttsBoundaryOk = true;
-    /* Trouve la ligne du mot */
-    var ci   = ev.charIndex;
-    var full = text;
-    var before = full.slice(0, ci);
-    var li   = (before.match(/\n/g) || []).length;
-    highlightLine(li);
+    highlightWordByChar(ev.charIndex, text);
+    /* Stats mot */
+    S.statsWordsSession++;
+    var st = getStats();
+    st.totalWords = (st.totalWords || 0) + 1;
+    saveStats(st);
+    updateSessionStats();
   });
 
   ttsUtt.addEventListener('start', function() {
     S.ttsPlaying = true;
     S.ttsPaused  = false;
+    startReadingTimer();
+    /* Incrémenter sessions */
+    var st = getStats();
+    st.sessions = (st.sessions || 0) + 1;
+    saveStats(st);
+    updateSessionStats();
     ttsStatus('Lecture en cours…');
     updateTTSBtns();
-    /* Attendre 1s pour voir si boundary fonctionne */
     setTimeout(function() {
       if (!ttsBoundaryOk && S.ttsPlaying) startPhraseFallback(text);
-    }, 1000);
+    }, 900);
   });
 
   ttsUtt.addEventListener('end', function() {
     if (ttsPhraseTimer) { clearTimeout(ttsPhraseTimer); ttsPhraseTimer = null; }
+    stopReadingTimer();
     S.ttsPlaying = false;
     S.ttsPaused  = false;
     clearTTSHighlight();
@@ -984,10 +1977,8 @@ function startTTS() {
   });
 
   ttsUtt.addEventListener('error', function(ev) {
-    if (ev.error === 'interrupted' || ev.error === 'canceled') {
-      /* normal — déclenché par stopTTS */
-      return;
-    }
+    if (ev.error === 'interrupted' || ev.error === 'canceled') return;
+    stopReadingTimer();
     S.ttsPlaying = false;
     S.ttsPaused  = false;
     ttsStatus('Erreur vocale');
@@ -1002,12 +1993,14 @@ function pauseTTS() {
   if (!S.ttsPaused) {
     window.speechSynthesis.pause();
     if (ttsPhraseTimer) { clearTimeout(ttsPhraseTimer); ttsPhraseTimer = null; }
+    stopReadingTimer();
     S.ttsPaused = true;
     ttsStatus('En pause');
     announce('Lecture en pause');
   } else {
     window.speechSynthesis.resume();
     S.ttsPaused = false;
+    startReadingTimer();
     ttsStatus('Lecture en cours…');
     announce('Lecture reprise');
     if (!ttsBoundaryOk) startPhraseFallback(editArea.value);
@@ -1020,14 +2013,39 @@ eid('btn-pause').addEventListener('click', pauseTTS);
 eid('btn-stop').addEventListener('click', function() { stopTTS(false); });
 
 /* ============================================================
+   SERVICE WORKER
+   ============================================================ */
+if ('serviceWorker' in navigator) {
+  try {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('./sw.js').then(function(reg) {
+        eid('pwa-badge').textContent = 'PWA ✓';
+      }).catch(function(err) {
+        console.warn('SW non enregistré:', err);
+      });
+    });
+  } catch(e) {
+    console.warn('Service Worker non supporté:', e);
+  }
+}
+
+/* ============================================================
    INITIALISATION
    ============================================================ */
 loadPrefs();
 loadText();
 syncControls();
+applyTheme();
+applyOverlay();
+var rawText = editArea.value;
+buildPages(rawText);
 initTTS();
 renderText();
 updateTTSBtns();
+updateSessionStats();
+
+/* Note OpenDyslexic */
+eid('od-option').title = 'Police non embarquée — doit être installée sur le système pour fonctionner.';
 </script>
 </body>
 </html>

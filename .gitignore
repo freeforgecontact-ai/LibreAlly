@@ -1,0 +1,46 @@
+# Dépendances / Dependencies
+node_modules/
+
+# Sorties de build / Build outputs
+dist/
+build/
+
+# Système d'exploitation / OS artefacts
+.DS_Store
+Thumbs.db
+
+# Journaux / Logs
+*.log
+logs/
+
+# Variables d'environnement / Environment variables
+.env
+.env.*
+!.env.example
+
+# Caches / Caches
+.cache/
+.parcel-cache/
+.vite/
+
+# Couverture de tests / Test coverage
+coverage/
+
+# Éditeurs / Editors
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Temporaire / Temporary
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Artefacts de packaging
+*.tgz
+*.zip

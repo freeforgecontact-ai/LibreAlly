@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="LibreA11y — Suite de 15 applications gratuites, open source et hors-ligne pour l'accessibilité numérique. L'accessibilité n'est pas une fonctionnalité premium.">
+  <meta name="theme-color" content="#0F4C81">
+  <title>LibreA11y — L'accessibilité pour tous, gratuitement</title>
+
+  <link rel="stylesheet" href="./assets/tokens.css">
+
+  <style>
+    /* =========================================================
+       LAYOUT GLOBAL
+       ========================================================= */
+    html {
+      scroll-behavior: smooth;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+    }
+
+    /* =========================================================
+       EN-TÊTE / NAVIGATION
+       ========================================================= */
+    .site-header {
+      background: var(--c-primary);
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,.25);
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 var(--sp-5);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-5);
+      min-height: 64px;
+      flex-wrap: wrap;
+    }
+
+    .site-logo {
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: #fff;
+      text-decoration: none;
+      letter-spacing: -.02em;
+      flex-shrink: 0;
+    }
+    .site-logo span {
+      color: var(--c-accent);
+    }
+
+    .site-nav {
+      flex: 1;
+    }
+    .site-nav ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      gap: var(--sp-4);
+      flex-wrap: wrap;
+    }
+    .site-nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      padding: var(--sp-2) var(--sp-3);
+      border-radius: var(--radius-sm);
+      transition: background .15s ease;
+    }
+    .site-nav a:hover,
+    .site-nav a:focus-visible {
+      background: rgba(255,255,255,.15);
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      flex-wrap: wrap;
+    }
+
+    /* Petits boutons de contrôle dans l'en-tête */
+    .ctrl-btn {
+      background: rgba(255,255,255,.12);
+      color: #fff;
+      border: 1.5px solid rgba(255,255,255,.3);
+      border-radius: var(--radius-pill);
+      font: inherit;
+      font-size: .82rem;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 6px 14px;
+      min-height: var(--tap-min);
+      min-width: var(--tap-min);
+      white-space: nowrap;
+      transition: background .15s ease, border-color .15s ease;
+    }
+    .ctrl-btn:hover,
+    .ctrl-btn:focus-visible {
+      background: rgba(255,255,255,.25);
+      border-color: rgba(255,255,255,.6);
+    }
+    .ctrl-btn[aria-pressed="true"] {
+      background: var(--c-accent);
+      color: var(--c-primary-darker);
+      border-color: var(--c-accent);
+    }
+
+    /* =========================================================
+       HERO
+       ========================================================= */
+    .hero {
+      background: var(--c-primary);
+      color: #fff;
+      padding: var(--sp-8) var(--sp-5);
+      text-align: center;
+    }
+
+    .hero-inner {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 900;
+      margin: 0 0 var(--sp-4);
+      line-height: 1.15;
+      color: #fff;
+    }
+
+    .hero-slogan {
+      font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+      font-weight: 700;
+      color: var(--c-accent);
+      margin: 0 0 var(--sp-5);
+      font-style: italic;
+    }
+
+    .hero-mission {
+      font-size: 1.1rem;
+      color: rgba(255,255,255,.88);
+      max-width: 640px;
+      margin: 0 auto var(--sp-7);
+      line-height: 1.7;
+    }
+
+    .hero-ctas {
+      display: flex;
+      gap: var(--sp-4);
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .hero-ctas .btn {
+      font-size: 1.05rem;
+      padding: var(--sp-4) var(--sp-6);
+    }
+
+    /* =========================================================
+       BANDE PRINCIPES
+       ========================================================= */
+    .principles-band {
+      background: var(--c-surface);
+      border-bottom: 1px solid var(--c-line);
+      padding: var(--sp-6) var(--sp-5);
+    }
+
+    .principles-band h2 {
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--c-muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin: 0 0 var(--sp-5);
+    }
+
+    .principles-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: var(--sp-3);
+    }
+
+    .principle-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+      background: var(--c-accent);
+      color: var(--c-primary-darker);
+      font-weight: 700;
+      font-size: .95rem;
+      padding: var(--sp-2) var(--sp-5);
+      border-radius: var(--radius-pill);
+      white-space: nowrap;
+    }
+
+    /* =========================================================
+       SECTION APPS
+       ========================================================= */
+    .apps-section {
+      padding: var(--sp-8) var(--sp-5);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .apps-section > h2 {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 900;
+      color: var(--c-primary);
+      text-align: center;
+      margin: 0 0 var(--sp-7);
+    }
+
+    .domain-section {
+      margin-bottom: var(--sp-8);
+    }
+
+    .domain-section h3 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--c-primary);
+      margin: 0 0 var(--sp-5);
+      padding-bottom: var(--sp-3);
+      border-bottom: 3px solid var(--c-primary-100);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+    }
+
+    .apps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: var(--sp-5);
+    }
+
+    /* Carte application */
+    .app-card {
+      background: var(--c-surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: var(--sp-6);
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-3);
+      border: 1px solid var(--c-line);
+      transition: box-shadow .2s ease, transform .15s ease;
+    }
+    .app-card:hover {
+      box-shadow: 0 10px 32px rgba(15, 76, 129, .18);
+      transform: translateY(-2px);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .app-card:hover { transform: none; }
+    }
+
+    .app-card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--sp-3);
+    }
+
+    .app-emoji {
+      font-size: 2rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .app-meta {
+      flex: 1;
+    }
+
+    .app-name {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--c-primary);
+      margin: 0 0 var(--sp-1);
+    }
+
+    .app-badge {
+      display: inline-block;
+      background: var(--c-accent);
+      color: var(--c-primary-darker);
+      font-size: .75rem;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: var(--radius-pill);
+    }
+
+    .app-for {
+      font-size: .88rem;
+      color: var(--c-muted);
+      font-style: italic;
+      margin: 0;
+    }
+
+    .app-phrase {
+      font-size: .97rem;
+      color: var(--c-ink-soft);
+      margin: 0;
+      flex: 1;
+    }
+
+    .app-spec-link {
+      font-size: .88rem;
+      font-weight: 700;
+      color: var(--c-primary);
+      text-decoration: none;
+      align-self: flex-start;
+      padding: var(--sp-1) 0;
+      border-bottom: 2px solid transparent;
+      transition: border-color .15s ease;
+    }
+    .app-spec-link:hover,
+    .app-spec-link:focus-visible {
+      border-color: var(--c-primary);
+    }
+
+    /* =========================================================
+       SECTION CONTRIBUER
+       ========================================================= */
+    .contribute-section {
+      background: var(--c-primary-100);
+      padding: var(--sp-8) var(--sp-5);
+      text-align: center;
+    }
+
+    .contribute-inner {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .contribute-section h2 {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 900;
+      color: var(--c-primary);
+      margin: 0 0 var(--sp-4);
+    }
+
+    .contribute-section p {
+      color: var(--c-ink-soft);
+      margin: 0 0 var(--sp-6);
+      font-size: 1.05rem;
+    }
+
+    /* =========================================================
+       PIED DE PAGE
+       ========================================================= */
+    .site-footer {
+      background: var(--c-ink);
+      color: rgba(255,255,255,.8);
+      padding: var(--sp-7) var(--sp-5);
+      text-align: center;
+    }
+
+    .footer-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-4);
+      align-items: center;
+    }
+
+    .footer-brand {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: var(--sp-5);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .footer-links a {
+      color: var(--c-accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .footer-links a:hover,
+    .footer-links a:focus-visible {
+      text-decoration: underline;
+    }
+
+    .footer-license {
+      font-size: .82rem;
+      color: rgba(255,255,255,.55);
+    }
+
+    /* =========================================================
+       UTILITAIRES
+       ========================================================= */
+    .visually-hidden {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* Separateur de section */
+    .section-wrap {
+      background: var(--c-bg);
+    }
+
+    /* =========================================================
+       RESPONSIVE
+       ========================================================= */
+    @media (max-width: 640px) {
+      .header-inner {
+        gap: var(--sp-3);
+        padding: var(--sp-3) var(--sp-4);
+      }
+      .site-nav ul {
+        gap: var(--sp-2);
+      }
+      .site-nav a {
+        font-size: .9rem;
+        padding: var(--sp-1) var(--sp-2);
+      }
+      .header-controls {
+        gap: var(--sp-1);
+      }
+      .ctrl-btn {
+        font-size: .75rem;
+        padding: 5px 10px;
+      }
+      .hero {
+        padding: var(--sp-7) var(--sp-4);
+      }
+      .apps-grid {
+        grid-template-columns: 1fr;
+      }
+      .footer-links {
+        flex-direction: column;
+        gap: var(--sp-3);
+      }
+    }
+
+    /* =========================================================
+       THÈME SOMBRE — ajustements spécifiques à la page
+       ========================================================= */
+    [data-theme="dark"] .app-card {
+      border-color: var(--c-line);
+    }
+    [data-theme="dark"] .site-footer {
+      background: #060e17;
+    }
+    [data-theme="dark"] .contribute-section {
+      background: var(--c-primary-050);
+    }
+    [data-theme="dark"] .principles-band {
+      background: var(--c-surface);
+    }
+
+    /* =========================================================
+       THÈME FORT CONTRASTE — ajustements
+       ========================================================= */
+    [data-theme="contrast"] .app-card {
+      border: 2px solid #000;
+    }
+    [data-theme="contrast"] .app-spec-link {
+      color: #003a66;
+      text-decoration: underline;
+    }
+    [data-theme="contrast"] .hero-mission {
+      color: #fff;
+    }
+    [data-theme="contrast"] .site-nav a {
+      color: #fff;
+    }
+    [data-theme="contrast"] .ctrl-btn {
+      border-color: #fff;
+    }
+    [data-theme="contrast"] .footer-links a {
+      color: var(--c-accent);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- LIEN D'ÉVITEMENT -->
+  <a class="skip-link" href="#main-content" data-fr="Aller au contenu principal" data-en="Skip to main content">Aller au contenu principal</a>
+
+  <!-- ============================================================
+       EN-TÊTE
+       ============================================================ -->
+  <header class="site-header" role="banner">
+    <div class="header-inner">
+      <!-- Logo -->
+      <a href="#" class="site-logo" aria-label="LibreA11y — Accueil">
+        Libre<span>A11y</span>
+      </a>
+
+      <!-- Navigation principale -->
+      <nav class="site-nav" aria-label="Navigation principale">
+        <ul>
+          <li>
+            <a href="#apps" data-fr="Apps" data-en="Apps">Apps</a>
+          </li>
+          <li>
+            <a href="#principes" data-fr="Principes" data-en="Principles">Principes</a>
+          </li>
+          <li>
+            <a href="#contribuer" data-fr="Contribuer" data-en="Contribute">Contribuer</a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Commandes de thème et langue -->
+      <div class="header-controls" role="group" aria-label="Personnalisation de l'affichage">
+
+        <!-- Bascule langue -->
+        <button
+          class="ctrl-btn"
+          id="lang-toggle"
+          aria-pressed="false"
+          aria-label="Basculer en anglais"
+          onclick="toggleLang(this)"
+        >FR / EN</button>
+
+        <!-- Thèmes -->
+        <button
+          class="ctrl-btn"
+          aria-label="Thème clair"
+          data-fr="Clair"
+          data-en="Light"
+          onclick="setTheme('light', this)"
+        >Clair</button>
+
+        <button
+          class="ctrl-btn"
+          aria-label="Thème sombre"
+          data-fr="Sombre"
+          data-en="Dark"
+          onclick="setTheme('dark', this)"
+        >Sombre</button>
+
+        <button
+          class="ctrl-btn"
+          aria-label="Thème fort contraste"
+          data-fr="Fort contraste"
+          data-en="High contrast"
+          onclick="setTheme('contrast', this)"
+        >Fort contraste</button>
+
+        <!-- Taille de texte -->
+        <button
+          class="ctrl-btn"
+          aria-label="Taille de texte normale"
+          onclick="setFontSize('normal')"
+        >A</button>
+        <button
+          class="ctrl-btn"
+          aria-label="Taille de texte augmentée"
+          onclick="setFontSize('large')"
+        >A+</button>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       CONTENU PRINCIPAL
+       ============================================================ -->
+  <main id="main-content">
+
+    <!-- =====================
+         HERO
+         ===================== -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-inner">
+        <h1 id="hero-title" data-fr="LibreA11y" data-en="LibreA11y">LibreA11y</h1>
+
+        <p class="hero-slogan" data-fr="L'accessibilité n'est pas une fonctionnalité premium." data-en="Accessibility is not a premium feature.">
+          L'accessibilité n'est pas une fonctionnalité premium.
+        </p>
+
+        <p class="hero-mission" data-fr="15 applications gratuites, entièrement open source et fonctionnant hors-ligne, conçues pour que chaque personne en situation de handicap puisse utiliser la technologie sans barrière, sans abonnement, sans compromis." data-en="15 free, fully open-source and offline applications designed so that every person with a disability can use technology without barriers, without subscriptions, without compromise.">
+          15 applications gratuites, entièrement open source et fonctionnant hors-ligne, conçues pour que chaque personne en situation de handicap puisse utiliser la technologie sans barrière, sans abonnement, sans compromis.
+        </p>
+
+        <div class="hero-ctas">
+          <a class="btn btn-accent" href="#apps" data-fr="Voir les apps" data-en="Explore the apps">
+            Voir les apps
+          </a>
+          <a class="btn btn-ghost" style="color:#fff;border-color:rgba(255,255,255,.6);" href="./parlo/" data-fr="Démo Parlo" data-en="Parlo Demo">
+            Démo Parlo
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================
+         PRINCIPES
+         ===================== -->
+    <section id="principes" class="principles-band" aria-labelledby="principles-title">
+      <h2 id="principles-title" data-fr="Nos engagements" data-en="Our commitments">Nos engagements</h2>
+      <ul class="principles-list" role="list">
+        <li>
+          <span class="principle-pill">
+            <span aria-hidden="true">🆓</span>
+            <span data-fr="Gratuit" data-en="Free">Gratuit</span>
+          </span>
+        </li>
+        <li>
+          <span class="principle-pill">
+            <span aria-hidden="true">🔓</span>
+            <span data-fr="Open source" data-en="Open source">Open source</span>
+          </span>
+        </li>
+        <li>
+          <span class="principle-pill">
+            <span aria-hidden="true">✈️</span>
+            <span data-fr="Hors-ligne" data-en="Offline">Hors-ligne</span>
+          </span>
+        </li>
+        <li>
+          <span class="principle-pill">
+            <span aria-hidden="true">🔒</span>
+            <span data-fr="Vie privée" data-en="Privacy">Vie privée</span>
+          </span>
+        </li>
+        <li>
+          <span class="principle-pill">
+            <span aria-hidden="true">🌍</span>
+            <span data-fr="Multilingue" data-en="Multilingual">Multilingue</span>
+          </span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- =====================
+         SECTION APPS
+         ===================== -->
+    <div class="section-wrap">
+      <div class="apps-section" id="apps">
+        <h2 data-fr="Les 15 applications" data-en="The 15 applications">Les 15 applications</h2>
+
+        <!-- === COMMUNICATION === -->
+        <section class="domain-section" aria-labelledby="domain-communication">
+          <h3 id="domain-communication">
+            <span aria-hidden="true">💬</span>
+            <span data-fr="Communication" data-en="Communication">Communication</span>
+          </h3>
+          <div class="apps-grid">
+
+            <article class="app-card" aria-labelledby="app-parlo-name">
+              <div class="app-card-header">
+                <div class="app-emoji" aria-hidden="true">💬</div>
+                <div class="app-meta">
+                  <h4 class="app-name" id="app-parlo-name">Parlo</h4>
+                  <span class="app-badge" data-fr="Communication" data-en="Communication">Communication</span>
+                </div>
+              </div>
+              <p class="app-for" data-fr="Pour : non-verbaux (autisme, paralysie cérébrale, SLA, aphasie)" data-en="For: non-verbal users (autism, cerebral palsy, ALS, aphasia)">
+                Pour : non-verbaux (autisme, paralysie cérébrale, SLA, aphasie)
+              </p>
+              <p class="app-phrase" data-fr="Tableau de symboles + texte qui parle à votre place" data-en="Symbol board and text-to-speech that speaks for you">
+                Tableau de symboles + texte qui parle à votre place
+              </p>
+              <a
+                class="app-spec-link"
+                href="https://github.com/freeforgecontact-ai/LibreAll/blob/main/docs/apps/01-parlo-aac.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-fr="Spécification →" data-en="Specification →"
+                aria-label="Spécification de Parlo (ouvre dans un nouvel onglet)"
+              >Spécification →</a>
+            </article>
+
+          </div>
+        </section>
+
+        <!-- === VISION === -->
+        <section class="domain-section" aria-labelledby="domain-vision">
+          <h3 id="domain-vision">
+            <span aria-hidden="true">👁</span>
+            <span data-fr="Vision" data-en="Vision">Vision</span>
+          </h3>
+          <div class="apps-grid">
+
+            <article class="app-card" aria-labelledby="app-lumen-name">
+              <div class="app-card-header">
+                <div class="app-emoji" aria-hidden="true">🔍</div>
+                <div class="app-meta">
+                  <h4 class="app-name" id="app-lumen-name">Lumen</h4>
+                  <span class="app-badge" data-fr="Vision" data-en="Vision">Vision</span>
+                </div>
+              </div>
+              <p class="app-for" data-fr="Pour : basse vision" data-en="For: low vision">
+                Pour : basse vision
+              </p>
+              <p class="app-phrase" data-fr="Loupe d'écran, contrastes et thèmes adaptés" data-en="Screen magnifier, contrast adjustment and adapted themes">
+                Loupe d'écran, contrastes et thèmes adaptés
+              </p>
+              <a
+                class="app-spec-link"
+                href="https://github.com/freeforgecontact-ai/LibreAll/blob/main/docs/apps/02-lumen-malvoyance.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-fr="Spécification →" data-en="Specification →"
+                aria-label="Spécification de Lumen (ouvre dans un nouvel onglet)"
+              >Spécification →</a>
+            </article>
+
+            <article class="app-card" aria-labelledby="app-voxread-name">
+              <div class="app-card-header">
+                <div class="app-emoji" aria-hidden="true">📖</div>
+                <div class="app-meta">
+                  <h4 class="app-name" id="app-voxread-name">VoxRead</h4>
+                  <span class="app-badge" data-fr="Vision" data-en="Vision">Vision</span>
+                </div>
+              </div>
+              <p class="app-for" data-fr="Pour : aveugles, basse vision" data-en="For: blind users, low vision">
+                Pour : aveugles, basse vision
+              </p>
+              <p class="app-phrase" data-fr="Lit à voix haute documents et texte capté à la caméra (OCR)" data-en="Reads documents and camera-captured text aloud with OCR">
+                Lit à voix haute documents et texte capté à la caméra (OCR)
+              </p>
+              <a
+                class="app-spec-link"
+                href="https://github.com/freeforgecontact-ai/LibreAll/blob/main/docs/apps/03-voxread-lecture.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-fr="Spécification →" data-en="Specification →"
+                aria-label="Spécification de VoxRead (ouvre dans un nouvel onglet)"
+              >Spécification →</a>
+            </article>
+
+            <article class="app-card" aria-labelledby="app-coloraide-name">
+              <div class="app-card-header">
+                <div class="app-emoji" aria-hidden="true">🎨</div>
+                <div class="app-meta">
+                  <h4 class="app-name" id="app-coloraide-name">ColorAide</h4>
+                  <span class="app-badge" data-fr="Vision" data-en="Vision">Vision</span>
+                </div>
+              </div>
+              <p class="app-for" data-fr="Pour : daltonisme" data-en="For: colour blindness">
+                Pour : daltonisme
+              </p>
+              <p class="app-phrase" data-fr="Corrige les couleurs et identifie une teinte à la demande" data-en="Corrects colours and identifies any hue on demand">
+                Corrige les couleurs et identifie une teinte à la demande
+              </p>
+              <a
+                class="app-spec-link"
+                href="https://github.com/freeforgecontact-ai/LibreAll/blob/main/docs/apps/04-coloraide-daltonisme.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-fr="Spécification →" data-en="Specification →"
+                aria-label="Spécification de ColorAide (ouvre dans un nouvel onglet)"
+              >Spécification →</a>
+            </article>
+
+          </div>
+        </section>
+
+        <!-- === AUDITION === -->
+        <section class="domain-section" aria-labelledby="domain-audition">
+          <h3 id="domain-audition">
+            <span aria-hidden="true">👂</span>
+            <span data-fr="Audition" data-en="Hearing">Audition</span>
+          </h3>
+          <div class="apps-grid">
+
+            <article class="app-card" aria-labelledby="app-captilive-name">
+              <div class="app-card-header">
+                <div class="app-emoji" aria-hidden="true">📝</div>
+                <div class="app-meta">
+                  <h4 class="app-name" id="app-captilive-name">CaptiLive</h4>
+                  <span class="app-badge" data-fr="Audition" data-en="Hearing">Audition</span>
+                </div>
+              </div>
+              <p class="app-for" data-fr="Pour : sourds, malentendants" data-en="For: deaf and hard-of-hearing users">
+                Pour : sourds, malentendants
+              </p>
+              <p class="app-phrase" data-fr="Sous-titres en direct, calculés sur l'appareil" data-en="Real-time captions, computed entirely on-device">
+                Sous-titres en direct, calculés sur l'appareil
+              </p>
+              <a
+                class="app-spec-link"
+                href="https://github.com/freeforgecontact-ai/LibreAll/blob/main/docs/apps/05-captilive-soustitres.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-fr="Spécification →" data-en="Specification →"
+                aria-label="Spécification de CaptiLive (ouvre dans un nouvel onglet)"
+              >Spécification →</a>
+            </article>
+
+            <article class="app-card" aria-labelledby="app-soundwatch-name">
+              <div class="app-card-header">
+                <div class="app-emoji" aria-hidden="true">🔔</div>
+                <div class="app-meta">
+                  <h4 class="app-name" id="app-soundwatch-name">SoundWatch</h4>
+                  <span class="app-badge" data-fr="Audition" data-en="Hearing">Audition</span>
+                </div>
+              </div>
+              <p class="app-for" data-fr="Pour : sourds, malentendants" data-en="For: deaf and hard-of-hearing users">
+                Pour : sourds, malentendants
+              </p>
+              <p class="app-phrase" data-fr="Reconnaît les sons importants → alerte visuelle/vibrante" data-en="Recognises important sounds and triggers visual or vibration alerts">
+                Reconnaît les sons importants → alerte visuelle/vibrante
+              </p>
+              <a
+                class="app-spec-link"
+                href="https://github.com/freeforgecontact-ai/LibreAll/blob/main/docs/apps/06-soundwatch-alertes.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-fr="Spécification →" data-en="Specification →"
+                aria-label="Spécification de SoundWatch (ouvre dans un nouvel onglet)"
+              >Spécification →</a>
+            </article>
+
+            <article class="app-card" aria-labelledby="app-signlearn-name">
+              <div class="app-card-header">
+                <div class="app-emoji" aria-hidden="true">🤟</div>
+                <div class="app-meta">
+                  <h4 class="app-name" id="app-signlearn-name">SignLearn</h4>
+                  <span class="app-badge" data-fr="Audition" data-en="Hearing">Audition</span>
+                </div>
+              </div>
+              <p class="app-for" data-fr="Pour : sourds, entourage, écoles" data-en="For: deaf users, families, schools">
+                Pour : sourds, entourage, écoles
+              </p>
+              <p class="app-phrase" data-fr="Apprentissage et dictionnaire de langue des signes" data-en="Sign language learning tool and dictionary">
+                Apprentissage et dictionnaire de langue des signes
+              </p>
+              <a
+                class="app-spec-link"
+                href="https://github.com/freeforgecontact-ai/LibreAll/blob/main/docs/apps/07-signlearn-langue-signes.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-fr="Spécification →" data-en="Specification →"
+                aria-label="Spécification de SignLearn (ouvre dans un nouvel onglet)"
+              >Spécification →</a>
+            </article>
+
+          </div>
+        </section>
+
+        <!-- === MOTRICITÉ === -->
+        <section class="domain-section" aria-labelledby="domain-motricite">
+          <h3 id="domain-motricite">
+            <span aria-hidden="true">🖐</span>
+            <span data-fr="Motricité" data-en="Motor">Motricité</span>
+          </h3>
+          <div class="apps-grid">
+
+            <article class="app-card" aria-labelledby="app-switchboard-name">
+              <div class="app-card-header">
+                <div class="app-emoji" aria-hidden="true">🕹️</div>
+                <div class="app-meta">
+                  <h4 class="app-name" id="app-switchboard-name">SwitchBoard</h4>
+                  <span class="app-badge" data-fr="Motricité" data-en="Motor">Motricité</span>
+                </div>
+              </div>
+              <p class="app-for" data-fr="Pour : motricité très réduite, tétraplégie" data-en="For: severely limited motor control, tetraplegia">
+                Pour : motricité très réduite, tétraplégie
+              </p>
+              <p class="app-phrase" data-fr="Pilotage par contacteur et balayage (scanning)" data-en="Switch-access and scanning control for the entire device">
+                Pilotage par contacteur et balayage (scanning)
+              </p>
+              <a
+                class="app-spec-link"
+                href="https://github.com/freeforgecontact-ai/LibreAll/blob/main/docs/apps/08-switchboard-contacteur.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-fr="Spécification →" data-en="Specification →"
+                aria-label="Spécification de SwitchBoard (ouvre dans un nouvel onglet)"
+              >Spécification →</a>
+            </article>
+
+            <article class="app-card" aria-labelledby="app-gazetype-name">
+              <div class="app-card-header">
+                <div class="app-emoji" aria-hidden="true">👁️</div>
+                <div class="app-meta">
+                  <h4 class="app-name" id="app-gazetype-name">GazeType</h4>
+                  <span class="app-badge" data-fr="Motricité" data-en="Motor">Motricité</span>
+                </div>
+              </div>
+              <p class="app-for" data-fr="Pour : SLA, paralysie, locked-in" data-en="For: ALS, paralysis, locked-in syndrome">
+                Pour : SLA, paralysie, locked-in
+              </p>
+              <p class="app-phrase" data-fr="Clavier piloté au regard ou à la tête, par webcam" data-en="Keyboard controlled by gaze or head movement via webcam">
+                Clavier piloté au regard ou à la tête, par webcam
+              </p>
+              <a
+                class="app-spec-link"
+                href="https://github.com/freeforgecontact-ai/LibreAll/blob/main/docs/apps/09-gazetype-occulaire.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-fr="Spécification →" data-en="Specification →"
+                aria-label="Spécification de GazeType (ouvre dans un nouvel onglet)"
+              >Spécification →</a>
+            </article>
+
+            <article class="app-card" aria-labelledby="app-steadytouch-name">
+              <div class="app-card-header">
+                <div class="app-emoji" aria-hidden="true">✋</div>
+                <div class="app-meta">
+                  <h4 class="app-name" id="app-steadytouch-name">SteadyTouch</h4>
+                  <span class="app-badge" data-fr="Motricité" data-en="Motor">Motricité</span>
+                </div>
+              </div>
+              <p class="app-for" data-fr="Pour : Parkinson, tremblement essentiel" data-en="For: Parkinson's, essential tremor">
+                Pour : Parkinson, tremblement essentiel
+              </p>
+              <p class="app-phrase" data-fr="Lisse les tremblements, agrandit les cibles" data-en="Smooths tremors and enlarges touch targets">
+                Lisse les tremblements, agrandit les cibles
+              </p>
+              <a
+                class="app-spec-link"
+                href="https://github.com/freeforgecontact-ai/LibreAll/blob/main/docs/apps/10-steadytouch-tremblements.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-fr="Spécification →" data-en="Specification →"
+                aria-label="Spécification de SteadyTouch (ouvre dans un nouvel onglet)"
+              >Spécification →</a>
+            </article>
+
+          </div>
+        </section>
+
+        <!-- === COGNITIF & DYS === -->
+        <section class="domain-section" aria-labelledby="domain-cognitif">
+          <h3 id="domain-cognitif">
+            <span aria-hidden="true">🧩</span>
+            <span data-fr="Cognitif &amp; Dys" data-en="Cognitive &amp; Learning">Cognitif &amp; Dys</span>
+          </h3>
+          <div class="apps-grid">
+
+            <article class="app-card" aria-labelledby="app-dysreader-name">
+              <div class="app-card-header">
+                <div class="app-emoji" aria-hidden="true">📚</div>
+                <div class="app-meta">
+                  <h4 class="app-name" id="app-dysreader-name">DysReader</h4>
+                  <span class="app-badge" data-fr="Cognitif &amp; Dys" data-en="Cognitive &amp; Learning">Cognitif &amp; Dys</span>
+                </div>
+              </div>
+              <p class="app-for" data-fr="Pour : dyslexie" data-en="For: dyslexia">
+                Pour : dyslexie
+              </p>
+              <p class="app-phrase" data-fr="Lecture adaptée : police, espacement, syllabes, lecture vocale" data-en="Adapted reading: custom font, spacing, syllable highlighting, text-to-speech">
+                Lecture adaptée : police, espacement, syllabes, lecture vocale
+              </p>
+              <a
+                class="app-spec-link"
+                href="https://github.com/freeforgecontact-ai/LibreAll/blob/main/docs/apps/11-dysreader-dyslexie.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-fr="Spécification →" data-en="Specification →"
+                aria-label="Spécification de DysReader (ouvre dans un nouvel onglet)"
+              >Spécification →</a>
+            </article>
+
+            <article class="app-card" aria-labelledby="app-mathease-name">
+              <div class="app-card-header">
+                <div class="app-emoji" aria-hidden="true">🔢</div>
+                <div class="app-meta">
+                  <h4 class="app-name" id="app-mathease-name">MathEase</h4>
+                  <span class="app-badge" data-fr="Cognitif &amp; Dys" data-en="Cognitive &amp; Learning">Cognitif &amp; Dys</span>
+                </div>
+              </div>
+              <p class="app-for" data-fr="Pour : dyscalculie" data-en="For: dyscalculia">
+                Pour : dyscalculie
+              </p>
+              <p class="app-phrase" data-fr="Maths visuelles, étape par étape, objets manipulables" data-en="Visual maths, step-by-step, with manipulable objects">
+                Maths visuelles, étape par étape, objets manipulables
+              </p>
+              <a
+                class="app-spec-link"
+                href="https://github.com/freeforgecontact-ai/LibreAll/blob/main/docs/apps/12-mathease-dyscalculie.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-fr="Spécification →" data-en="Specification →"
+                aria-label="Spécification de MathEase (ouvre dans un nouvel onglet)"
+              >Spécification →</a>
+            </article>
+
+            <article class="app-card" aria-labelledby="app-dayflow-name">
+              <div class="app-card-header">
+                <div class="app-emoji" aria-hidden="true">🗓️</div>
+                <div class="app-meta">
+                  <h4 class="app-name" id="app-dayflow-name">DayFlow</h4>
+                  <span class="app-badge" data-fr="Cognitif &amp; Dys" data-en="Cognitive &amp; Learning">Cognitif &amp; Dys</span>
+                </div>
+              </div>
+              <p class="app-for" data-fr="Pour : autisme, TDAH, déficience intellectuelle, démence" data-en="For: autism, ADHD, intellectual disability, dementia">
+                Pour : autisme, TDAH, déficience intellectuelle, démence
+              </p>
+              <p class="app-phrase" data-fr="Emploi du temps visuel et découpage des tâches" data-en="Visual daily schedule and step-by-step task breakdown">
+                Emploi du temps visuel et découpage des tâches
+              </p>
+              <a
+                class="app-spec-link"
+                href="https://github.com/freeforgecontact-ai/LibreAll/blob/main/docs/apps/13-dayflow-routines.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-fr="Spécification →" data-en="Specification →"
+                aria-label="Spécification de DayFlow (ouvre dans un nouvel onglet)"
+              >Spécification →</a>
+            </article>
+
+            <article class="app-card" aria-labelledby="app-calmspace-name">
+              <div class="app-card-header">
+                <div class="app-emoji" aria-hidden="true">🌿</div>
+                <div class="app-meta">
+                  <h4 class="app-name" id="app-calmspace-name">CalmSpace</h4>
+                  <span class="app-badge" data-fr="Cognitif &amp; Dys" data-en="Cognitive &amp; Learning">Cognitif &amp; Dys</span>
+                </div>
+              </div>
+              <p class="app-for" data-fr="Pour : autisme, TDAH, anxiété" data-en="For: autism, ADHD, anxiety">
+                Pour : autisme, TDAH, anxiété
+              </p>
+              <p class="app-phrase" data-fr="Régulation sensorielle et émotionnelle" data-en="Sensory and emotional self-regulation">
+                Régulation sensorielle et émotionnelle
+              </p>
+              <a
+                class="app-spec-link"
+                href="https://github.com/freeforgecontact-ai/LibreAll/blob/main/docs/apps/14-calmspace-sensoriel.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-fr="Spécification →" data-en="Specification →"
+                aria-label="Spécification de CalmSpace (ouvre dans un nouvel onglet)"
+              >Spécification →</a>
+            </article>
+
+          </div>
+        </section>
+
+        <!-- === MÉMOIRE === -->
+        <section class="domain-section" aria-labelledby="domain-memoire">
+          <h3 id="domain-memoire">
+            <span aria-hidden="true">🧠</span>
+            <span data-fr="Mémoire" data-en="Memory">Mémoire</span>
+          </h3>
+          <div class="apps-grid">
+
+            <article class="app-card" aria-labelledby="app-remindwell-name">
+              <div class="app-card-header">
+                <div class="app-emoji" aria-hidden="true">🧠</div>
+                <div class="app-meta">
+                  <h4 class="app-name" id="app-remindwell-name">RemindWell</h4>
+                  <span class="app-badge" data-fr="Mémoire" data-en="Memory">Mémoire</span>
+                </div>
+              </div>
+              <p class="app-for" data-fr="Pour : démence, Alzheimer, lésion cérébrale, âgés" data-en="For: dementia, Alzheimer's, brain injury, elderly">
+                Pour : démence, Alzheimer, lésion cérébrale, âgés
+              </p>
+              <p class="app-phrase" data-fr="Rappels, médicaments, aide-mémoire visages et noms" data-en="Reminders, medication tracking, face and name memory aid">
+                Rappels, médicaments, aide-mémoire visages et noms
+              </p>
+              <a
+                class="app-spec-link"
+                href="https://github.com/freeforgecontact-ai/LibreAll/blob/main/docs/apps/15-remindwell-memoire.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-fr="Spécification →" data-en="Specification →"
+                aria-label="Spécification de RemindWell (ouvre dans un nouvel onglet)"
+              >Spécification →</a>
+            </article>
+
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- =====================
+         SECTION CONTRIBUER
+         ===================== -->
+    <section id="contribuer" class="contribute-section" aria-labelledby="contribute-title">
+      <div class="contribute-inner">
+        <h2 id="contribute-title" data-fr="Rejoignez le mouvement" data-en="Join the movement">
+          Rejoignez le mouvement
+        </h2>
+        <p data-fr="LibreA11y est un projet communautaire : développeurs, designers, traducteurs, professionnels du handicap et personnes concernées sont les bienvenus. Chaque contribution compte — qu'il s'agisse d'une ligne de code, d'un retour utilisateur ou d'une traduction." data-en="LibreA11y is a community project: developers, designers, translators, disability professionals and people with lived experience are all welcome. Every contribution counts — whether it is a line of code, user feedback, or a translation.">
+          LibreA11y est un projet communautaire : développeurs, designers, traducteurs, professionnels du handicap et personnes concernées sont les bienvenus. Chaque contribution compte — qu'il s'agisse d'une ligne de code, d'un retour utilisateur ou d'une traduction.
+        </p>
+        <a
+          class="btn btn-primary"
+          href="https://github.com/freeforgecontact-ai/LibreAll"
+          target="_blank"
+          rel="noopener noreferrer"
+          data-fr="Contribuer sur GitHub" data-en="Contribute on GitHub"
+          aria-label="Contribuer sur GitHub (ouvre dans un nouvel onglet)"
+        >Contribuer sur GitHub</a>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============================================================
+       PIED DE PAGE
+       ============================================================ -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <p class="footer-brand" data-fr="Aux couleurs de PGRG IA" data-en="Colours by PGRG IA">
+        Aux couleurs de PGRG IA
+      </p>
+      <nav class="footer-links" aria-label="Liens du pied de page">
+        <a href="https://ia.pgrg.ca" target="_blank" rel="noopener noreferrer" data-fr="PGRG IA" data-en="PGRG IA">
+          PGRG IA
+        </a>
+        <a href="https://github.com/freeforgecontact-ai/LibreAll" target="_blank" rel="noopener noreferrer" data-fr="Dépôt GitHub" data-en="GitHub Repository">
+          Dépôt GitHub
+        </a>
+      </nav>
+      <p class="footer-license" data-fr="Apps sous licence GPL-3.0 · Bibliothèques MIT / Apache 2.0" data-en="Apps licensed under GPL-3.0 · Libraries MIT / Apache 2.0">
+        Apps sous licence GPL-3.0 · Bibliothèques MIT / Apache 2.0
+      </p>
+    </div>
+  </footer>
+
+  <!-- ============================================================
+       JAVASCRIPT
+       ============================================================ -->
+  <script>
+    /* ============================================================
+       BASCULE LANGUE FR / EN
+       ============================================================ */
+    var currentLang = 'fr';
+
+    function toggleLang(btn) {
+      currentLang = (currentLang === 'fr') ? 'en' : 'fr';
+
+      // Mettre à jour l'attribut lang de la page
+      document.documentElement.lang = currentLang;
+
+      // Mettre à jour l'état du bouton
+      btn.setAttribute('aria-pressed', currentLang === 'en' ? 'true' : 'false');
+      btn.setAttribute(
+        'aria-label',
+        currentLang === 'en'
+          ? 'Switch to French'
+          : 'Switch to English'
+      );
+
+      // Parcourir tous les éléments portant des attributs data-fr / data-en
+      var elements = document.querySelectorAll('[data-fr]');
+      elements.forEach(function(el) {
+        var text = currentLang === 'en' ? el.getAttribute('data-en') : el.getAttribute('data-fr');
+        if (text !== null) {
+          el.textContent = text;
+        }
+      });
+
+      // Mettre à jour les aria-label des liens de spec (ils n'ont pas data-fr)
+      updateSpecLinks();
+    }
+
+    function updateSpecLinks() {
+      var specLinks = document.querySelectorAll('.app-spec-link');
+      specLinks.forEach(function(link) {
+        var appName = link.closest('article').querySelector('.app-name').textContent.trim();
+        if (currentLang === 'en') {
+          link.setAttribute('aria-label', 'Specification for ' + appName + ' (opens in new tab)');
+        } else {
+          link.setAttribute('aria-label', 'Spécification de ' + appName + ' (ouvre dans un nouvel onglet)');
+        }
+      });
+    }
+
+    /* ============================================================
+       THÈMES
+       ============================================================ */
+    var activeThemeBtn = null;
+
+    function setTheme(theme, btn) {
+      var html = document.documentElement;
+
+      if (activeThemeBtn) {
+        activeThemeBtn.setAttribute('aria-pressed', 'false');
+      }
+
+      if (html.getAttribute('data-theme') === theme) {
+        // Toggle off — revenir au thème système
+        html.setAttribute('data-theme', '');
+        activeThemeBtn = null;
+      } else {
+        html.setAttribute('data-theme', theme);
+        btn.setAttribute('aria-pressed', 'true');
+        activeThemeBtn = btn;
+      }
+    }
+
+    /* ============================================================
+       TAILLE DE TEXTE
+       ============================================================ */
+    var fontLarge = false;
+
+    function setFontSize(size) {
+      var html = document.documentElement;
+      if (size === 'large') {
+        html.style.setProperty('--fs-base', '22px');
+        fontLarge = true;
+      } else {
+        html.style.setProperty('--fs-base', '18px');
+        fontLarge = false;
+      }
+    }
+
+    /* ============================================================
+       PRÉFÉRENCE SYSTÈME AU CHARGEMENT
+       Respecter prefers-color-scheme si aucun thème n'est forcé
+       (tokens.css le gère via @media, pas besoin de JS)
+       ============================================================ */
+  </script>
+
+</body>
+</html>

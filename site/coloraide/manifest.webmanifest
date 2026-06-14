@@ -1,0 +1,40 @@
+{
+  "name": "ColorAide — Assistance daltonisme",
+  "short_name": "ColorAide",
+  "description": "Filtres de correction, identification de couleurs et palettes sûres pour daltoniens. 100% hors-ligne.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F7F9FC",
+  "theme_color": "#0F4C81",
+  "lang": "fr",
+  "dir": "ltr",
+  "categories": ["accessibility", "utilities", "medical"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%230F4C81'/%3E%3Ccircle cx='72' cy='96' r='32' fill='%23e74c3c'/%3E%3Ccircle cx='120' cy='96' r='32' fill='%2327ae60' opacity='.85'/%3E%3Ccircle cx='96' cy='60' r='28' fill='%23F4B81C' opacity='.9'/%3E%3Ccircle cx='96' cy='96' r='18' fill='%23fff' opacity='.25'/%3E%3Ctext x='96' y='156' text-anchor='middle' font-size='22' font-weight='700' fill='%23F4B81C' font-family='system-ui,sans-serif'%3EColorAide%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230F4C81'/%3E%3Ccircle cx='192' cy='256' r='88' fill='%23e74c3c'/%3E%3Ccircle cx='320' cy='256' r='88' fill='%2327ae60' opacity='.85'/%3E%3Ccircle cx='256' cy='156' r='76' fill='%23F4B81C' opacity='.9'/%3E%3Ccircle cx='256' cy='256' r='48' fill='%23fff' opacity='.22'/%3E%3Ctext x='256' y='410' text-anchor='middle' font-size='56' font-weight='700' fill='%23F4B81C' font-family='system-ui,sans-serif'%3EColorAide%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Identifier une couleur",
+      "url": "./index.html#section-identify",
+      "description": "Ouvrir l'identificateur de couleur"
+    },
+    {
+      "name": "Palette sûre",
+      "url": "./index.html#section-palette",
+      "description": "Voir les palettes sûres pour daltoniens"
+    }
+  ]
+}

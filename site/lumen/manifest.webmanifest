@@ -1,0 +1,39 @@
+{
+  "name": "Lumen — Loupe & Accessibilité Visuelle",
+  "short_name": "Lumen",
+  "description": "Loupe d'écran, loupe caméra, thèmes forts contrastes et lecture vocale pour basse vision. 100% hors-ligne.",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0F4C81",
+  "theme_color": "#0F4C81",
+  "categories": ["accessibility", "utilities"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%230F4C81'/%3E%3Ccircle cx='82' cy='82' r='44' fill='none' stroke='%23F4B81C' stroke-width='14'/%3E%3Cline x1='115' y1='115' x2='160' y2='160' stroke='%23F4B81C' stroke-width='16' stroke-linecap='round'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230F4C81'/%3E%3Ccircle cx='216' cy='216' r='120' fill='none' stroke='%23F4B81C' stroke-width='36'/%3E%3Cline x1='305' y1='305' x2='430' y2='430' stroke='%23F4B81C' stroke-width='42' stroke-linecap='round'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Loupe document",
+      "url": "./index.html#doc",
+      "description": "Ouvrir Lumen sur l'onglet Document"
+    },
+    {
+      "name": "Loupe caméra",
+      "url": "./index.html#camera",
+      "description": "Ouvrir Lumen sur l'onglet Caméra"
+    }
+  ]
+}

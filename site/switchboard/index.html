@@ -2,549 +2,577 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SwitchBoard — Démo | LibreA11y</title>
-<meta name="description" content="Démonstration de pilotage par contacteur et balayage (switch scanning). Hors-ligne, aucune donnée envoyée.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SwitchBoard | LibreA11y</title>
+<meta name="description" content="Communication par contacteur et balayage. Grilles configurables, modes de balayage, profils. 100% hors-ligne.">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#0F4C81">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SwitchBoard">
 <style>
-/* ===== VARIABLES & RESET ===== */
+/* ===== VARIABLES ===== */
 :root {
   --marine:    #0F4C81;
   --marine-dk: #0A3A63;
+  --marine-lt: #1A6DB5;
   --or:        #F4B81C;
   --or-lt:     #FFD45E;
+  --or-dk:     #C89010;
   --encre:     #16202E;
-  --fond:      #F7F9FC;
+  --fond:      #F0F4FA;
   --surface:   #FFFFFF;
-  --border:    #D0D9E8;
-  --focus-ring: #F4B81C;
+  --surface2:  #F7F9FC;
+  --border:    #C8D5E8;
+  --border2:   #A8BFDB;
+  --success:   #16a34a;
+  --danger:    #dc2626;
+  --focus-ring:#F4B81C;
+  --scan-clr:  #F4B81C;
   --radius:    14px;
   --radius-sm: 8px;
-  --shadow:    0 2px 8px rgba(15,76,129,0.13);
-  --shadow-hv: 0 4px 18px rgba(15,76,129,0.24);
-  --scan-clr:  #F4B81C;
+  --radius-xs: 5px;
+  --shadow:    0 2px 8px rgba(15,76,129,.13);
+  --shadow-hv: 0 4px 18px rgba(15,76,129,.24);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,.18);
   --tr:        0.14s ease;
+  --cell-min:  110px;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --tr: 0s; }
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { height: 100%; }
+html { height: 100%; scroll-behavior: smooth; }
 body {
   min-height: 100%;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   background: var(--fond);
   color: var(--encre);
   font-size: 16px;
-  line-height: 1.4;
-  display: flex;
-  flex-direction: column;
-}
-
-/* ===== SKIP LINK ===== */
-#skip-link {
-  position: absolute;
-  top: -99px;
-  left: 8px;
-  z-index: 9999;
-  background: var(--or);
-  color: var(--encre);
-  font-weight: 700;
-  padding: 10px 18px;
-  border-radius: var(--radius-sm);
-  text-decoration: none;
-  font-size: 0.95rem;
-  transition: top 0.15s;
-}
-#skip-link:focus { top: 8px; }
-
-/* ===== FOCUS ===== */
-:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 3px;
-}
-
-/* ===== HEADER ===== */
-#app-header {
-  background: var(--marine);
-  color: #fff;
-  padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  box-shadow: 0 2px 10px rgba(10,58,99,0.32);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  flex-shrink: 0;
-}
-#header-left { display: flex; align-items: center; gap: 16px; }
-#back-link {
-  color: var(--or-lt);
-  text-decoration: none;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-  min-height: 44px;
-  transition: background var(--tr);
-}
-#back-link:hover, #back-link:focus-visible {
-  background: rgba(255,255,255,0.15);
-  color: #fff;
-}
-#app-title {
-  font-size: 1.35rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  letter-spacing: -0.2px;
-}
-#header-notice {
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.62);
-  text-align: right;
-  line-height: 1.35;
-}
-
-/* ===== INFO BANNER ===== */
-#info-banner {
-  background: #fff8e1;
-  border-bottom: 2px solid var(--or);
-  padding: 10px 20px;
-  font-size: 0.88rem;
-  color: var(--encre);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-#info-banner span { font-weight: 600; color: var(--marine-dk); }
-
-/* ===== MAIN ===== */
-#app-main {
-  flex: 1;
+  line-height: 1.45;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
+/* ===== SKIP LINK ===== */
+#skip-link {
+  position: absolute; top: -99px; left: 8px; z-index: 9999;
+  background: var(--or); color: var(--encre);
+  font-weight: 700; padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  text-decoration: none; font-size: .95rem;
+  transition: top .15s;
+}
+#skip-link:focus { top: 8px; }
+
+/* ===== FOCUS ===== */
+:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+
+/* ===== ARIA-LIVE ===== */
+#aria-live {
+  position: absolute; left: -9999px;
+  width: 1px; height: 1px; overflow: hidden;
+}
+
+/* ===== HEADER ===== */
+#app-header {
+  background: var(--marine); color: #fff;
+  padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  box-shadow: 0 2px 10px rgba(10,58,99,.32);
+  position: sticky; top: 0; z-index: 50; flex-shrink: 0;
+}
+#header-left { display: flex; align-items: center; gap: 14px; }
+#back-link {
+  color: var(--or-lt); text-decoration: none; font-size: .9rem;
+  display: flex; align-items: center; gap: 4px;
+  padding: 8px 12px; border-radius: var(--radius-sm);
+  white-space: nowrap; min-height: 44px; transition: background var(--tr);
+}
+#back-link:hover, #back-link:focus-visible { background: rgba(255,255,255,.15); color: #fff; }
+#app-title { font-size: 1.25rem; font-weight: 700; letter-spacing: -.2px; }
+#header-actions { display: flex; align-items: center; gap: 8px; }
+.hdr-btn {
+  background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.25);
+  border-radius: var(--radius-sm); padding: 0 14px;
+  font-size: .82rem; font-weight: 600; cursor: pointer;
+  min-height: 40px; min-width: 56px;
+  transition: background var(--tr);
+  display: flex; align-items: center; gap: 6px;
+}
+.hdr-btn:hover, .hdr-btn:focus-visible { background: rgba(255,255,255,.22); }
+#pwa-install-btn { display: none; }
+
+/* ===== MAIN LAYOUT ===== */
+#app-body {
+  flex: 1; display: flex; flex-direction: column;
+  overflow: hidden; position: relative;
+}
+
+/* ===== PANELS (grille principale / paramètres / profils) ===== */
+.panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.panel[hidden] { display: none; }
+
 /* ===== SCAN STATUS BAR ===== */
 #scan-status-bar {
-  background: var(--marine-dk);
-  color: #fff;
-  padding: 8px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  font-size: 0.84rem;
-  flex-shrink: 0;
+  background: var(--marine-dk); color: #fff;
+  padding: 7px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap; font-size: .82rem; flex-shrink: 0;
 }
-#scan-status-label {
-  display: flex; align-items: center; gap: 8px;
-}
+#scan-status-left { display: flex; align-items: center; gap: 8px; }
 #scan-indicator {
-  width: 12px; height: 12px;
-  border-radius: 50%;
-  background: #9ca3af;
-  flex-shrink: 0;
-  transition: background 0.2s;
+  width: 11px; height: 11px; border-radius: 50%;
+  background: #6b7280; flex-shrink: 0; transition: background .2s;
 }
 body.scan-running #scan-indicator { background: #4ade80; }
 #scan-status-text { font-weight: 600; }
-
-#scan-kbd-hints {
-  display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
-  font-size: 0.8rem; color: rgba(255,255,255,0.78);
-}
-#scan-kbd-hints kbd {
-  background: rgba(255,255,255,0.18);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.3);
-  padding: 2px 7px;
-  border-radius: 4px;
-  font-size: 0.78rem;
-  font-family: monospace;
+#scan-kbd { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; color: rgba(255,255,255,.78); }
+#scan-kbd kbd {
+  background: rgba(255,255,255,.18); color: #fff;
+  border: 1px solid rgba(255,255,255,.3);
+  padding: 2px 7px; border-radius: 4px; font-size: .76rem; font-family: monospace;
 }
 
-/* ===== SWITCH CONTROL BUTTONS ===== */
+/* ===== SWITCH CONTROLS ===== */
 #switch-controls {
-  display: flex;
-  gap: 10px;
-  padding: 12px 20px 8px;
-  background: var(--fond);
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-  flex-shrink: 0;
-  align-items: center;
+  display: flex; gap: 10px; padding: 10px 16px 8px;
+  background: var(--surface2); border-bottom: 1px solid var(--border);
+  flex-wrap: wrap; flex-shrink: 0; align-items: center;
 }
-.switch-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 0 24px;
-  border: none;
-  border-radius: var(--radius);
-  font-size: 1.05rem;
-  font-weight: 700;
-  cursor: pointer;
-  min-height: 56px;
-  min-width: 160px;
+.sw-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  border: none; border-radius: var(--radius);
+  font-size: 1rem; font-weight: 700; cursor: pointer;
+  min-height: 56px; min-width: 140px; padding: 0 20px;
   transition: transform var(--tr), box-shadow var(--tr), background var(--tr);
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
+  -webkit-tap-highlight-color: transparent; user-select: none;
 }
-.switch-btn:active { transform: scale(0.95); }
+.sw-btn:active { transform: scale(.95); }
 #btn-select {
-  background: var(--or);
-  color: var(--encre);
-  border: 3px solid var(--marine);
-  flex: 1;
-  min-width: 140px;
+  background: var(--or); color: var(--encre);
+  border: 3px solid var(--marine); flex: 1; min-width: 120px;
 }
 #btn-select:hover { background: var(--or-lt); box-shadow: var(--shadow-hv); }
 #btn-advance {
-  background: var(--marine);
-  color: #fff;
-  flex: 1;
-  min-width: 140px;
+  background: var(--marine); color: #fff;
+  flex: 1; min-width: 120px;
 }
 #btn-advance:hover { background: var(--marine-dk); box-shadow: var(--shadow-hv); }
 #btn-scan-toggle {
-  background: var(--surface);
-  color: var(--marine);
+  background: var(--surface); color: var(--marine);
   border: 2px solid var(--marine);
-  font-size: 0.9rem;
-  padding: 0 16px;
-  min-height: 48px;
-  min-width: 130px;
+  font-size: .88rem; padding: 0 16px;
+  min-height: 48px; min-width: 120px;
 }
 #btn-scan-toggle:hover { background: var(--marine); color: #fff; }
 #btn-scan-toggle[aria-pressed="true"] {
-  background: #dcfce7;
-  border-color: #16a34a;
-  color: #166534;
+  background: #dcfce7; border-color: var(--success); color: #14532d;
 }
 
 /* ===== SETTINGS BAR ===== */
 #settings-bar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 8px 20px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  font-size: 0.84rem;
-  flex-wrap: wrap;
-  flex-shrink: 0;
+  display: flex; align-items: center; gap: 14px; padding: 7px 16px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  font-size: .83rem; flex-wrap: wrap; flex-shrink: 0;
 }
-.setting-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+.sg { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.sg label { font-size: .8rem; font-weight: 600; color: var(--encre); white-space: nowrap; }
+.sg input[type="range"] { width: 80px; accent-color: var(--marine); cursor: pointer; }
+.sg select {
+  padding: 4px 8px; border: 2px solid var(--border);
+  border-radius: var(--radius-sm); font-size: .8rem;
+  background: var(--fond); color: var(--encre); cursor: pointer;
+  min-height: 34px;
 }
-.setting-group label {
-  font-size: 0.83rem;
-  font-weight: 600;
-  color: var(--encre);
-  white-space: nowrap;
-}
-.setting-group input[type="range"] {
-  width: 90px;
-  accent-color: var(--marine);
-  cursor: pointer;
-}
-.setting-group select {
-  padding: 5px 8px;
-  border: 2px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 0.83rem;
-  background: var(--fond);
-  color: var(--encre);
-  cursor: pointer;
-  min-height: 36px;
-}
-.setting-group select:focus-visible { border-color: var(--marine); outline: none; }
-.setting-val {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--marine);
-  min-width: 34px;
-}
+.sg select:focus-visible { border-color: var(--marine); outline: none; }
+.sv { font-size: .78rem; font-weight: 700; color: var(--marine); min-width: 32px; }
 
 /* Toggle */
-.toggle-wrap { display: flex; align-items: center; gap: 8px; }
-.toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
-.toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
-.toggle-track {
-  position: absolute; inset: 0;
-  background: #cdd5df;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background 0.18s;
+.tgl-wrap { display: flex; align-items: center; gap: 7px; }
+.tgl { position: relative; width: 42px; height: 23px; flex-shrink: 0; }
+.tgl input { opacity: 0; width: 0; height: 0; position: absolute; }
+.tgl-track {
+  position: absolute; inset: 0; background: #cbd5e1;
+  border-radius: 12px; cursor: pointer; transition: background .18s;
 }
-.toggle input:checked + .toggle-track { background: var(--marine); }
-.toggle-thumb {
+.tgl input:checked + .tgl-track { background: var(--marine); }
+.tgl-thumb {
   position: absolute; top: 3px; left: 3px;
-  width: 18px; height: 18px;
-  background: #fff;
-  border-radius: 50%;
-  transition: transform 0.18s;
-  pointer-events: none;
-  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  width: 17px; height: 17px; background: #fff;
+  border-radius: 50%; transition: transform .18s;
+  pointer-events: none; box-shadow: 0 1px 3px rgba(0,0,0,.2);
 }
-.toggle input:checked ~ .toggle-track .toggle-thumb { transform: translateX(20px); }
-.toggle-wrap span { font-size: 0.82rem; font-weight: 500; cursor: pointer; }
-@media (prefers-reduced-motion: reduce) {
-  .toggle-track, .toggle-thumb { transition: none; }
-}
+.tgl input:checked ~ .tgl-track .tgl-thumb { transform: translateX(19px); }
+.tgl-wrap span { font-size: .8rem; font-weight: 500; cursor: pointer; }
 
-/* ===== GRID AREA ===== */
-#grid-wrapper {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px 20px 24px;
+/* ===== GRID TABS ===== */
+#grid-tabs-bar {
+  display: flex; align-items: center; gap: 0;
+  background: var(--surface); border-bottom: 2px solid var(--border);
+  overflow-x: auto; flex-shrink: 0; padding: 0 16px;
 }
-#action-grid {
+.grid-tab {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; font-size: .85rem; font-weight: 600;
+  color: var(--encre); background: none; border: none;
+  border-bottom: 3px solid transparent; margin-bottom: -2px;
+  cursor: pointer; white-space: nowrap; min-height: 44px;
+  transition: color var(--tr), border-color var(--tr);
+}
+.grid-tab:hover { color: var(--marine); }
+.grid-tab[aria-selected="true"] {
+  color: var(--marine); border-bottom-color: var(--marine);
+}
+#btn-add-grid {
+  padding: 6px 12px; font-size: .8rem; font-weight: 700;
+  color: var(--marine); background: none; border: 2px dashed var(--border2);
+  border-radius: var(--radius-sm); cursor: pointer;
+  margin-left: 8px; min-height: 36px; white-space: nowrap;
+  transition: background var(--tr), border-color var(--tr);
+}
+#btn-add-grid:hover { background: var(--fond); border-color: var(--marine); }
+
+/* ===== GRID WRAPPER ===== */
+#grid-wrapper {
+  flex: 1; overflow-y: auto; padding: 14px 16px 80px;
+  -webkit-overflow-scrolling: touch;
+}
+.action-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 12px;
-  max-width: 920px;
+  gap: 10px;
+  max-width: 960px;
   margin: 0 auto;
 }
 
 /* ===== GRID CELL ===== */
 .grid-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  background: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  cursor: pointer;
-  padding: 14px 10px;
-  min-height: 110px;
-  min-width: 0;
-  text-align: center;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 5px;
+  background: var(--surface); border: 2px solid var(--border);
+  border-radius: var(--radius); cursor: pointer;
+  padding: 12px 8px; min-height: var(--cell-min); min-width: 0;
+  text-align: center; position: relative;
   transition: border-color var(--tr), box-shadow var(--tr), background var(--tr), transform var(--tr);
-  position: relative;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
+  -webkit-tap-highlight-color: transparent; user-select: none;
 }
-.grid-cell:hover {
-  border-color: var(--marine);
-  box-shadow: var(--shadow-hv);
-  background: #f0f6ff;
+.grid-cell:hover { border-color: var(--marine); box-shadow: var(--shadow-hv); background: #eef4ff; }
+.grid-cell:active { transform: scale(.94); }
+.grid-cell:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.cell-emoji { font-size: 2.2rem; line-height: 1; pointer-events: none; }
+.cell-label { font-size: .88rem; font-weight: 700; color: var(--encre); pointer-events: none; word-break: break-word; }
+.cell-badge {
+  position: absolute; top: 6px; right: 6px;
+  background: var(--marine); color: #fff;
+  font-size: .65rem; font-weight: 800;
+  padding: 2px 6px; border-radius: 20px; pointer-events: none;
 }
-.grid-cell:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-.grid-cell:active { transform: scale(0.94); }
-
-.cell-emoji {
-  font-size: 2.4rem;
-  line-height: 1;
+.cell-counter-val {
+  font-size: 1.3rem; font-weight: 900; color: var(--marine);
   pointer-events: none;
 }
-.cell-label {
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: var(--encre);
-  pointer-events: none;
-}
+/* state toggle on/off */
+.grid-cell.state-on { background: #fff8e1; border-color: var(--or); }
+.grid-cell.state-on .cell-label { color: var(--or-dk); }
 
 /* ===== SCAN HIGHLIGHT ===== */
-.grid-cell.scan-row-active {
-  background: rgba(244,184,28,0.10);
-  border-color: var(--or);
-}
+.grid-cell.scan-row { background: rgba(244,184,28,.09); border-color: var(--or); }
 .grid-cell.scan-focus {
-  background: rgba(244,184,28,0.18);
-  border-color: var(--or);
+  background: rgba(244,184,28,.22); border-color: var(--or);
   border-width: 3px;
-  box-shadow: 0 0 0 4px rgba(244,184,28,0.35), var(--shadow-hv);
-  z-index: 2;
+  box-shadow: 0 0 0 4px rgba(244,184,28,.4), var(--shadow-hv);
+  z-index: 2; transform: scale(1.02);
 }
-/* No blinking — only smooth movement */
-@media (prefers-reduced-motion: reduce) {
-  .grid-cell, .grid-cell.scan-focus { transition: none; }
-  .cell-activate { animation: none !important; }
-}
+.grid-cell.scan-group { background: rgba(244,184,28,.07); border-color: var(--or); border-style: dashed; }
+.grid-cell.scan-group-focus { background: rgba(244,184,28,.18); border-color: var(--or); border-width: 3px; }
 
-/* ===== CELL ACTIVATE FEEDBACK ===== */
+/* Activate flash */
 @keyframes cellActivate {
-  0%   { transform: scale(0.93); background: var(--or-lt); }
-  50%  { transform: scale(1.05); background: var(--or); }
+  0%   { transform: scale(.93); background: var(--or-lt); }
+  50%  { transform: scale(1.06); background: var(--or); }
   100% { transform: scale(1); }
 }
-.cell-activate {
-  animation: cellActivate 0.25s ease forwards;
+.cell-activate { animation: cellActivate .28s ease forwards; }
+
+/* ===== EDIT OVERLAY on cell ===== */
+.cell-edit-btn {
+  position: absolute; top: 4px; left: 4px;
+  background: rgba(15,76,129,.12); color: var(--marine);
+  border: none; border-radius: var(--radius-xs);
+  font-size: .65rem; font-weight: 700; cursor: pointer;
+  padding: 2px 5px; opacity: 0; transition: opacity .15s;
+  line-height: 1.4; pointer-events: auto;
 }
+.grid-cell:hover .cell-edit-btn,
+.grid-cell:focus-within .cell-edit-btn { opacity: 1; }
+body.edit-mode .cell-edit-btn { opacity: 1; }
 
 /* ===== LIGHT PANEL ===== */
 #light-panel {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.4s;
+  position: fixed; inset: 0; pointer-events: none; z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .4s;
 }
-#light-panel.light-on {
-  background: rgba(255,240,100,0.38);
-  pointer-events: none;
-}
+#light-panel.light-on { background: rgba(255,240,100,.38); }
 #light-label {
-  font-size: 2.8rem;
-  font-weight: 900;
-  color: #7d5000;
-  opacity: 0;
-  transition: opacity 0.3s;
-  text-shadow: 0 2px 8px rgba(255,220,0,0.7);
-  pointer-events: none;
-  user-select: none;
+  font-size: 2.6rem; font-weight: 900; color: #7d5000;
+  opacity: 0; transition: opacity .3s;
+  text-shadow: 0 2px 8px rgba(255,220,0,.7);
+  pointer-events: none; user-select: none;
 }
 #light-panel.light-on #light-label { opacity: 1; }
 
+/* ===== ALERT AIDE ===== */
+#aide-alert {
+  position: fixed; inset: 0; z-index: 350;
+  background: rgba(220,38,38,.88);
+  display: none; align-items: center; justify-content: center;
+  flex-direction: column; gap: 20px;
+  pointer-events: none;
+}
+#aide-alert.show {
+  display: flex; pointer-events: auto;
+  animation: aideFlash .6s ease-in-out;
+}
+@keyframes aideFlash {
+  0%,100% { opacity: 1; } 50% { opacity: .7; }
+}
+#aide-alert-inner {
+  background: #fff; border-radius: var(--radius);
+  padding: 32px 40px; text-align: center;
+  box-shadow: var(--shadow-lg); max-width: 420px;
+}
+#aide-alert-inner h2 { color: var(--danger); font-size: 1.6rem; margin-bottom: 12px; }
+#aide-alert-inner p { font-size: 1.05rem; color: var(--encre); margin-bottom: 20px; }
+#btn-aide-dismiss {
+  background: var(--danger); color: #fff;
+  border: none; border-radius: var(--radius-sm);
+  padding: 14px 32px; font-size: 1.1rem; font-weight: 700;
+  cursor: pointer; min-height: 56px;
+}
+#btn-aide-dismiss:hover { background: #b91c1c; }
+
 /* ===== MUSIC OVERLAY ===== */
 #music-overlay {
-  position: fixed;
-  bottom: 80px;
-  right: 24px;
-  font-size: 2.6rem;
-  pointer-events: none;
-  z-index: 210;
-  display: none;
-  user-select: none;
+  position: fixed; bottom: 80px; right: 24px;
+  font-size: 2.4rem; pointer-events: none; z-index: 210;
+  display: none; user-select: none;
 }
 @keyframes musicFloat {
   0%   { transform: translateY(0) rotate(-8deg); opacity: 1; }
-  100% { transform: translateY(-64px) rotate(8deg); opacity: 0; }
+  100% { transform: translateY(-60px) rotate(8deg); opacity: 0; }
 }
-.music-note {
-  display: inline-block;
-  animation: musicFloat 1.6s ease-out forwards;
+.music-note { display: inline-block; animation: musicFloat 1.5s ease-out forwards; }
+
+/* ===== CAUSE-EFFET PANEL ===== */
+#cause-panel {
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  gap: 20px; padding: 32px 20px; text-align: center;
+  background: var(--fond); flex: 1;
 }
-@media (prefers-reduced-motion: reduce) {
-  .music-note { animation: none; opacity: 0; }
+#cause-panel.active { display: flex; }
+#cause-big {
+  font-size: 8rem; line-height: 1;
+  transition: transform .2s, filter .2s;
+  user-select: none; filter: grayscale(1) opacity(.3);
+}
+#cause-big.triggered {
+  transform: scale(1.3); filter: none;
+}
+#cause-msg { font-size: 1.4rem; font-weight: 700; color: var(--marine); }
+#cause-count { font-size: 1rem; color: var(--encre); opacity: .7; }
+#btn-cause-close {
+  background: var(--marine); color: #fff;
+  border: none; border-radius: var(--radius);
+  padding: 14px 32px; font-size: 1rem; font-weight: 700;
+  cursor: pointer; min-height: 56px;
 }
 
-/* ===== FEEDBACK TOAST ===== */
+/* ===== TOAST ===== */
 #feedback-toast {
-  position: fixed;
-  bottom: 28px;
-  left: 50%;
+  position: fixed; bottom: 28px; left: 50%;
   transform: translateX(-50%) translateY(20px);
-  background: var(--marine-dk);
-  color: #fff;
-  padding: 12px 28px;
-  border-radius: 40px;
-  font-size: 1rem;
-  font-weight: 600;
-  opacity: 0;
-  transition: opacity 0.2s, transform 0.2s;
-  pointer-events: none;
-  z-index: 300;
-  white-space: nowrap;
+  background: var(--marine-dk); color: #fff;
+  padding: 11px 26px; border-radius: 40px;
+  font-size: .98rem; font-weight: 600;
+  opacity: 0; transition: opacity .2s, transform .2s;
+  pointer-events: none; z-index: 300; white-space: nowrap;
+  max-width: 90vw; text-overflow: ellipsis; overflow: hidden;
 }
-#feedback-toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
+#feedback-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* ===== AIDE PANEL ===== */
-#aide-panel {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(15,76,129,0.45);
-  z-index: 400;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+/* ===== MODAL BASE ===== */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(15,76,129,.45); z-index: 400;
+  align-items: center; justify-content: center; padding: 20px;
 }
-#aide-panel.open { display: flex; }
-#aide-box {
-  background: var(--surface);
-  border-radius: var(--radius);
-  padding: 28px 32px;
-  max-width: 520px;
-  width: 100%;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 26px 28px; width: 100%; box-shadow: var(--shadow-lg);
+  max-height: 90vh; overflow-y: auto; position: relative;
 }
-#aide-box h2 {
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: var(--marine);
-  margin-bottom: 14px;
+.modal-box h2 {
+  font-size: 1.2rem; font-weight: 800; color: var(--marine);
+  margin-bottom: 16px;
 }
-#aide-box p, #aide-box li {
-  font-size: 0.95rem;
-  line-height: 1.55;
-  color: var(--encre);
-  margin-bottom: 8px;
+.modal-close {
+  position: absolute; top: 14px; right: 14px;
+  background: none; border: 1px solid var(--border);
+  border-radius: 50%; width: 36px; height: 36px;
+  font-size: 1.1rem; cursor: pointer; color: var(--encre);
+  display: flex; align-items: center; justify-content: center;
 }
-#aide-box ul { padding-left: 1.2em; margin-bottom: 12px; }
-#aide-box kbd {
-  background: var(--encre);
-  color: #fff;
-  padding: 2px 7px;
-  border-radius: 4px;
-  font-size: 0.82rem;
-  font-family: monospace;
+.modal-close:hover { background: var(--fond); }
+
+/* AIDE MODAL */
+#aide-modal .modal-box { max-width: 540px; }
+#aide-modal p, #aide-modal li { font-size: .93rem; line-height: 1.55; margin-bottom: 8px; }
+#aide-modal ul { padding-left: 1.2em; margin-bottom: 12px; }
+#aide-modal kbd {
+  background: var(--encre); color: #fff;
+  padding: 2px 6px; border-radius: 4px; font-size: .8rem; font-family: monospace;
 }
 #btn-aide-close {
-  margin-top: 16px;
-  background: var(--marine);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: 12px 28px;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  min-height: 48px;
-  width: 100%;
+  margin-top: 14px; background: var(--marine); color: #fff;
+  border: none; border-radius: var(--radius-sm);
+  padding: 12px 28px; font-size: .98rem; font-weight: 700;
+  cursor: pointer; min-height: 48px; width: 100%;
 }
 #btn-aide-close:hover { background: var(--marine-dk); }
 
-/* ===== ARIA LIVE ===== */
-#aria-live {
-  position: absolute;
-  left: -9999px;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
+/* CELL EDITOR MODAL */
+#cell-editor .modal-box { max-width: 460px; }
+.field-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+.field-row label { font-size: .82rem; font-weight: 700; color: var(--encre); }
+.field-row input, .field-row select, .field-row textarea {
+  padding: 9px 12px; border: 2px solid var(--border);
+  border-radius: var(--radius-sm); font-size: .92rem;
+  background: var(--fond); color: var(--encre);
+  min-height: 42px; font-family: inherit;
 }
+.field-row input:focus, .field-row select:focus, .field-row textarea:focus {
+  border-color: var(--marine); outline: none;
+}
+.field-row textarea { min-height: 70px; resize: vertical; }
+.editor-actions { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+.btn-primary {
+  background: var(--marine); color: #fff; border: none;
+  border-radius: var(--radius-sm); padding: 11px 24px;
+  font-size: .95rem; font-weight: 700; cursor: pointer; min-height: 48px;
+  flex: 1;
+}
+.btn-primary:hover { background: var(--marine-dk); }
+.btn-danger {
+  background: var(--danger); color: #fff; border: none;
+  border-radius: var(--radius-sm); padding: 11px 24px;
+  font-size: .95rem; font-weight: 700; cursor: pointer; min-height: 48px;
+}
+.btn-danger:hover { background: #b91c1c; }
+.btn-secondary {
+  background: var(--surface); color: var(--marine);
+  border: 2px solid var(--marine); border-radius: var(--radius-sm);
+  padding: 11px 20px; font-size: .92rem; font-weight: 700;
+  cursor: pointer; min-height: 48px;
+}
+.btn-secondary:hover { background: var(--fond); }
+
+/* PROFILS MODAL */
+#profiles-modal .modal-box { max-width: 520px; }
+.profile-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.profile-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; background: var(--fond);
+  border: 2px solid var(--border); border-radius: var(--radius-sm);
+}
+.profile-item.active-profile { border-color: var(--marine); background: #eef4ff; }
+.profile-name { font-weight: 700; flex: 1; font-size: .92rem; }
+.profile-desc { font-size: .78rem; color: #555; }
+.profile-actions { display: flex; gap: 6px; }
+.profile-btn {
+  background: none; border: 1px solid var(--border);
+  border-radius: var(--radius-xs); padding: 4px 10px;
+  font-size: .78rem; font-weight: 600; cursor: pointer; color: var(--encre);
+  min-height: 32px;
+}
+.profile-btn:hover { background: var(--marine); color: #fff; border-color: var(--marine); }
+.profile-btn.del { color: var(--danger); }
+.profile-btn.del:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+/* GRID SETTINGS MODAL */
+#grid-settings-modal .modal-box { max-width: 480px; }
+
+/* IMPORT/EXPORT */
+.io-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+
+/* ===== SETTINGS PANEL ===== */
+#settings-panel {
+  background: var(--surface); padding: 20px 20px 80px;
+  overflow-y: auto;
+}
+.settings-section { margin-bottom: 28px; }
+.settings-section h3 {
+  font-size: 1rem; font-weight: 800; color: var(--marine);
+  border-bottom: 2px solid var(--border); padding-bottom: 6px; margin-bottom: 14px;
+}
+.settings-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border);
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-label { font-size: .9rem; font-weight: 600; }
+.settings-desc { font-size: .78rem; color: #666; margin-top: 2px; }
+.settings-ctrl { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.settings-ctrl input[type="range"] { width: 100px; accent-color: var(--marine); }
+.settings-ctrl select {
+  padding: 5px 8px; border: 2px solid var(--border);
+  border-radius: var(--radius-sm); font-size: .85rem;
+  background: var(--fond); min-height: 36px;
+}
+
+/* ===== BOTTOM NAV ===== */
+#bottom-nav {
+  background: var(--surface); border-top: 2px solid var(--border);
+  display: flex; justify-content: space-around;
+  padding: 4px 0 calc(4px + env(safe-area-inset-bottom));
+  flex-shrink: 0; z-index: 40;
+}
+.nav-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: none; border: none; cursor: pointer;
+  padding: 6px 16px; border-radius: var(--radius-sm);
+  min-height: 56px; min-width: 70px; flex: 1;
+  font-size: .68rem; font-weight: 600; color: #6b7280;
+  transition: color var(--tr), background var(--tr);
+}
+.nav-btn:hover { background: var(--fond); }
+.nav-btn[aria-selected="true"] { color: var(--marine); }
+.nav-btn svg { width: 22px; height: 22px; }
+.nav-btn[aria-selected="true"] svg { stroke: var(--marine); }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 540px) {
-  #action-grid {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 9px;
-  }
-  .cell-emoji { font-size: 2rem; }
-  .grid-cell { min-height: 90px; }
-  .switch-btn { min-width: 100px; font-size: 0.9rem; }
-  #settings-bar { gap: 10px; }
-  .setting-group input[type="range"] { width: 70px; }
+  :root { --cell-min: 90px; }
+  .cell-emoji { font-size: 1.8rem; }
+  .cell-label { font-size: .78rem; }
+  .sw-btn { min-width: 100px; font-size: .9rem; }
+  #settings-bar { gap: 8px; }
+  .sg input[type="range"] { width: 65px; }
+  .modal-box { padding: 20px 16px; }
+}
+@media (min-width: 860px) {
+  #bottom-nav { justify-content: center; gap: 4px; }
+  .nav-btn { flex: 0 0 auto; min-width: 100px; }
 }
 </style>
 </head>
 <body>
 
 <!-- SKIP LINK -->
-<a href="#action-grid" id="skip-link">Aller directement à la grille d'actions</a>
+<a href="#grid-wrapper" id="skip-link">Aller à la grille d'actions</a>
 
 <!-- ARIA LIVE -->
 <div id="aria-live" aria-live="polite" aria-atomic="true" role="status"></div>
@@ -552,707 +580,1732 @@ body.scan-running #scan-indicator { background: #4ade80; }
 <!-- HEADER -->
 <header id="app-header" role="banner">
   <div id="header-left">
-    <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y">← LibreA11y</a>
-    <h1 id="app-title">🕹️ SwitchBoard — démo</h1>
+    <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y">&#8592; LibreA11y</a>
+    <h1 id="app-title">SwitchBoard</h1>
   </div>
-  <div id="header-notice" aria-label="démo hors-ligne, aucune donnée envoyée">
-    démo · 100% hors-ligne<br>aucune donnée envoyée
+  <div id="header-actions">
+    <button class="hdr-btn" id="btn-cause" aria-label="Ouvrir l'activité cause-à-effet">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      Cause-effet
+    </button>
+    <button class="hdr-btn" id="btn-profiles" aria-label="Gérer les profils">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Profils
+    </button>
+    <button class="hdr-btn" id="pwa-install-btn" aria-label="Installer l'application">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true"><path d="M12 2v13M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/></svg>
+      Installer
+    </button>
+    <button class="hdr-btn" id="btn-aide" aria-label="Ouvrir l'aide">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg>
+      Aide
+    </button>
   </div>
 </header>
 
-<!-- INFO BANNER -->
-<div id="info-banner" role="note">
-  <span>Comment ça marche :</span> activez le balayage, puis utilisez votre contacteur (ou les boutons ci-dessous) pour avancer dans la grille et sélectionner une action.
-</div>
+<!-- APP BODY -->
+<div id="app-body" role="main">
 
-<!-- MAIN -->
-<main id="app-main" role="main">
+  <!-- === PANEL GRILLE === -->
+  <div class="panel" id="panel-grille" role="region" aria-label="Grille d'actions">
 
-  <!-- SCAN STATUS -->
-  <div id="scan-status-bar" role="status" aria-live="polite">
-    <div id="scan-status-label">
-      <div id="scan-indicator" aria-hidden="true"></div>
-      <span id="scan-status-text">Balayage arrêté</span>
-    </div>
-    <div id="scan-kbd-hints" aria-label="Raccourcis clavier : Espace pour sélectionner, Entrée pour avancer">
-      <kbd aria-label="touche Espace">Espace</kbd> Sélectionner &nbsp;
-      <kbd aria-label="touche Entrée">Entrée</kbd> Avancer
-    </div>
-  </div>
-
-  <!-- SWITCH CONTROL BUTTONS -->
-  <div id="switch-controls" role="toolbar" aria-label="Contrôles contacteur">
-    <button id="btn-select" class="switch-btn" aria-label="Sélectionner l'action en cours (contacteur 1 / Espace)">
-      ✅ Sélectionner
-    </button>
-    <button id="btn-advance" class="switch-btn" aria-label="Avancer vers la prochaine cellule (contacteur 2 / Entrée)">
-      ➡️ Avancer
-    </button>
-    <button id="btn-scan-toggle" class="switch-btn" aria-pressed="false" aria-label="Activer ou désactiver le balayage automatique">
-      ▶ Balayage auto
-    </button>
-  </div>
-
-  <!-- SETTINGS BAR -->
-  <div id="settings-bar" role="group" aria-label="Réglages du balayage">
-    <div class="setting-group">
-      <label for="speed-range">Vitesse :</label>
-      <input type="range" id="speed-range" min="500" max="3000" step="100" value="1500"
-             aria-valuemin="0.5" aria-valuemax="3" aria-label="Durée entre chaque pas (millisecondes)">
-      <span class="setting-val" id="speed-val" aria-live="polite">1,5 s</span>
-    </div>
-    <div class="setting-group">
-      <label for="dwell-range">Temps d'acceptation :</label>
-      <input type="range" id="dwell-range" min="0" max="800" step="50" value="0"
-             aria-label="Délai anti-faux-contact en millisecondes">
-      <span class="setting-val" id="dwell-val" aria-live="polite">0 ms</span>
-    </div>
-    <div class="setting-group">
-      <label for="mode-select">Mode :</label>
-      <select id="mode-select" aria-label="Mode de balayage">
-        <option value="auto">Automatique</option>
-        <option value="step">Par étapes</option>
-      </select>
-    </div>
-    <div class="setting-group">
-      <div class="toggle-wrap">
-        <label class="toggle" for="linemode-toggle">
-          <input type="checkbox" id="linemode-toggle" aria-label="Activer le mode ligne-colonne">
-          <span class="toggle-track"><span class="toggle-thumb"></span></span>
-        </label>
-        <span id="linemode-label">Ligne-colonne</span>
+    <!-- SCAN STATUS -->
+    <div id="scan-status-bar" role="status" aria-live="polite" aria-atomic="true">
+      <div id="scan-status-left">
+        <div id="scan-indicator" aria-hidden="true"></div>
+        <span id="scan-status-text">Balayage arrêté</span>
+        <span id="scan-mode-badge" style="margin-left:8px;font-size:.74rem;opacity:.78"></span>
+      </div>
+      <div id="scan-kbd" aria-label="Raccourcis : Espace sélectionner, Entrée avancer">
+        <kbd>Espace</kbd> Sélect. &nbsp;
+        <kbd>Entrée</kbd> Avancer
       </div>
     </div>
-    <div class="setting-group">
-      <div class="toggle-wrap">
-        <label class="toggle" for="sound-toggle">
-          <input type="checkbox" id="sound-toggle" checked aria-label="Activer le retour sonore">
-          <span class="toggle-track"><span class="toggle-thumb"></span></span>
-        </label>
-        <span>Son</span>
+
+    <!-- SWITCH CONTROLS -->
+    <div id="switch-controls" role="toolbar" aria-label="Contrôles contacteur">
+      <button id="btn-select" class="sw-btn" aria-label="Sélectionner (Contacteur 1 / Espace)">
+        &#10003; Sélectionner
+      </button>
+      <button id="btn-advance" class="sw-btn" aria-label="Avancer (Contacteur 2 / Entrée)">
+        &#8594; Avancer
+      </button>
+      <button id="btn-scan-toggle" class="sw-btn" aria-pressed="false" aria-label="Activer le balayage automatique">
+        &#9654; Balayage
+      </button>
+    </div>
+
+    <!-- SETTINGS BAR -->
+    <div id="settings-bar" role="group" aria-label="Réglages rapides">
+      <div class="sg">
+        <label for="speed-range">Vitesse</label>
+        <input type="range" id="speed-range" min="400" max="4000" step="100" value="1500"
+               aria-label="Durée entre chaque pas en millisecondes">
+        <span class="sv" id="speed-val" aria-live="polite">1,5s</span>
+      </div>
+      <div class="sg">
+        <label for="dwell-range">Acceptation</label>
+        <input type="range" id="dwell-range" min="0" max="1000" step="50" value="0"
+               aria-label="Délai anti-faux-contact en millisecondes">
+        <span class="sv" id="dwell-val" aria-live="polite">0ms</span>
+      </div>
+      <div class="sg">
+        <label for="mode-select">Mode</label>
+        <select id="mode-select" aria-label="Mode de balayage">
+          <option value="auto">Auto</option>
+          <option value="step">Pas-à-pas</option>
+        </select>
+      </div>
+      <div class="sg">
+        <label for="scan-type-select">Type</label>
+        <select id="scan-type-select" aria-label="Type de balayage">
+          <option value="linear">Linéaire</option>
+          <option value="rowcol">Ligne-col</option>
+          <option value="group">Groupes</option>
+        </select>
+      </div>
+      <div class="sg">
+        <label for="switches-select">Contacteurs</label>
+        <select id="switches-select" aria-label="Nombre de contacteurs">
+          <option value="1">1 contacteur</option>
+          <option value="2">2 contacteurs</option>
+        </select>
+      </div>
+      <div class="sg">
+        <div class="tgl-wrap">
+          <label class="tgl" for="sound-toggle">
+            <input type="checkbox" id="sound-toggle" checked aria-label="Son activé">
+            <span class="tgl-track"><span class="tgl-thumb"></span></span>
+          </label>
+          <span>Son</span>
+        </div>
+      </div>
+      <div class="sg">
+        <div class="tgl-wrap">
+          <label class="tgl" for="voice-toggle">
+            <input type="checkbox" id="voice-toggle" checked aria-label="Voix activée">
+            <span class="tgl-track"><span class="tgl-thumb"></span></span>
+          </label>
+          <span>Voix</span>
+        </div>
+      </div>
+      <div class="sg">
+        <div class="tgl-wrap">
+          <label class="tgl" for="edit-mode-toggle">
+            <input type="checkbox" id="edit-mode-toggle" aria-label="Mode édition des cellules">
+            <span class="tgl-track"><span class="tgl-thumb"></span></span>
+          </label>
+          <span>Éditer</span>
+        </div>
       </div>
     </div>
-    <div class="setting-group">
-      <div class="toggle-wrap">
-        <label class="toggle" for="voice-toggle">
-          <input type="checkbox" id="voice-toggle" checked aria-label="Activer la lecture vocale">
-          <span class="toggle-track"><span class="toggle-thumb"></span></span>
-        </label>
-        <span>Voix</span>
+
+    <!-- GRID TABS -->
+    <div id="grid-tabs-bar" role="tablist" aria-label="Grilles">
+      <!-- dynamically filled -->
+      <button id="btn-add-grid" aria-label="Ajouter une grille">+ Grille</button>
+    </div>
+
+    <!-- CAUSE-EFFET (overlay inside panel) -->
+    <div id="cause-panel" role="region" aria-label="Activité cause-à-effet" aria-live="polite">
+      <div id="cause-big" aria-hidden="true">&#127774;</div>
+      <div id="cause-msg">Appuie sur ton contacteur !</div>
+      <div id="cause-count"></div>
+      <button id="btn-cause-close" class="btn-primary">Fermer l'activité</button>
+    </div>
+
+    <!-- GRID WRAPPER -->
+    <div id="grid-wrapper" tabindex="-1">
+      <!-- grids dynamically injected -->
+    </div>
+
+  </div><!-- /panel-grille -->
+
+  <!-- === PANEL RÉGLAGES === -->
+  <div class="panel" id="panel-reglages" role="region" aria-label="Réglages avancés" hidden>
+    <div id="settings-panel">
+      <div class="settings-section">
+        <h3>Balayage</h3>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Vitesse de balayage</div>
+            <div class="settings-desc">Durée entre chaque pas (ms)</div>
+          </div>
+          <div class="settings-ctrl">
+            <input type="range" id="adv-speed" min="400" max="4000" step="100" value="1500"
+                   aria-label="Vitesse de balayage en millisecondes">
+            <span class="sv" id="adv-speed-val">1500ms</span>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Temps d'acceptation</div>
+            <div class="settings-desc">Anti-faux-contacts (ms)</div>
+          </div>
+          <div class="settings-ctrl">
+            <input type="range" id="adv-dwell" min="0" max="1500" step="50" value="0"
+                   aria-label="Temps d'acceptation en millisecondes">
+            <span class="sv" id="adv-dwell-val">0ms</span>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Boucle infinie</div>
+            <div class="settings-desc">Reprendre au début après la dernière cellule</div>
+          </div>
+          <div class="settings-ctrl">
+            <div class="tgl-wrap">
+              <label class="tgl" for="loop-toggle">
+                <input type="checkbox" id="loop-toggle" checked aria-label="Boucle infinie">
+                <span class="tgl-track"><span class="tgl-thumb"></span></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Répétition auto sélection</div>
+            <div class="settings-desc">Nombre de boucles avant auto-sélection (0 = désactivé)</div>
+          </div>
+          <div class="settings-ctrl">
+            <input type="number" id="auto-select-loops" min="0" max="10" value="0"
+                   style="width:60px;padding:5px 8px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:.88rem;"
+                   aria-label="Boucles avant auto-sélection">
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Grille</h3>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Colonnes</div>
+            <div class="settings-desc">Nombre de colonnes de la grille active</div>
+          </div>
+          <div class="settings-ctrl">
+            <select id="cols-select" aria-label="Nombre de colonnes">
+              <option value="2">2</option>
+              <option value="3" selected>3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+            </select>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Taille des cellules</div>
+            <div class="settings-desc">Hauteur minimale des cellules</div>
+          </div>
+          <div class="settings-ctrl">
+            <select id="cell-size-select" aria-label="Taille des cellules">
+              <option value="90">Petite</option>
+              <option value="120" selected>Normale</option>
+              <option value="160">Grande</option>
+              <option value="200">Très grande</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Import / Export</h3>
+        <div class="io-row">
+          <button class="btn-primary" id="btn-export" style="flex:0 0 auto">
+            Exporter JSON
+          </button>
+          <label class="btn-secondary" style="cursor:pointer;display:inline-flex;align-items:center;min-height:48px;padding:0 20px;font-size:.92rem;font-weight:700;">
+            Importer JSON
+            <input type="file" id="import-file" accept=".json" style="display:none" aria-label="Importer un fichier JSON de grille">
+          </label>
+        </div>
+        <p style="margin-top:10px;font-size:.8rem;color:#666;">L'export inclut toutes les grilles et leurs cellules. L'import remplace toutes les grilles existantes.</p>
+      </div>
+
+      <div class="settings-section">
+        <h3>À propos</h3>
+        <p style="font-size:.88rem;color:#444;line-height:1.6;">SwitchBoard v1.0 — LibreA11y<br>100% hors-ligne. Aucune donnée envoyée.<br>Accessibilité exemplaire. Licence AGPL-3.0.</p>
       </div>
     </div>
-  </div>
+  </div><!-- /panel-reglages -->
 
-  <!-- ACTION GRID -->
-  <div id="grid-wrapper">
-    <div id="action-grid" role="grid" aria-label="Grille d'actions" aria-rowcount="3">
-    </div>
-  </div>
+</div><!-- /app-body -->
 
-</main>
+<!-- BOTTOM NAV -->
+<nav id="bottom-nav" aria-label="Navigation principale">
+  <button class="nav-btn" id="nav-grille" aria-selected="true" aria-label="Grille d'actions">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Grille
+  </button>
+  <button class="nav-btn" id="nav-reglages" aria-selected="false" aria-label="Réglages">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Réglages
+  </button>
+</nav>
 
-<!-- LIGHT PANEL (Lumière) -->
+<!-- LIGHT PANEL -->
 <div id="light-panel" aria-hidden="true">
-  <div id="light-label">💡 Lumière allumée</div>
+  <div id="light-label">Lumiere allumee</div>
 </div>
 
 <!-- MUSIC OVERLAY -->
 <div id="music-overlay" aria-hidden="true"></div>
 
-<!-- FEEDBACK TOAST -->
-<div id="feedback-toast" role="status" aria-live="polite"></div>
+<!-- AIDE ALERT (SOS) -->
+<div id="aide-alert" role="alertdialog" aria-modal="true" aria-labelledby="aide-alert-title">
+  <div id="aide-alert-inner">
+    <h2 id="aide-alert-title">AIDE</h2>
+    <p>Une demande d'aide a ete envoyee !</p>
+    <button id="btn-aide-dismiss">OK — J'arrive</button>
+  </div>
+</div>
 
-<!-- AIDE PANEL -->
-<div id="aide-panel" role="dialog" aria-modal="true" aria-labelledby="aide-titre">
-  <div id="aide-box">
-    <h2 id="aide-titre">🆘 Aide — Comment utiliser SwitchBoard</h2>
-    <p>SwitchBoard permet de piloter des actions à l'écran avec un ou deux contacteurs physiques (boutons adaptés).</p>
+<!-- TOAST -->
+<div id="feedback-toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<!-- AIDE MODAL -->
+<div id="aide-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="aide-modal-title">
+  <div class="modal-box">
+    <button class="modal-close" id="aide-modal-close" aria-label="Fermer l'aide">&times;</button>
+    <h2 id="aide-modal-title">Aide — SwitchBoard</h2>
+    <p><strong>SwitchBoard</strong> permet de piloter des actions avec un ou deux contacteurs physiques.</p>
     <ul>
-      <li><strong>Balayage automatique</strong> : le surlignage avance seul de case en case. Appuyez sur votre contacteur (ou <kbd>Espace</kbd>) pour sélectionner la case en surbrillance.</li>
-      <li><strong>Par étapes</strong> : appuyez sur <kbd>Entrée</kbd> (ou le bouton Avancer) pour avancer manuellement, puis <kbd>Espace</kbd> (ou Sélectionner) pour valider.</li>
-      <li><strong>Mode ligne-colonne</strong> : activez-le pour d'abord sélectionner une ligne entière, puis une colonne dans cette ligne.</li>
-      <li><strong>Temps d'acceptation</strong> : délai avant qu'une pression soit prise en compte (évite les faux-contacts).</li>
+      <li><strong>Balayage auto</strong> : le surlignage avance seul. Appuyez sur <kbd>Espace</kbd> (ou le bouton Selectionner) pour choisir.</li>
+      <li><strong>Pas-a-pas</strong> : appuyez sur <kbd>Entree</kbd> pour avancer, puis <kbd>Espace</kbd> pour selectionner.</li>
+      <li><strong>Ligne-col</strong> : selectionnez d'abord une ligne, puis une cellule dans cette ligne.</li>
+      <li><strong>Groupes</strong> : les cellules sont regroupees ; selectionnez un groupe puis une cellule.</li>
+      <li><strong>2 contacteurs</strong> : Espace = selectionner, Entree = avancer independamment.</li>
+      <li><strong>Temps d'acceptation</strong> : delai avant qu'une pression soit prise en compte.</li>
+      <li><strong>Mode edition</strong> : activez la bascule "Editer" pour modifier les cellules.</li>
+      <li><strong>Profils</strong> : sauvegardez vos reglages (vitesse, mode, etc.) sous un nom.</li>
     </ul>
-    <p>Les boutons à l'écran (Sélectionner / Avancer) remplacent les contacteurs physiques pour la démonstration.</p>
-    <button id="btn-aide-close" autofocus>Fermer</button>
+    <p>Les boutons Selectionner et Avancer remplacent les contacteurs physiques.</p>
+    <button id="btn-aide-close">Fermer</button>
+  </div>
+</div>
+
+<!-- CELL EDITOR MODAL -->
+<div id="cell-editor" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="cell-editor-title">
+  <div class="modal-box">
+    <button class="modal-close" id="cell-editor-close" aria-label="Fermer l'editeur">&times;</button>
+    <h2 id="cell-editor-title">Modifier la cellule</h2>
+    <div class="field-row">
+      <label for="ce-emoji">Emoji</label>
+      <input type="text" id="ce-emoji" maxlength="4" placeholder="ex: &#128075;" autocomplete="off">
+    </div>
+    <div class="field-row">
+      <label for="ce-label">Libelle</label>
+      <input type="text" id="ce-label" maxlength="40" placeholder="ex: Bonjour" autocomplete="off">
+    </div>
+    <div class="field-row">
+      <label for="ce-action">Type d'action</label>
+      <select id="ce-action" aria-label="Type d'action">
+        <option value="say">Prononcer une phrase</option>
+        <option value="toggle">Basculer un etat</option>
+        <option value="nav">Naviguer vers une grille</option>
+        <option value="aide">Appeler a l'aide (alerte)</option>
+        <option value="counter">Compteur</option>
+        <option value="music">Jouer de la musique</option>
+      </select>
+    </div>
+    <div class="field-row" id="ce-value-row">
+      <label for="ce-value">Phrase a prononcer</label>
+      <textarea id="ce-value" rows="2" placeholder="Texte qui sera lu a voix haute..."></textarea>
+    </div>
+    <div class="field-row" id="ce-nav-row" style="display:none">
+      <label for="ce-nav-target">Grille cible</label>
+      <select id="ce-nav-target" aria-label="Grille cible"></select>
+    </div>
+    <div class="editor-actions">
+      <button class="btn-primary" id="ce-save">Enregistrer</button>
+      <button class="btn-secondary" id="ce-cancel">Annuler</button>
+      <button class="btn-danger" id="ce-delete">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILES MODAL -->
+<div id="profiles-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="profiles-title">
+  <div class="modal-box">
+    <button class="modal-close" id="profiles-close" aria-label="Fermer les profils">&times;</button>
+    <h2 id="profiles-title">Profils</h2>
+    <div class="profile-list" id="profile-list"></div>
+    <div class="field-row">
+      <label for="new-profile-name">Nom du nouveau profil</label>
+      <input type="text" id="new-profile-name" maxlength="40" placeholder="ex: Vitesse lente" autocomplete="off">
+    </div>
+    <div class="editor-actions">
+      <button class="btn-primary" id="btn-save-profile">Sauvegarder profil actuel</button>
+    </div>
   </div>
 </div>
 
 <script>
 (function() {
-  'use strict';
+'use strict';
 
-  /* ========================================================
-     DONNÉES : GRILLE D'ACTIONS
-     ======================================================== */
-  const ACTIONS = [
-    { emoji:'👋', label:'Bonjour',   action:'say',    value:'Bonjour !' },
-    { emoji:'✅', label:'Oui',       action:'say',    value:'Oui.' },
-    { emoji:'❌', label:'Non',       action:'say',    value:'Non.' },
-    { emoji:'🍽️', label:'J\'ai faim', action:'say',   value:'J\'ai faim.' },
-    { emoji:'💧', label:'J\'ai soif', action:'say',   value:'J\'ai soif.' },
-    { emoji:'💡', label:'Lumière',   action:'light',  value:'Lumière' },
-    { emoji:'🎵', label:'Musique',   action:'music',  value:'Musique' },
-    { emoji:'🆘', label:'Aide',      action:'aide',   value:'Aide' },
-    { emoji:'📺', label:'Télé',      action:'say',    value:'Allumer la télé, s\'il vous plaît.' },
-    { emoji:'🌡️', label:'Chaud',     action:'say',    value:'J\'ai chaud.' },
-    { emoji:'🥶', label:'Froid',     action:'say',    value:'J\'ai froid.' },
-    { emoji:'😴', label:'Fatigué',   action:'say',    value:'Je suis fatigué.' },
-    { emoji:'😣', label:'Douleur',   action:'say',    value:'J\'ai mal.' },
-    { emoji:'🚶', label:'Sortir',    action:'say',    value:'Je voudrais sortir.' },
-    { emoji:'😊', label:'Merci',     action:'say',    value:'Merci !' },
-  ];
+/* ============================================================
+   STORAGE HELPERS
+   ============================================================ */
+function lsGet(key, def) {
+  try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : def; }
+  catch(e) { return def; }
+}
+function lsSet(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+}
 
-  /* ========================================================
-     STATE
-     ======================================================== */
-  let scanIndex   = 0;   // index de la cellule actuellement surlignée
-  let scanRunning = false;
-  let scanTimer   = null;
-  let scanMode    = 'auto';   // 'auto' | 'step'
-  let lineMode    = false;
-  let scanSpeed   = 1500;
-  let dwellTime   = 0;
-  let dwellTimer  = null;
-  let dwellPending = false;
-  let lightOn     = false;
-  let soundEnabled = true;
-  let voiceEnabled = true;
-  let ttsVoice    = null;
-  let activeFocusTrap = null;
-
-  // Ligne-colonne state
-  let lcPhase     = 'row'; // 'row' | 'col'
-  let lcRowIndex  = 0;
-  let lcColIndex  = 0;
-  let cols        = 1;
-  let rows        = 1;
-
-  /* ========================================================
-     AUDIO CONTEXT
-     ======================================================== */
-  let audioCtx = null;
-  function getAudio() {
-    if (!audioCtx) {
-      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
-    }
-    return audioCtx;
+/* ============================================================
+   DEFAULT GRIDS
+   ============================================================ */
+const DEFAULT_GRIDS = [
+  {
+    id: 'g1', name: 'Communication', cols: 3, cellSize: 120,
+    cells: [
+      { emoji:'👋', label:'Bonjour',     action:'say',   value:'Bonjour !' },
+      { emoji:'✅', label:'Oui',         action:'say',   value:'Oui.' },
+      { emoji:'❌', label:'Non',         action:'say',   value:'Non.' },
+      { emoji:'🍽️', label:'Faim',       action:'say',   value:"J'ai faim." },
+      { emoji:'💧', label:'Soif',        action:'say',   value:"J'ai soif." },
+      { emoji:'😴', label:'Fatigué',     action:'say',   value:'Je suis fatigué.' },
+      { emoji:'😣', label:'Douleur',     action:'say',   value:"J'ai mal." },
+      { emoji:'🥶', label:'Froid',       action:'say',   value:"J'ai froid." },
+      { emoji:'🌡️', label:'Chaud',       action:'say',   value:"J'ai chaud." },
+      { emoji:'😊', label:'Merci',       action:'say',   value:'Merci !' },
+      { emoji:'🚶', label:'Sortir',      action:'say',   value:'Je voudrais sortir.' },
+      { emoji:'💡', label:'Lumière',     action:'toggle',value:'Lumière',   state: false },
+      { emoji:'🎵', label:'Musique',     action:'music', value:'Musique' },
+      { emoji:'📺', label:'Télé',        action:'say',   value:"Allumer la télé, s'il vous plaît." },
+      { emoji:'🆘', label:'Aide !',      action:'aide',  value:'Aide' },
+    ]
+  },
+  {
+    id: 'g2', name: 'Émotions', cols: 3, cellSize: 120,
+    cells: [
+      { emoji:'😀', label:'Content',     action:'say',   value:'Je suis content.' },
+      { emoji:'😢', label:'Triste',      action:'say',   value:'Je suis triste.' },
+      { emoji:'😡', label:'En colère',   action:'say',   value:'Je suis en colère.' },
+      { emoji:'😨', label:'Peur',        action:'say',   value:"J'ai peur." },
+      { emoji:'😍', label:'Amour',       action:'say',   value:'Je t\'aime.' },
+      { emoji:'😴', label:'Sommeil',     action:'say',   value:"J'ai sommeil." },
+      { emoji:'🤩', label:'Super !',     action:'say',   value:'C\'est super !' },
+      { emoji:'😔', label:'Ennui',       action:'say',   value:'Je m\'ennuie.' },
+      { emoji:'🏠', label:'Maison',      action:'nav',   value:'g1' },
+    ]
   }
+];
 
-  function beep(freq, dur, vol, type) {
-    if (!soundEnabled) return;
-    const ctx = getAudio();
-    if (!ctx) return;
-    try {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = type || 'sine';
-      osc.frequency.setValueAtTime(freq, ctx.currentTime);
-      gain.gain.setValueAtTime(vol || 0.08, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + dur);
-    } catch(e) {}
+/* ============================================================
+   LOAD PERSISTED STATE
+   ============================================================ */
+let grids    = lsGet('sb_grids', null);
+if (!grids || !Array.isArray(grids) || grids.length === 0) grids = JSON.parse(JSON.stringify(DEFAULT_GRIDS));
+
+let activeGridId  = lsGet('sb_active_grid', grids[0].id);
+if (!grids.find(g => g.id === activeGridId)) activeGridId = grids[0].id;
+
+let profiles = lsGet('sb_profiles', []);
+
+let settings = lsGet('sb_settings', {
+  scanSpeed: 1500,
+  dwellTime: 0,
+  scanMode: 'auto',      // 'auto' | 'step'
+  scanType: 'linear',    // 'linear' | 'rowcol' | 'group'
+  numSwitches: 2,
+  sound: true,
+  voice: true,
+  loop: true,
+  autoSelectLoops: 0
+});
+
+/* ============================================================
+   AUDIO
+   ============================================================ */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
   }
-
-  function beepStep()   { beep(440, 0.06, 0.06, 'sine'); }
-  function beepSelect() { beep(660, 0.18, 0.12, 'triangle'); }
-  function beepRowSel() { beep(550, 0.10, 0.09, 'sine'); }
-
-  /* ========================================================
-     TTS
-     ======================================================== */
-  function initVoices() {
-    const voices = window.speechSynthesis.getVoices();
-    ttsVoice = voices.find(v => v.lang.startsWith('fr')) || voices[0] || null;
+  if (audioCtx && audioCtx.state === 'suspended') {
+    try { audioCtx.resume(); } catch(e) {}
   }
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.addEventListener('voiceschanged', initVoices);
-    initVoices();
-  }
+  return audioCtx;
+}
+function beep(freq, dur, vol, type) {
+  if (!settings.sound) return;
+  const ctx = getAudio(); if (!ctx) return;
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    gain.gain.setValueAtTime(vol || 0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + dur);
+  } catch(e) {}
+}
+function beepStep()   { beep(440, 0.06, 0.06, 'sine'); }
+function beepRowSel() { beep(550, 0.10, 0.09, 'sine'); }
+function beepSelect() { beep(660, 0.20, 0.12, 'triangle'); }
+function beepAlert()  { beep(880, 0.35, 0.18, 'square'); setTimeout(()=>beep(880,0.35,0.18,'square'), 400); }
+function playMelody() {
+  const notes = [523,587,659,698,784];
+  notes.forEach((f, i) => setTimeout(() => beep(f, 0.25, 0.08, 'triangle'), i * 120));
+}
 
-  function speak(text) {
-    if (!voiceEnabled) return;
-    if (!('speechSynthesis' in window)) return;
-    try {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      if (ttsVoice) u.voice = ttsVoice;
-      u.lang = 'fr-FR';
-      u.rate = 1.1;
-      window.speechSynthesis.speak(u);
-    } catch(e) {}
-  }
+/* ============================================================
+   TTS
+   ============================================================ */
+let ttsVoice = null;
+function initVoices() {
+  try {
+    const vs = window.speechSynthesis.getVoices();
+    ttsVoice = vs.find(v => v.lang && v.lang.startsWith('fr')) || vs[0] || null;
+  } catch(e) {}
+}
+if ('speechSynthesis' in window) {
+  try { window.speechSynthesis.addEventListener('voiceschanged', initVoices); initVoices(); } catch(e) {}
+}
+function speak(text) {
+  if (!settings.voice) return;
+  if (!('speechSynthesis' in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    if (ttsVoice) u.voice = ttsVoice;
+    u.lang = 'fr-FR'; u.rate = 1.05;
+    window.speechSynthesis.speak(u);
+  } catch(e) {}
+}
 
-  /* ========================================================
-     ARIA LIVE
-     ======================================================== */
-  const ariaLive = document.getElementById('aria-live');
-  function announce(msg) {
-    ariaLive.textContent = '';
-    requestAnimationFrame(() => { ariaLive.textContent = msg; });
-  }
-
-  /* ========================================================
-     TOAST
-     ======================================================== */
-  const toast = document.getElementById('feedback-toast');
-  let toastTimer = null;
-  function showToast(msg) {
+/* ============================================================
+   ARIA LIVE + TOAST
+   ============================================================ */
+const ariaLive = document.getElementById('aria-live');
+function announce(msg) {
+  try { ariaLive.textContent = ''; requestAnimationFrame(() => { ariaLive.textContent = msg; }); }
+  catch(e) {}
+}
+const toast = document.getElementById('feedback-toast');
+let toastTm = null;
+function showToast(msg) {
+  try {
     toast.textContent = msg;
     toast.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
-  }
+    clearTimeout(toastTm);
+    toastTm = setTimeout(() => toast.classList.remove('show'), 2400);
+  } catch(e) {}
+}
 
-  /* ========================================================
-     BUILD GRID
-     ======================================================== */
-  const grid = document.getElementById('action-grid');
-  let cells = [];
+/* ============================================================
+   SCAN STATE
+   ============================================================ */
+let scanRunning  = false;
+let scanTimer    = null;
+let scanIdx      = 0;   // linear index
+let lcPhase      = 'row'; // rowcol: 'row' | 'col'
+let lcRow        = 0;
+let lcCol        = 0;
+let grpPhase     = 'group'; // group: 'group' | 'cell'
+let grpIdx       = 0;
+let grpCellIdx   = 0;
+let loopCount    = 0;
+let dwellTimer   = null;
+let dwellPending = false;
+let activeTrap   = null;
+let causeMode    = false;
+let causeCount   = 0;
+let counterValues = {}; // cellIdx -> count per grid
+let lightStates   = {}; // cellKey -> bool
 
-  function buildGrid() {
-    grid.innerHTML = '';
-    cells = [];
-    ACTIONS.forEach((a, i) => {
-      const btn = document.createElement('button');
-      btn.className = 'grid-cell';
-      btn.setAttribute('role', 'gridcell');
-      btn.setAttribute('tabindex', '0');
-      btn.setAttribute('aria-label', a.label + (a.action === 'light' ? ' — basculer la lumière' : a.action === 'music' ? ' — jouer de la musique' : a.action === 'aide' ? ' — ouvrir l\'aide' : ''));
-      btn.dataset.index = i;
-      btn.innerHTML =
-        '<span class="cell-emoji" aria-hidden="true">' + a.emoji + '</span>' +
-        '<span class="cell-label">' + a.label + '</span>';
-      btn.addEventListener('click', () => onCellClick(i));
-      btn.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onCellClick(i);
-        }
-      });
-      grid.appendChild(btn);
-      cells.push(btn);
+/* ============================================================
+   GRID RENDERING
+   ============================================================ */
+function gridKey(gridId) { return gridId; }
+function cellKey(gridId, cellIdx) { return gridId + ':' + cellIdx; }
+
+function getCols() {
+  const g = grids.find(x => x.id === activeGridId);
+  return g ? (g.cols || 3) : 3;
+}
+function getCellSize() {
+  const g = grids.find(x => x.id === activeGridId);
+  return g ? (g.cellSize || 120) : 120;
+}
+
+let cellEls = []; // DOM elements for active grid
+
+function renderTabs() {
+  const bar = document.getElementById('grid-tabs-bar');
+  const addBtn = document.getElementById('btn-add-grid');
+  // remove old tabs
+  bar.querySelectorAll('.grid-tab').forEach(t => t.remove());
+  grids.forEach(g => {
+    const btn = document.createElement('button');
+    btn.className = 'grid-tab';
+    btn.setAttribute('role', 'tab');
+    btn.setAttribute('aria-selected', g.id === activeGridId ? 'true' : 'false');
+    btn.dataset.gridId = g.id;
+    btn.textContent = g.name;
+    btn.addEventListener('click', () => switchGrid(g.id));
+    bar.insertBefore(btn, addBtn);
+  });
+}
+
+function switchGrid(id) {
+  if (scanRunning) stopScan();
+  activeGridId = id;
+  lsSet('sb_active_grid', id);
+  renderTabs();
+  renderGrid();
+  updateColsSelect();
+  updateCellSizeSelect();
+}
+
+function renderGrid() {
+  const wrapper = document.getElementById('grid-wrapper');
+  wrapper.innerHTML = '';
+  const g = grids.find(x => x.id === activeGridId);
+  if (!g) return;
+
+  const div = document.createElement('div');
+  div.className = 'action-grid';
+  div.id = 'action-grid-' + g.id;
+  div.setAttribute('role', 'grid');
+  div.setAttribute('aria-label', 'Grille ' + g.name);
+  const cols = g.cols || 3;
+  div.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+  div.style.setProperty('--cell-min', (g.cellSize || 120) + 'px');
+
+  cellEls = [];
+  g.cells.forEach((cell, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'grid-cell';
+    btn.setAttribute('role', 'gridcell');
+    btn.setAttribute('tabindex', '0');
+    btn.dataset.cellIdx = idx;
+
+    // Edit button
+    const editBtn = document.createElement('button');
+    editBtn.className = 'cell-edit-btn';
+    editBtn.setAttribute('aria-label', 'Modifier ' + cell.label);
+    editBtn.textContent = 'Modif.';
+    editBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openCellEditor(idx);
     });
-    updateGridDimensions();
+    btn.appendChild(editBtn);
+
+    updateCellDOM(btn, cell, idx, g.id);
+
+    btn.addEventListener('click', () => { if (!document.body.classList.contains('edit-mode')) onCellClick(idx); });
+    btn.addEventListener('keydown', (e) => {
+      if ((e.key === 'Enter' || e.key === ' ') && !document.body.classList.contains('edit-mode')) {
+        e.preventDefault(); onCellClick(idx);
+      }
+    });
+    div.appendChild(btn);
+    cellEls.push(btn);
+  });
+
+  // Add cell button (in edit mode)
+  const addCell = document.createElement('button');
+  addCell.className = 'grid-cell';
+  addCell.style.borderStyle = 'dashed';
+  addCell.style.borderColor = 'var(--border2)';
+  addCell.innerHTML = '<span class="cell-emoji" aria-hidden="true">+</span><span class="cell-label">Ajouter</span>';
+  addCell.setAttribute('aria-label', 'Ajouter une cellule');
+  addCell.id = 'btn-add-cell';
+  addCell.style.display = 'none';
+  addCell.addEventListener('click', () => openCellEditor(-1));
+  div.appendChild(addCell);
+
+  wrapper.appendChild(div);
+  syncEditMode();
+}
+
+function updateCellDOM(btn, cell, idx, gridId) {
+  // Clear content except edit-btn
+  const editBtn = btn.querySelector('.cell-edit-btn');
+  btn.innerHTML = '';
+  if (editBtn) btn.appendChild(editBtn);
+
+  const emojiSpan = document.createElement('span');
+  emojiSpan.className = 'cell-emoji';
+  emojiSpan.setAttribute('aria-hidden', 'true');
+  emojiSpan.textContent = cell.emoji || '?';
+
+  const labelSpan = document.createElement('span');
+  labelSpan.className = 'cell-label';
+  labelSpan.textContent = cell.label || '';
+
+  btn.appendChild(emojiSpan);
+
+  if (cell.action === 'counter') {
+    const cv = document.createElement('span');
+    cv.className = 'cell-counter-val';
+    const key = cellKey(gridId, idx);
+    cv.textContent = (counterValues[key] || 0).toString();
+    cv.id = 'counter-' + key;
+    btn.appendChild(cv);
   }
 
-  function updateGridDimensions() {
-    if (!cells.length) return;
-    const containerWidth = grid.getBoundingClientRect().width || 900;
-    const cellWidth = 142; // minmax(130px,1fr) approx
-    cols = Math.max(1, Math.floor(containerWidth / cellWidth));
-    rows = Math.ceil(cells.length / cols);
+  btn.appendChild(labelSpan);
+
+  // State toggle visual
+  const ck = cellKey(gridId, idx);
+  if (cell.action === 'toggle') {
+    btn.classList.toggle('state-on', !!(lightStates[ck]));
+    const badge = document.createElement('span');
+    badge.className = 'cell-badge';
+    badge.textContent = lightStates[ck] ? 'ON' : 'OFF';
+    btn.appendChild(badge);
   }
 
-  /* ========================================================
-     SCAN HIGHLIGHT
-     ======================================================== */
-  function clearHighlight() {
-    cells.forEach(c => { c.classList.remove('scan-focus', 'scan-row-active'); });
-  }
+  // Aria label
+  let al = cell.label;
+  if (cell.action === 'say') al += ' — ' + (cell.value || '');
+  else if (cell.action === 'toggle') al += ' — ' + (lightStates[ck] ? 'allumé' : 'éteint');
+  else if (cell.action === 'nav') al += ' — aller à la grille';
+  else if (cell.action === 'aide') al += ' — appeler à l\'aide';
+  else if (cell.action === 'counter') al += ' — compteur : ' + (counterValues[ck] || 0);
+  btn.setAttribute('aria-label', al);
+  btn.setAttribute('aria-pressed', cell.action === 'toggle' ? (lightStates[ck] ? 'true' : 'false') : null);
+  if (btn.getAttribute('aria-pressed') === 'null') btn.removeAttribute('aria-pressed');
+}
 
-  function highlightIndex(idx) {
-    clearHighlight();
-    if (idx < 0 || idx >= cells.length) return;
-    cells[idx].classList.add('scan-focus');
-    // announce cell label for screen reader
-    announce(ACTIONS[idx].label);
+function syncEditMode() {
+  const isEdit = document.getElementById('edit-mode-toggle').checked;
+  document.body.classList.toggle('edit-mode', isEdit);
+  const addCell = document.getElementById('btn-add-cell');
+  if (addCell) addCell.style.display = isEdit ? '' : 'none';
+}
+
+/* ============================================================
+   CELL ACTIVATION
+   ============================================================ */
+function onCellClick(idx) { activateCell(idx); }
+
+function activateCell(idx) {
+  if (causeMode) { triggerCause(); return; }
+  const g = grids.find(x => x.id === activeGridId);
+  if (!g || idx < 0 || idx >= g.cells.length) return;
+  const cell = g.cells[idx];
+  const btn = cellEls[idx];
+  if (!btn) return;
+  const ck = cellKey(g.id, idx);
+
+  beepSelect();
+  // flash
+  try {
+    btn.classList.remove('cell-activate');
+    void btn.offsetWidth;
+    btn.classList.add('cell-activate');
+    setTimeout(() => btn.classList.remove('cell-activate'), 320);
+  } catch(e) {}
+
+  switch (cell.action) {
+    case 'say':
+      speak(cell.value || cell.label);
+      announce(cell.label + ' : ' + (cell.value || ''));
+      showToast(cell.emoji + ' ' + (cell.value || cell.label));
+      break;
+    case 'toggle': {
+      lightStates[ck] = !lightStates[ck];
+      lsSet('sb_lightstates', lightStates);
+      updateCellDOM(btn, cell, idx, g.id);
+      const lp = document.getElementById('light-panel');
+      const ll = document.getElementById('light-label');
+      // Use label as the toggle label
+      const onMsg = (cell.value || cell.label) + ' allumé';
+      const offMsg = (cell.value || cell.label) + ' éteint';
+      const isOn = lightStates[ck];
+      if (lp) lp.classList.toggle('light-on', isOn);
+      if (ll) ll.textContent = isOn ? onMsg : offMsg;
+      speak(isOn ? onMsg : offMsg);
+      announce(isOn ? onMsg : offMsg);
+      showToast(cell.emoji + ' ' + (isOn ? onMsg : offMsg));
+      break;
+    }
+    case 'music':
+      showMusicNotes();
+      playMelody();
+      speak('Musique !');
+      announce('Musique !');
+      showToast('🎵 Musique !');
+      break;
+    case 'aide':
+      showAideAlert();
+      break;
+    case 'nav': {
+      const target = grids.find(x => x.id === cell.value);
+      if (target) {
+        if (scanRunning) stopScan();
+        switchGrid(cell.value);
+        speak('Navigation vers ' + target.name);
+        announce('Navigation vers ' + target.name);
+        showToast('→ ' + target.name);
+      } else {
+        showToast('Grille introuvable.');
+      }
+      break;
+    }
+    case 'counter': {
+      counterValues[ck] = (counterValues[ck] || 0) + 1;
+      lsSet('sb_counters', counterValues);
+      updateCellDOM(btn, cell, idx, g.id);
+      const cv = document.getElementById('counter-' + ck);
+      const val = counterValues[ck];
+      if (cv) cv.textContent = val;
+      speak(cell.label + ' : ' + val);
+      announce(cell.label + ' : ' + val);
+      showToast(cell.emoji + ' ' + cell.label + ' = ' + val);
+      break;
+    }
+    default:
+      speak(cell.label);
+      announce(cell.label);
+      showToast(cell.emoji + ' ' + cell.label);
+  }
+}
+
+/* ============================================================
+   SCAN ENGINE
+   ============================================================ */
+function activeCells() {
+  return cellEls.filter(c => !c.id || c.id !== 'btn-add-cell');
+}
+
+function numCols() { return getCols(); }
+
+function numRows() {
+  const ac = activeCells();
+  return Math.ceil(ac.length / numCols());
+}
+
+// Groups: rows treated as groups
+function getGroupCells(grpI) {
+  const c = numCols();
+  const ac = activeCells();
+  const start = grpI * c;
+  return ac.slice(start, start + c);
+}
+function numGroups() { return numRows(); }
+
+function clearHighlight() {
+  cellEls.forEach(c => c.classList.remove('scan-focus','scan-row','scan-group','scan-group-focus'));
+}
+
+function highlightLinear(idx) {
+  clearHighlight();
+  const ac = activeCells();
+  if (idx >= 0 && idx < ac.length) {
+    ac[idx].classList.add('scan-focus');
+    const g = grids.find(x => x.id === activeGridId);
+    const label = g ? (g.cells[idx] ? g.cells[idx].label : '') : '';
+    announce(label);
     beepStep();
   }
+}
 
-  function highlightRow(rowIdx) {
-    clearHighlight();
-    const start = rowIdx * cols;
-    for (let c = 0; c < cols && start + c < cells.length; c++) {
-      cells[start + c].classList.add('scan-row-active');
-    }
-    announce('Ligne ' + (rowIdx + 1));
+function highlightRow(row) {
+  clearHighlight();
+  const c = numCols();
+  const ac = activeCells();
+  const start = row * c;
+  for (let i = 0; i < c && start + i < ac.length; i++) {
+    ac[start + i].classList.add('scan-row');
+  }
+  announce('Ligne ' + (row + 1));
+  beepStep();
+}
+
+function highlightCell(row, col) {
+  clearHighlight();
+  const c = numCols();
+  const ac = activeCells();
+  const idx = row * c + col;
+  if (idx < ac.length) {
+    ac[idx].classList.add('scan-focus');
+    const g = grids.find(x => x.id === activeGridId);
+    const label = g ? (g.cells[idx] ? g.cells[idx].label : '') : '';
+    announce(label);
     beepStep();
   }
+}
 
-  /* ========================================================
-     SCAN ENGINE
-     ======================================================== */
-  function startScan() {
-    if (scanRunning) return;
-    scanRunning = true;
-    scanIndex = 0;
-    lcPhase = 'row'; lcRowIndex = 0; lcColIndex = 0;
-    document.body.classList.add('scan-running');
-    updateScanStatus();
-    if (scanMode === 'auto') {
-      doAutoStep();
-    } else {
-      // step mode — just highlight first
-      if (lineMode) {
-        highlightRow(lcRowIndex);
-      } else {
-        highlightIndex(scanIndex);
-      }
-    }
+function highlightGroup(grpI) {
+  clearHighlight();
+  const grpCells = getGroupCells(grpI);
+  grpCells.forEach(c => c.classList.add('scan-group'));
+  announce('Groupe ' + (grpI + 1));
+  beepStep();
+}
+
+function highlightGroupCell(grpI, ci) {
+  clearHighlight();
+  const grpCells = getGroupCells(grpI);
+  grpCells.forEach((c, i) => {
+    if (i === ci) c.classList.add('scan-focus');
+    else c.classList.add('scan-group-focus');
+  });
+  const ac = activeCells();
+  const c = numCols();
+  const globalIdx = grpI * c + ci;
+  const g = grids.find(x => x.id === activeGridId);
+  const label = g ? (g.cells[globalIdx] ? g.cells[globalIdx].label : '') : '';
+  announce(label);
+  beepStep();
+}
+
+function currentHighlight() {
+  const c = numCols();
+  if (settings.scanType === 'rowcol') {
+    if (lcPhase === 'row') highlightRow(lcRow);
+    else highlightCell(lcRow, lcCol);
+  } else if (settings.scanType === 'group') {
+    if (grpPhase === 'group') highlightGroup(grpIdx);
+    else highlightGroupCell(grpIdx, grpCellIdx);
+  } else {
+    highlightLinear(scanIdx);
   }
+}
 
-  function stopScan() {
-    scanRunning = false;
-    clearTimeout(scanTimer);
-    clearHighlight();
-    document.body.classList.remove('scan-running');
-    updateScanStatus();
-  }
+function startScan() {
+  if (scanRunning) return;
+  scanRunning = true;
+  scanIdx = 0; lcPhase = 'row'; lcRow = 0; lcCol = 0;
+  grpPhase = 'group'; grpIdx = 0; grpCellIdx = 0; loopCount = 0;
+  document.body.classList.add('scan-running');
+  updateScanUI();
+  if (settings.scanMode === 'auto') scheduleAutoStep();
+  else currentHighlight();
+}
 
-  function doAutoStep() {
-    if (!scanRunning || scanMode !== 'auto') return;
-    if (lineMode) {
-      highlightRow(lcRowIndex);
-    } else {
-      highlightIndex(scanIndex);
-    }
-    scanTimer = setTimeout(() => {
-      advanceScan();
-      if (scanRunning) doAutoStep();
-    }, scanSpeed);
-  }
+function stopScan() {
+  scanRunning = false;
+  clearTimeout(scanTimer);
+  clearDwell();
+  clearHighlight();
+  document.body.classList.remove('scan-running');
+  updateScanUI();
+}
 
-  function advanceScan() {
+function scheduleAutoStep() {
+  if (!scanRunning || settings.scanMode !== 'auto') return;
+  currentHighlight();
+  scanTimer = setTimeout(() => {
     if (!scanRunning) return;
-    if (lineMode) {
-      if (lcPhase === 'row') {
-        lcRowIndex = (lcRowIndex + 1) % rows;
-      } else {
-        lcColIndex = (lcColIndex + 1) % Math.min(cols, cells.length - lcRowIndex * cols);
-      }
+    advanceScan();
+    scheduleAutoStep();
+  }, settings.scanSpeed);
+}
+
+function advanceScan() {
+  const ac = activeCells();
+  if (!ac.length) return;
+  const c = numCols();
+  const rows = numRows();
+  const grps = numGroups();
+
+  if (settings.scanType === 'rowcol') {
+    if (lcPhase === 'row') {
+      lcRow = (lcRow + 1) % rows;
+      if (lcRow === 0) { loopCount++; checkAutoSelect(); }
     } else {
-      scanIndex = (scanIndex + 1) % cells.length;
+      const maxCol = Math.min(c, ac.length - lcRow * c);
+      lcCol = (lcCol + 1) % maxCol;
+      if (lcCol === 0 && settings.loop) { lcPhase = 'row'; }
     }
-    if (scanMode === 'step') {
-      if (lineMode) {
-        if (lcPhase === 'row') highlightRow(lcRowIndex);
-        else highlightIndex(lcRowIndex * cols + lcColIndex);
-      } else {
-        highlightIndex(scanIndex);
-      }
+  } else if (settings.scanType === 'group') {
+    if (grpPhase === 'group') {
+      grpIdx = (grpIdx + 1) % grps;
+      if (grpIdx === 0) { loopCount++; checkAutoSelect(); }
+    } else {
+      const gc = getGroupCells(grpIdx);
+      grpCellIdx = (grpCellIdx + 1) % gc.length;
+      if (grpCellIdx === 0 && settings.loop) { grpPhase = 'group'; }
     }
+  } else {
+    scanIdx = (scanIdx + 1) % ac.length;
+    if (scanIdx === 0) { loopCount++; checkAutoSelect(); }
   }
 
-  function doSelect() {
-    if (!scanRunning) return;
+  if (settings.scanMode === 'step') currentHighlight();
+}
 
-    if (dwellTime > 0) {
-      if (dwellPending) return;
-      dwellPending = true;
-      // show visual indicator (border pulse) without blinking
-      dwellTimer = setTimeout(() => {
-        dwellPending = false;
-        doSelectNow();
-      }, dwellTime);
-      return;
-    }
+function checkAutoSelect() {
+  const n = parseInt(settings.autoSelectLoops) || 0;
+  if (n > 0 && loopCount >= n) {
+    loopCount = 0;
     doSelectNow();
   }
+}
 
-  function doSelectNow() {
-    if (!scanRunning) return;
-    if (lineMode && lcPhase === 'row') {
-      // Select the row, switch to col phase
-      lcPhase = 'col';
-      lcColIndex = 0;
+function clearDwell() {
+  clearTimeout(dwellTimer);
+  dwellPending = false;
+}
+
+function doSelect() {
+  if (!scanRunning) return;
+  if (settings.dwellTime > 0) {
+    if (dwellPending) return;
+    dwellPending = true;
+    dwellTimer = setTimeout(() => {
+      dwellPending = false;
+      doSelectNow();
+    }, settings.dwellTime);
+    return;
+  }
+  doSelectNow();
+}
+
+function doSelectNow() {
+  if (!scanRunning) return;
+  const ac = activeCells();
+  const c = numCols();
+
+  if (settings.scanType === 'rowcol') {
+    if (lcPhase === 'row') {
+      lcPhase = 'col'; lcCol = 0;
       beepRowSel();
-      announce('Ligne ' + (lcRowIndex + 1) + ' sélectionnée — choisissez une colonne');
+      announce('Ligne ' + (lcRow + 1) + ' — choisissez une cellule');
       clearHighlight();
-      highlightIndex(lcRowIndex * cols + lcColIndex);
-      if (scanMode === 'auto') {
+      highlightCell(lcRow, lcCol);
+      if (settings.scanMode === 'auto') {
         clearTimeout(scanTimer);
-        scanTimer = setTimeout(() => {
-          advanceScan();
-          if (scanRunning) doAutoStep();
-        }, scanSpeed);
+        scheduleAutoStep();
       }
       return;
-    }
-
-    // Actual cell activation
-    let cellIdx;
-    if (lineMode && lcPhase === 'col') {
-      cellIdx = lcRowIndex * cols + lcColIndex;
-      lcPhase = 'row'; // reset
     } else {
-      cellIdx = scanIndex;
-    }
-
-    if (cellIdx >= 0 && cellIdx < cells.length) {
-      activateCell(cellIdx);
-    }
-  }
-
-  /* ========================================================
-     CELL ACTIVATION
-     ======================================================== */
-  function activateCell(idx) {
-    const cell = cells[idx];
-    const act = ACTIONS[idx];
-    beepSelect();
-
-    // Visual flash
-    cell.classList.remove('cell-activate');
-    void cell.offsetWidth; // reflow
-    cell.classList.add('cell-activate');
-    setTimeout(() => cell.classList.remove('cell-activate'), 300);
-
-    switch (act.action) {
-      case 'say':
-        speak(act.value);
-        announce(act.label + ' : ' + act.value);
-        showToast('💬 ' + act.value);
-        break;
-      case 'light':
-        lightOn = !lightOn;
-        const lp = document.getElementById('light-panel');
-        lp.classList.toggle('light-on', lightOn);
-        const msg = lightOn ? 'Lumière allumée' : 'Lumière éteinte';
-        speak(msg);
-        announce(msg);
-        showToast('💡 ' + msg);
-        break;
-      case 'music':
-        showMusicNotes();
-        speak('Musique');
-        announce('Musique');
-        showToast('🎵 Musique !');
-        break;
-      case 'aide':
-        openAide();
-        break;
+      const idx = lcRow * c + lcCol;
+      lcPhase = 'row';
+      activateByIndex(idx);
+      return;
     }
   }
 
-  function onCellClick(idx) {
+  if (settings.scanType === 'group') {
+    if (grpPhase === 'group') {
+      grpPhase = 'cell'; grpCellIdx = 0;
+      beepRowSel();
+      announce('Groupe ' + (grpIdx + 1) + ' — choisissez une cellule');
+      clearHighlight();
+      highlightGroupCell(grpIdx, grpCellIdx);
+      if (settings.scanMode === 'auto') {
+        clearTimeout(scanTimer);
+        scheduleAutoStep();
+      }
+      return;
+    } else {
+      const idx = grpIdx * c + grpCellIdx;
+      grpPhase = 'group';
+      activateByIndex(idx);
+      return;
+    }
+  }
+
+  // linear
+  activateByIndex(scanIdx);
+}
+
+function activateByIndex(idx) {
+  const ac = activeCells();
+  if (idx >= 0 && idx < ac.length) {
     activateCell(idx);
   }
+}
 
-  /* ========================================================
-     MUSIC ANIMATION
-     ======================================================== */
-  function showMusicNotes() {
-    const ov = document.getElementById('music-overlay');
-    ov.style.display = 'block';
-    ov.innerHTML = '';
-    const notes = ['♪','♫','♩','♬'];
-    for (let i = 0; i < 5; i++) {
-      const span = document.createElement('span');
-      span.className = 'music-note';
-      span.textContent = notes[i % notes.length];
-      span.style.marginLeft = (i * 14) + 'px';
-      span.style.animationDelay = (i * 0.18) + 's';
-      span.style.fontSize = (2 + i * 0.15) + 'rem';
-      span.style.color = i % 2 === 0 ? '#F4B81C' : '#0F4C81';
-      ov.appendChild(span);
-    }
-    // play a little melody
-    if (soundEnabled && audioCtx) {
-      const melody = [523, 587, 659, 698, 784];
-      melody.forEach((f, i) => {
-        setTimeout(() => beep(f, 0.25, 0.08, 'triangle'), i * 120);
-      });
-    } else if (soundEnabled) {
-      getAudio();
-      const melody = [523, 587, 659, 698, 784];
-      melody.forEach((f, i) => {
-        setTimeout(() => beep(f, 0.25, 0.08, 'triangle'), i * 120);
-      });
-    }
-    setTimeout(() => { ov.style.display = 'none'; ov.innerHTML = ''; }, 2200);
-  }
+/* ============================================================
+   CAUSE-EFFET
+   ============================================================ */
+const CAUSE_ICONS = ['🌟','🎊','🎈','🌈','⚡','🔥','🌺','🎉','🦋','🌙'];
+let causeIconIdx = 0;
 
-  /* ========================================================
-     AIDE MODAL
-     ======================================================== */
-  function openAide() {
-    const panel = document.getElementById('aide-panel');
-    panel.classList.add('open');
-    panel.querySelector('#btn-aide-close').focus();
-    const prevFocus = document.activeElement;
-    activeFocusTrap = { panel, prevFocus };
-    panel.addEventListener('keydown', trapFocus);
-    panel.addEventListener('keydown', aideEsc);
-    if (scanRunning) stopScan();
-  }
+function openCause() {
+  causeMode = true;
+  causeCount = 0;
+  causeIconIdx = 0;
+  if (scanRunning) stopScan();
+  document.getElementById('cause-panel').classList.add('active');
+  document.getElementById('grid-wrapper').style.display = 'none';
+  document.getElementById('cause-big').textContent = CAUSE_ICONS[0];
+  document.getElementById('cause-big').classList.remove('triggered');
+  document.getElementById('cause-msg').textContent = 'Appuie sur ton contacteur !';
+  document.getElementById('cause-count').textContent = '';
+  document.getElementById('btn-cause-close').focus();
+  announce('Activite cause-a-effet. Appuie sur ton contacteur.');
+}
 
-  function closeAide() {
-    const panel = document.getElementById('aide-panel');
-    panel.classList.remove('open');
-    panel.removeEventListener('keydown', trapFocus);
-    panel.removeEventListener('keydown', aideEsc);
-    if (activeFocusTrap && activeFocusTrap.prevFocus) {
-      activeFocusTrap.prevFocus.focus();
-    }
-    activeFocusTrap = null;
-  }
+function closeCause() {
+  causeMode = false;
+  document.getElementById('cause-panel').classList.remove('active');
+  document.getElementById('grid-wrapper').style.display = '';
+}
 
-  function trapFocus(e) {
-    if (e.key !== 'Tab') return;
-    const focusable = [...document.getElementById('aide-box').querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')];
-    if (!focusable.length) return;
-    const first = focusable[0], last = focusable[focusable.length - 1];
-    if (e.shiftKey) {
-      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
-    } else {
-      if (document.activeElement === last) { e.preventDefault(); first.focus(); }
-    }
-  }
+function triggerCause() {
+  causeCount++;
+  causeIconIdx = (causeIconIdx + 1) % CAUSE_ICONS.length;
+  const big = document.getElementById('cause-big');
+  big.textContent = CAUSE_ICONS[causeIconIdx];
+  big.classList.remove('triggered');
+  void big.offsetWidth;
+  big.classList.add('triggered');
+  beepSelect();
+  playMelody();
+  const msgs = [
+    'Bravo !', 'Super !', 'Encore !', 'Excellent !', 'Wow !', 'Génial !'
+  ];
+  const msg = msgs[causeCount % msgs.length];
+  document.getElementById('cause-msg').textContent = msg;
+  document.getElementById('cause-count').textContent = 'Appuis : ' + causeCount;
+  speak(msg);
+  announce(msg);
+  setTimeout(() => { big.classList.remove('triggered'); }, 800);
+}
 
-  function aideEsc(e) {
-    if (e.key === 'Escape') { e.preventDefault(); closeAide(); }
-  }
+/* ============================================================
+   AIDE ALERT
+   ============================================================ */
+function showAideAlert() {
+  beepAlert();
+  speak('Aide ! J\'ai besoin d\'aide !');
+  announce('Appel à l\'aide');
+  const el = document.getElementById('aide-alert');
+  el.classList.add('show');
+  const btn = document.getElementById('btn-aide-dismiss');
+  if (btn) { btn.focus(); }
+  if (scanRunning) stopScan();
+}
 
-  document.getElementById('btn-aide-close').addEventListener('click', closeAide);
-  document.getElementById('aide-panel').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('aide-panel')) closeAide();
+function closeAideAlert() {
+  document.getElementById('aide-alert').classList.remove('show');
+}
+
+/* ============================================================
+   MUSIC
+   ============================================================ */
+function showMusicNotes() {
+  const ov = document.getElementById('music-overlay');
+  ov.style.display = 'block';
+  ov.innerHTML = '';
+  ['♪','♫','♩','♬','♪'].forEach((n, i) => {
+    const span = document.createElement('span');
+    span.className = 'music-note';
+    span.textContent = n;
+    span.style.cssText = 'margin-left:' + (i * 14) + 'px;animation-delay:' + (i * .18) + 's;font-size:' + (2 + i * .12) + 'rem;color:' + (i % 2 === 0 ? '#F4B81C' : '#0F4C81') + ';';
+    ov.appendChild(span);
   });
+  setTimeout(() => { ov.style.display = 'none'; ov.innerHTML = ''; }, 2200);
+}
 
-  /* ========================================================
-     STATUS BAR
-     ======================================================== */
-  function updateScanStatus() {
-    const txt = document.getElementById('scan-status-text');
-    const btn = document.getElementById('btn-scan-toggle');
-    if (scanRunning) {
-      txt.textContent = scanMode === 'auto' ? 'Balayage automatique en cours…' : 'Balayage par étapes actif';
-      btn.setAttribute('aria-pressed', 'true');
-      btn.textContent = '⏹ Arrêter';
-    } else {
-      txt.textContent = 'Balayage arrêté';
-      btn.setAttribute('aria-pressed', 'false');
-      btn.textContent = '▶ Balayage auto';
-    }
+/* ============================================================
+   SCAN UI UPDATE
+   ============================================================ */
+function updateScanUI() {
+  const txt = document.getElementById('scan-status-text');
+  const btn = document.getElementById('btn-scan-toggle');
+  const badge = document.getElementById('scan-mode-badge');
+  const typeLabels = { linear: 'Linéaire', rowcol: 'Ligne-col', group: 'Groupes' };
+  const modeLabels = { auto: 'Auto', step: 'Pas-à-pas' };
+  if (scanRunning) {
+    txt.textContent = 'Balayage en cours…';
+    btn.setAttribute('aria-pressed', 'true');
+    btn.textContent = '⏹ Arrêter';
+    badge.textContent = typeLabels[settings.scanType] + ' · ' + modeLabels[settings.scanMode];
+  } else {
+    txt.textContent = 'Balayage arrêté';
+    btn.setAttribute('aria-pressed', 'false');
+    btn.textContent = '▶ Balayage';
+    badge.textContent = '';
+  }
+}
+
+/* ============================================================
+   SETTINGS SYNC
+   ============================================================ */
+function saveSettings() { lsSet('sb_settings', settings); }
+
+function applySettingsToControls() {
+  document.getElementById('speed-range').value = settings.scanSpeed;
+  document.getElementById('speed-val').textContent = (settings.scanSpeed / 1000).toFixed(1).replace('.', ',') + 's';
+  document.getElementById('dwell-range').value = settings.dwellTime;
+  document.getElementById('dwell-val').textContent = settings.dwellTime + 'ms';
+  document.getElementById('mode-select').value = settings.scanMode;
+  document.getElementById('scan-type-select').value = settings.scanType;
+  document.getElementById('switches-select').value = settings.numSwitches;
+  document.getElementById('sound-toggle').checked = settings.sound;
+  document.getElementById('voice-toggle').checked = settings.voice;
+  document.getElementById('adv-speed').value = settings.scanSpeed;
+  document.getElementById('adv-speed-val').textContent = settings.scanSpeed + 'ms';
+  document.getElementById('adv-dwell').value = settings.dwellTime;
+  document.getElementById('adv-dwell-val').textContent = settings.dwellTime + 'ms';
+  document.getElementById('loop-toggle').checked = settings.loop !== false;
+  document.getElementById('auto-select-loops').value = settings.autoSelectLoops || 0;
+  updateColsSelect();
+  updateCellSizeSelect();
+}
+
+function updateColsSelect() {
+  const g = grids.find(x => x.id === activeGridId);
+  const sel = document.getElementById('cols-select');
+  if (g && sel) sel.value = g.cols || 3;
+}
+
+function updateCellSizeSelect() {
+  const g = grids.find(x => x.id === activeGridId);
+  const sel = document.getElementById('cell-size-select');
+  if (g && sel) sel.value = g.cellSize || 120;
+}
+
+function saveGrids() { lsSet('sb_grids', grids); }
+
+/* ============================================================
+   CELL EDITOR
+   ============================================================ */
+let editingCellIdx = -1;
+
+function openCellEditor(idx) {
+  editingCellIdx = idx;
+  const g = grids.find(x => x.id === activeGridId);
+  const overlay = document.getElementById('cell-editor');
+  const titleEl = document.getElementById('cell-editor-title');
+
+  if (idx === -1) {
+    titleEl.textContent = 'Ajouter une cellule';
+    document.getElementById('ce-emoji').value = '❓';
+    document.getElementById('ce-label').value = '';
+    document.getElementById('ce-action').value = 'say';
+    document.getElementById('ce-value').value = '';
+  } else if (g && g.cells[idx]) {
+    titleEl.textContent = 'Modifier la cellule';
+    const cell = g.cells[idx];
+    document.getElementById('ce-emoji').value = cell.emoji || '';
+    document.getElementById('ce-label').value = cell.label || '';
+    document.getElementById('ce-action').value = cell.action || 'say';
+    document.getElementById('ce-value').value = cell.value || '';
   }
 
-  /* ========================================================
-     CONTROLS
-     ======================================================== */
-  document.getElementById('btn-scan-toggle').addEventListener('click', () => {
-    getAudio(); // unlock audio on user gesture
-    if (scanRunning) {
-      stopScan();
-    } else {
-      startScan();
+  populateNavTargets();
+  updateCEFields();
+
+  overlay.classList.add('open');
+  overlay.addEventListener('keydown', ceEsc);
+  document.getElementById('ce-label').focus();
+  activeTrap = { overlay, prevFocus: document.activeElement };
+}
+
+function populateNavTargets() {
+  const sel = document.getElementById('ce-nav-target');
+  sel.innerHTML = '';
+  grids.forEach(g => {
+    if (g.id !== activeGridId) {
+      const opt = document.createElement('option');
+      opt.value = g.id;
+      opt.textContent = g.name;
+      sel.appendChild(opt);
     }
   });
+  // set current value
+  const g = grids.find(x => x.id === activeGridId);
+  if (g && editingCellIdx >= 0 && g.cells[editingCellIdx] && g.cells[editingCellIdx].action === 'nav') {
+    sel.value = g.cells[editingCellIdx].value || '';
+  }
+}
 
-  document.getElementById('btn-advance').addEventListener('click', () => {
-    getAudio();
+function updateCEFields() {
+  const action = document.getElementById('ce-action').value;
+  document.getElementById('ce-value-row').style.display = (action === 'say') ? '' : 'none';
+  document.getElementById('ce-nav-row').style.display = (action === 'nav') ? '' : 'none';
+}
+
+function closeCellEditor() {
+  const overlay = document.getElementById('cell-editor');
+  overlay.classList.remove('open');
+  overlay.removeEventListener('keydown', ceEsc);
+  if (activeTrap && activeTrap.prevFocus) {
+    try { activeTrap.prevFocus.focus(); } catch(e) {}
+  }
+  activeTrap = null;
+}
+
+function ceEsc(e) { if (e.key === 'Escape') { e.preventDefault(); closeCellEditor(); } }
+
+function saveCellEditor() {
+  const emoji  = document.getElementById('ce-emoji').value.trim() || '❓';
+  const label  = document.getElementById('ce-label').value.trim();
+  const action = document.getElementById('ce-action').value;
+  const value  = action === 'nav'
+    ? document.getElementById('ce-nav-target').value
+    : document.getElementById('ce-value').value.trim();
+
+  if (!label) { document.getElementById('ce-label').focus(); return; }
+
+  const g = grids.find(x => x.id === activeGridId);
+  if (!g) return;
+
+  const cellData = { emoji, label, action, value };
+
+  if (editingCellIdx === -1) {
+    g.cells.push(cellData);
+  } else {
+    // preserve state key value if toggle
+    if (action === 'toggle') {
+      const ck = cellKey(g.id, editingCellIdx);
+      // keep existing state
+    }
+    g.cells[editingCellIdx] = cellData;
+  }
+  saveGrids();
+  renderGrid();
+  closeCellEditor();
+  showToast('Cellule sauvegardée');
+}
+
+function deleteCellEditor() {
+  if (editingCellIdx < 0) { closeCellEditor(); return; }
+  const g = grids.find(x => x.id === activeGridId);
+  if (!g) return;
+  if (!confirm('Supprimer cette cellule ?')) return;
+  g.cells.splice(editingCellIdx, 1);
+  saveGrids();
+  renderGrid();
+  closeCellEditor();
+  showToast('Cellule supprimée');
+}
+
+/* ============================================================
+   GRID MANAGEMENT
+   ============================================================ */
+function addGrid() {
+  const name = prompt('Nom de la nouvelle grille :');
+  if (!name) return;
+  const id = 'g' + Date.now();
+  grids.push({ id, name: name.trim(), cols: 3, cellSize: 120, cells: [] });
+  saveGrids();
+  switchGrid(id);
+  showToast('Grille "' + name + '" créée');
+}
+
+/* ============================================================
+   PROFILES
+   ============================================================ */
+function getProfileSnapshot() {
+  return {
+    scanSpeed: settings.scanSpeed,
+    dwellTime: settings.dwellTime,
+    scanMode: settings.scanMode,
+    scanType: settings.scanType,
+    numSwitches: settings.numSwitches,
+    sound: settings.sound,
+    voice: settings.voice,
+    loop: settings.loop,
+    autoSelectLoops: settings.autoSelectLoops
+  };
+}
+
+function applyProfile(p) {
+  Object.assign(settings, p.settings);
+  saveSettings();
+  applySettingsToControls();
+  if (scanRunning) { stopScan(); startScan(); }
+}
+
+function renderProfileList() {
+  const list = document.getElementById('profile-list');
+  list.innerHTML = '';
+  if (profiles.length === 0) {
+    list.innerHTML = '<p style="font-size:.85rem;color:#666;">Aucun profil sauvegardé.</p>';
+    return;
+  }
+  profiles.forEach((p, i) => {
+    const item = document.createElement('div');
+    item.className = 'profile-item';
+    item.innerHTML = '<div><div class="profile-name">' + escHtml(p.name) + '</div><div class="profile-desc">' + escHtml(p.desc || '') + '</div></div><div class="profile-actions"></div>';
+    const actDiv = item.querySelector('.profile-actions');
+
+    const loadBtn = document.createElement('button');
+    loadBtn.className = 'profile-btn';
+    loadBtn.textContent = 'Charger';
+    loadBtn.setAttribute('aria-label', 'Charger le profil ' + p.name);
+    loadBtn.addEventListener('click', () => { applyProfile(p); showToast('Profil "' + p.name + '" chargé'); });
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'profile-btn del';
+    delBtn.textContent = 'Suppr.';
+    delBtn.setAttribute('aria-label', 'Supprimer le profil ' + p.name);
+    delBtn.addEventListener('click', () => {
+      profiles.splice(i, 1);
+      lsSet('sb_profiles', profiles);
+      renderProfileList();
+    });
+
+    actDiv.appendChild(loadBtn);
+    actDiv.appendChild(delBtn);
+    list.appendChild(item);
+  });
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ============================================================
+   IMPORT / EXPORT
+   ============================================================ */
+function exportGrids() {
+  try {
+    const data = { version: 1, grids: grids };
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'switchboard-grilles.json';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('Export réussi');
+  } catch(e) { showToast('Erreur export : ' + e.message); }
+}
+
+function importGrids(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.grids || !Array.isArray(data.grids)) throw new Error('Format invalide');
+      if (!confirm('Remplacer toutes les grilles par celles du fichier ?')) return;
+      grids = data.grids;
+      saveGrids();
+      activeGridId = grids[0].id;
+      lsSet('sb_active_grid', activeGridId);
+      renderTabs();
+      renderGrid();
+      showToast('Import réussi — ' + grids.length + ' grille(s)');
+    } catch(err) { showToast('Erreur import : ' + err.message); }
+  };
+  reader.onerror = () => showToast('Erreur lecture fichier');
+  reader.readAsText(file);
+}
+
+/* ============================================================
+   NAVIGATION (PANELS)
+   ============================================================ */
+function showPanel(id) {
+  ['panel-grille','panel-reglages'].forEach(pid => {
+    const p = document.getElementById(pid);
+    if (p) p.hidden = (pid !== id);
+  });
+  document.getElementById('nav-grille').setAttribute('aria-selected', id === 'panel-grille' ? 'true' : 'false');
+  document.getElementById('nav-reglages').setAttribute('aria-selected', id === 'panel-reglages' ? 'true' : 'false');
+}
+
+/* ============================================================
+   MODAL HELPERS
+   ============================================================ */
+function openModal(id, focusId) {
+  const el = document.getElementById(id);
+  el.classList.add('open');
+  el.addEventListener('keydown', _trapModal);
+  el.addEventListener('keydown', _escModal);
+  if (focusId) {
+    const f = document.getElementById(focusId);
+    if (f) f.focus();
+  }
+  activeTrap = { overlay: el, prevFocus: document.activeElement };
+  if (scanRunning) stopScan();
+}
+
+function closeModal(id) {
+  const el = document.getElementById(id);
+  el.classList.remove('open');
+  el.removeEventListener('keydown', _trapModal);
+  el.removeEventListener('keydown', _escModal);
+  if (activeTrap && activeTrap.prevFocus) {
+    try { activeTrap.prevFocus.focus(); } catch(e) {}
+  }
+  activeTrap = null;
+}
+
+function _trapModal(e) {
+  if (e.key !== 'Tab') return;
+  const box = e.currentTarget.querySelector('.modal-box');
+  if (!box) return;
+  const focusable = [...box.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')];
+  if (!focusable.length) return;
+  const first = focusable[0], last = focusable[focusable.length - 1];
+  if (e.shiftKey) { if (document.activeElement === first) { e.preventDefault(); last.focus(); } }
+  else { if (document.activeElement === last) { e.preventDefault(); first.focus(); } }
+}
+function _escModal(e) { if (e.key === 'Escape') { e.preventDefault(); closeModal(e.currentTarget.id); } }
+
+/* ============================================================
+   WIRING — CONTROLS
+   ============================================================ */
+document.getElementById('btn-scan-toggle').addEventListener('click', () => {
+  getAudio();
+  if (scanRunning) stopScan(); else startScan();
+});
+
+document.getElementById('btn-advance').addEventListener('click', () => {
+  getAudio();
+  if (!scanRunning) { startScan(); return; }
+  clearTimeout(scanTimer);
+  advanceScan();
+  if (settings.scanMode === 'auto') scheduleAutoStep();
+});
+
+document.getElementById('btn-select').addEventListener('click', () => {
+  getAudio();
+  if (causeMode) { triggerCause(); return; }
+  if (!scanRunning) return;
+  doSelect();
+});
+
+/* ============================================================
+   WIRING — KEYBOARD
+   ============================================================ */
+document.addEventListener('keydown', (e) => {
+  if (activeTrap) return;
+  const tag = document.activeElement ? document.activeElement.tagName : '';
+  if (['INPUT','SELECT','TEXTAREA'].includes(tag)) return;
+
+  if (e.key === ' ' || e.key === 'Spacebar') {
+    e.preventDefault(); getAudio();
+    if (causeMode) { triggerCause(); return; }
+    if (!scanRunning) return;
+    doSelect();
+  } else if (e.key === 'Enter') {
+    const el = document.activeElement;
+    if (el && (el.classList.contains('grid-cell') || el.classList.contains('nav-btn'))) return;
+    if (el && el.tagName === 'BUTTON' && el.closest('.modal-overlay')) return;
+    e.preventDefault(); getAudio();
+    if (causeMode) { triggerCause(); return; }
     if (!scanRunning) { startScan(); return; }
     clearTimeout(scanTimer);
     advanceScan();
-    if (scanMode === 'auto') {
-      doAutoStep();
-    }
-  });
+    if (settings.scanMode === 'auto') scheduleAutoStep();
+  }
+});
 
-  document.getElementById('btn-select').addEventListener('click', () => {
-    getAudio();
-    if (!scanRunning) return;
-    doSelect();
-  });
+/* ============================================================
+   WIRING — SETTINGS BAR
+   ============================================================ */
+document.getElementById('speed-range').addEventListener('input', function() {
+  settings.scanSpeed = parseInt(this.value);
+  document.getElementById('speed-val').textContent = (settings.scanSpeed/1000).toFixed(1).replace('.',',')+'s';
+  document.getElementById('adv-speed').value = settings.scanSpeed;
+  document.getElementById('adv-speed-val').textContent = settings.scanSpeed + 'ms';
+  saveSettings();
+});
 
-  /* ========================================================
-     KEYBOARD
-     ======================================================== */
-  document.addEventListener('keydown', (e) => {
-    // Don't intercept inside settings controls or modal
-    if (activeFocusTrap) return;
-    const tag = document.activeElement ? document.activeElement.tagName : '';
-    if (['INPUT','SELECT','TEXTAREA'].includes(tag)) return;
+document.getElementById('dwell-range').addEventListener('input', function() {
+  settings.dwellTime = parseInt(this.value);
+  document.getElementById('dwell-val').textContent = settings.dwellTime + 'ms';
+  document.getElementById('adv-dwell').value = settings.dwellTime;
+  document.getElementById('adv-dwell-val').textContent = settings.dwellTime + 'ms';
+  saveSettings();
+});
 
-    if (e.key === ' ' || e.key === 'Spacebar') {
-      e.preventDefault();
-      getAudio();
-      if (!scanRunning) return;
-      doSelect();
-    } else if (e.key === 'Enter') {
-      // Only intercept Enter for scan advance if not on a button/grid-cell
-      if (document.activeElement && document.activeElement.classList.contains('grid-cell')) return;
-      if (document.activeElement && document.activeElement.tagName === 'BUTTON' && !document.activeElement.id.startsWith('btn-select') && !document.activeElement.id.startsWith('btn-advance')) return;
-      e.preventDefault();
-      getAudio();
-      if (!scanRunning) { startScan(); return; }
-      clearTimeout(scanTimer);
-      advanceScan();
-      if (scanMode === 'auto') doAutoStep();
-    }
-  });
+document.getElementById('mode-select').addEventListener('change', function() {
+  settings.scanMode = this.value;
+  saveSettings();
+  if (scanRunning) { stopScan(); startScan(); }
+  updateScanUI();
+});
 
-  /* ========================================================
-     SETTINGS
-     ======================================================== */
-  const speedRange = document.getElementById('speed-range');
-  const speedVal   = document.getElementById('speed-val');
-  speedRange.addEventListener('input', () => {
-    scanSpeed = parseInt(speedRange.value);
-    const s = (scanSpeed / 1000).toFixed(1).replace('.', ',');
-    speedVal.textContent = s + ' s';
-  });
+document.getElementById('scan-type-select').addEventListener('change', function() {
+  settings.scanType = this.value;
+  saveSettings();
+  if (scanRunning) { stopScan(); startScan(); }
+  updateScanUI();
+});
 
-  const dwellRange = document.getElementById('dwell-range');
-  const dwellVal   = document.getElementById('dwell-val');
-  dwellRange.addEventListener('input', () => {
-    dwellTime = parseInt(dwellRange.value);
-    dwellVal.textContent = dwellTime + ' ms';
-  });
+document.getElementById('switches-select').addEventListener('change', function() {
+  settings.numSwitches = parseInt(this.value);
+  saveSettings();
+  updateKbdHints();
+});
 
-  const modeSelect = document.getElementById('mode-select');
-  modeSelect.addEventListener('change', () => {
-    scanMode = modeSelect.value;
-    if (scanRunning) {
-      stopScan();
-      startScan();
-    }
-    document.getElementById('btn-scan-toggle').textContent = scanMode === 'auto' ? '▶ Balayage auto' : '▶ Par étapes';
-  });
+function updateKbdHints() {
+  const kbdEl = document.getElementById('scan-kbd');
+  if (settings.numSwitches === 1) {
+    kbdEl.innerHTML = '<kbd>Espace</kbd> Sélect./Avancer';
+    kbdEl.setAttribute('aria-label', 'Raccourci : Espace pour sélectionner et avancer');
+  } else {
+    kbdEl.innerHTML = '<kbd>Espace</kbd> Sélect. &nbsp;<kbd>Entrée</kbd> Avancer';
+    kbdEl.setAttribute('aria-label', 'Raccourcis : Espace pour sélectionner, Entrée pour avancer');
+  }
+}
 
-  const linemodeToggle = document.getElementById('linemode-toggle');
-  linemodeToggle.addEventListener('change', () => {
-    lineMode = linemodeToggle.checked;
+document.getElementById('sound-toggle').addEventListener('change', function() {
+  settings.sound = this.checked; saveSettings(); getAudio();
+});
+document.getElementById('voice-toggle').addEventListener('change', function() {
+  settings.voice = this.checked; saveSettings();
+});
+document.getElementById('edit-mode-toggle').addEventListener('change', syncEditMode);
+
+/* ============================================================
+   WIRING — ADVANCED SETTINGS
+   ============================================================ */
+document.getElementById('adv-speed').addEventListener('input', function() {
+  settings.scanSpeed = parseInt(this.value);
+  document.getElementById('adv-speed-val').textContent = settings.scanSpeed + 'ms';
+  document.getElementById('speed-range').value = settings.scanSpeed;
+  document.getElementById('speed-val').textContent = (settings.scanSpeed/1000).toFixed(1).replace('.',',')+'s';
+  saveSettings();
+});
+document.getElementById('adv-dwell').addEventListener('input', function() {
+  settings.dwellTime = parseInt(this.value);
+  document.getElementById('adv-dwell-val').textContent = settings.dwellTime + 'ms';
+  document.getElementById('dwell-range').value = settings.dwellTime;
+  document.getElementById('dwell-val').textContent = settings.dwellTime + 'ms';
+  saveSettings();
+});
+document.getElementById('loop-toggle').addEventListener('change', function() {
+  settings.loop = this.checked; saveSettings();
+});
+document.getElementById('auto-select-loops').addEventListener('change', function() {
+  settings.autoSelectLoops = parseInt(this.value) || 0; saveSettings();
+});
+document.getElementById('cols-select').addEventListener('change', function() {
+  const g = grids.find(x => x.id === activeGridId);
+  if (g) {
+    g.cols = parseInt(this.value);
+    saveGrids();
+    renderGrid();
     if (scanRunning) { stopScan(); startScan(); }
+  }
+});
+document.getElementById('cell-size-select').addEventListener('change', function() {
+  const g = grids.find(x => x.id === activeGridId);
+  if (g) {
+    g.cellSize = parseInt(this.value);
+    saveGrids();
+    renderGrid();
+  }
+});
+document.getElementById('btn-export').addEventListener('click', exportGrids);
+document.getElementById('import-file').addEventListener('change', function() {
+  importGrids(this.files[0]);
+  this.value = '';
+});
+
+/* ============================================================
+   WIRING — MODALS / BUTTONS
+   ============================================================ */
+document.getElementById('btn-aide').addEventListener('click', () => openModal('aide-modal', 'btn-aide-close'));
+document.getElementById('btn-aide-close').addEventListener('click', () => closeModal('aide-modal'));
+document.getElementById('aide-modal-close').addEventListener('click', () => closeModal('aide-modal'));
+document.getElementById('aide-modal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal('aide-modal'); });
+
+document.getElementById('btn-profiles').addEventListener('click', () => {
+  renderProfileList();
+  openModal('profiles-modal', 'new-profile-name');
+});
+document.getElementById('profiles-close').addEventListener('click', () => closeModal('profiles-modal'));
+document.getElementById('profiles-modal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal('profiles-modal'); });
+document.getElementById('btn-save-profile').addEventListener('click', () => {
+  const name = document.getElementById('new-profile-name').value.trim();
+  if (!name) { document.getElementById('new-profile-name').focus(); return; }
+  const p = { name, desc: settings.scanMode + ' · ' + settings.scanType + ' · ' + settings.scanSpeed + 'ms', settings: getProfileSnapshot() };
+  profiles.push(p);
+  lsSet('sb_profiles', profiles);
+  document.getElementById('new-profile-name').value = '';
+  renderProfileList();
+  showToast('Profil "' + name + '" sauvegardé');
+});
+
+document.getElementById('btn-add-grid').addEventListener('click', addGrid);
+
+document.getElementById('btn-cause').addEventListener('click', () => {
+  showPanel('panel-grille');
+  document.getElementById('nav-grille').setAttribute('aria-selected', 'true');
+  document.getElementById('nav-reglages').setAttribute('aria-selected', 'false');
+  openCause();
+});
+document.getElementById('btn-cause-close').addEventListener('click', closeCause);
+
+document.getElementById('btn-aide-dismiss').addEventListener('click', closeAideAlert);
+document.getElementById('aide-alert').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeAideAlert(); });
+
+// Cell editor wiring
+document.getElementById('ce-action').addEventListener('change', updateCEFields);
+document.getElementById('ce-save').addEventListener('click', saveCellEditor);
+document.getElementById('ce-cancel').addEventListener('click', closeCellEditor);
+document.getElementById('ce-delete').addEventListener('click', deleteCellEditor);
+document.getElementById('cell-editor-close').addEventListener('click', closeCellEditor);
+document.getElementById('cell-editor').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeCellEditor(); });
+
+/* ============================================================
+   WIRING — BOTTOM NAV
+   ============================================================ */
+document.getElementById('nav-grille').addEventListener('click', () => showPanel('panel-grille'));
+document.getElementById('nav-reglages').addEventListener('click', () => showPanel('panel-reglages'));
+
+/* ============================================================
+   RESIZE
+   ============================================================ */
+let resizeTm = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTm);
+  resizeTm = setTimeout(() => {
+    if (scanRunning) { stopScan(); startScan(); }
+  }, 250);
+});
+
+/* ============================================================
+   PWA INSTALL
+   ============================================================ */
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstall = e;
+  document.getElementById('pwa-install-btn').style.display = '';
+});
+document.getElementById('pwa-install-btn').addEventListener('click', async () => {
+  if (!deferredInstall) return;
+  try {
+    deferredInstall.prompt();
+    const { outcome } = await deferredInstall.userChoice;
+    if (outcome === 'accepted') document.getElementById('pwa-install-btn').style.display = 'none';
+    deferredInstall = null;
+  } catch(e) {}
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwa-install-btn').style.display = 'none';
+  showToast('Application installée !');
+});
+
+/* ============================================================
+   SERVICE WORKER REGISTRATION
+   ============================================================ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    try {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    } catch(e) {}
   });
+}
 
-  const soundToggle = document.getElementById('sound-toggle');
-  soundToggle.addEventListener('change', () => {
-    soundEnabled = soundToggle.checked;
-    getAudio();
-  });
+/* ============================================================
+   LOAD PERSISTED STATES
+   ============================================================ */
+try { lightStates   = lsGet('sb_lightstates', {}); } catch(e) { lightStates = {}; }
+try { counterValues = lsGet('sb_counters', {}); } catch(e) { counterValues = {}; }
 
-  const voiceToggle = document.getElementById('voice-toggle');
-  voiceToggle.addEventListener('change', () => {
-    voiceEnabled = voiceToggle.checked;
-  });
-
-  /* ========================================================
-     RESIZE
-     ======================================================== */
-  let resizeTimer = null;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-      updateGridDimensions();
-      if (scanRunning) {
-        stopScan();
-        startScan();
-      }
-    }, 250);
-  });
-
-  /* ========================================================
-     INIT
-     ======================================================== */
-  buildGrid();
-  updateScanStatus();
-
-  // Accessibility: grid cells should not receive default tab focus when scan is active
-  // (they're operated by scan, not tab)
-  // But we keep tabindex=0 so keyboard users without scan can still use them directly.
+/* ============================================================
+   INIT
+   ============================================================ */
+applySettingsToControls();
+renderTabs();
+renderGrid();
+updateScanUI();
+updateKbdHints();
 
 })();
 </script>

@@ -3,13 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SteadyTouch — Démo saisie tolérante aux tremblements | LibreA11y</title>
-<meta name="description" content="Démonstration de SteadyTouch : lissage du pointeur, clic par maintien, anti-double-déclenchement, cibles agrandies. 100% hors-ligne.">
+<title>SteadyTouch — Saisie tolérante aux tremblements | LibreA11y</title>
+<meta name="description" content="SteadyTouch : lissage One Euro, dwell, anti-rebond, mini-jeu de précision, clavier adaptatif. PWA 100 % hors-ligne.">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#0F4C81">
 <style>
-/* ===== VARIABLES & RESET ===== */
+/* ===== VARIABLES ===== */
 :root {
   --marine:    #0F4C81;
   --marine-dk: #0A3A63;
+  --marine-lt: #1a6db5;
   --or:        #F4B81C;
   --or-lt:     #FFD45E;
   --encre:     #16202E;
@@ -42,650 +45,489 @@ body {
 
 /* ===== SKIP LINK ===== */
 #skip-link {
-  position: absolute;
-  top: -999px;
-  left: 4px;
-  z-index: 1000;
-  background: var(--or);
-  color: var(--encre);
-  font-weight: 700;
-  padding: 10px 18px;
-  border-radius: 0 0 var(--radius) var(--radius);
-  text-decoration: none;
-  font-size: 0.95rem;
+  position: absolute; top: -999px; left: 4px; z-index: 1000;
+  background: var(--or); color: var(--encre); font-weight: 700;
+  padding: 10px 18px; border-radius: 0 0 var(--radius) var(--radius);
+  text-decoration: none; font-size: 0.95rem;
 }
 #skip-link:focus { top: 0; }
 
 /* ===== FOCUS ===== */
-:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 3px;
+:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+
+/* ===== LIVE REGION ===== */
+#live-announce {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap;
 }
 
 /* ===== HEADER ===== */
 #app-header {
-  background: var(--marine);
-  color: #fff;
+  background: var(--marine); color: #fff;
   padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  box-shadow: 0 2px 8px rgba(10,58,99,0.3);
-  flex-wrap: wrap;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; box-shadow: 0 2px 8px rgba(10,58,99,0.3); flex-wrap: wrap;
 }
 #header-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 #back-link {
-  color: var(--or-lt);
-  text-decoration: none;
-  font-size: 0.9rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-  min-height: 48px;
-  transition: background var(--tr);
+  color: var(--or-lt); text-decoration: none; font-size: 0.9rem;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 8px 12px; border-radius: var(--radius-sm);
+  white-space: nowrap; min-height: 48px; transition: background var(--tr);
 }
 #back-link:hover, #back-link:focus-visible { background: rgba(255,255,255,0.15); color: #fff; }
-#app-title {
-  font-size: 1.35rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+#app-title { font-size: 1.35rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+#header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+#header-notice { font-size: 0.72rem; color: rgba(255,255,255,0.65); text-align: right; line-height: 1.4; }
+#install-btn {
+  display: none; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: var(--radius-sm);
+  border: 2px solid var(--or); background: transparent;
+  color: var(--or-lt); font-weight: 700; font-size: 0.82rem;
+  cursor: pointer; min-height: 44px; transition: background var(--tr);
 }
-#header-notice {
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.65);
-  text-align: right;
-  line-height: 1.4;
-}
+#install-btn:hover { background: rgba(244,184,28,0.15); }
+#install-btn.visible { display: inline-flex; }
 
-/* ===== LIVE REGION ===== */
-#live-announce {
-  position: absolute;
-  width: 1px; height: 1px;
-  overflow: hidden;
-  clip: rect(0,0,0,0);
-  white-space: nowrap;
+/* ===== NAV TABS ===== */
+#nav-tabs {
+  background: var(--marine-dk); display: flex; overflow-x: auto;
+  gap: 0; padding: 0 20px; scrollbar-width: none;
 }
+#nav-tabs::-webkit-scrollbar { display: none; }
+.nav-tab {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 12px 16px; color: rgba(255,255,255,0.7);
+  background: transparent; border: none; border-bottom: 3px solid transparent;
+  font-size: 0.88rem; font-weight: 600; cursor: pointer;
+  white-space: nowrap; min-height: 48px; transition: color var(--tr), border-color var(--tr);
+}
+.nav-tab:hover { color: #fff; }
+.nav-tab[aria-selected="true"] { color: var(--or-lt); border-bottom-color: var(--or); }
 
 /* ===== MAIN ===== */
-#main-content {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 24px 16px 48px;
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-}
+#main-content { max-width: 1100px; margin: 0 auto; padding: 24px 16px 120px; display: flex; flex-direction: column; gap: 28px; }
 
 /* ===== SECTION CARDS ===== */
-.section-card {
-  background: var(--surface);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-  overflow: hidden;
-}
-.section-head {
-  background: var(--marine);
-  color: #fff;
-  padding: 14px 20px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.section-card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden; }
+.section-head { background: var(--marine); color: #fff; padding: 14px 20px; display: flex; align-items: center; gap: 12px; }
 .section-icon { font-size: 1.5rem; line-height: 1; }
 .section-title { font-size: 1.1rem; font-weight: 700; }
 .section-desc { font-size: 0.82rem; color: rgba(255,255,255,0.75); margin-top: 2px; }
 .section-body { padding: 20px; }
 
-/* ===== CONTROLS ROW ===== */
-.ctrl-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-  margin-bottom: 14px;
+/* ===== CONTROLS ===== */
+.ctrl-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+.ctrl-label { font-size: 0.9rem; font-weight: 600; color: var(--marine); white-space: nowrap; }
+.ctrl-value { font-size: 0.85rem; color: var(--encre); font-variant-numeric: tabular-nums; min-width: 50px; }
+input[type="range"] {
+  -webkit-appearance: none; appearance: none; height: 8px; border-radius: 4px;
+  background: var(--border); cursor: pointer; width: 140px; accent-color: var(--marine);
 }
-.ctrl-label {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--marine);
-  white-space: nowrap;
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--marine); border: 3px solid #fff; box-shadow: 0 0 0 2px var(--marine);
 }
-.ctrl-value {
-  font-size: 0.85rem;
-  color: var(--encre);
-  font-variant-numeric: tabular-nums;
-  min-width: 42px;
-}
+input[type="range"]:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 
-/* ===== TOGGLE BUTTON ===== */
+/* ===== BUTTONS ===== */
 .toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border-radius: 999px;
-  border: 2px solid var(--marine);
-  background: var(--surface);
-  color: var(--marine);
-  font-weight: 700;
-  font-size: 0.95rem;
-  cursor: pointer;
-  min-height: 48px;
-  transition: background var(--tr), color var(--tr);
+  display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px;
+  border-radius: 999px; border: 2px solid var(--marine); background: var(--surface);
+  color: var(--marine); font-weight: 700; font-size: 0.95rem; cursor: pointer;
+  min-height: 48px; transition: background var(--tr), color var(--tr);
 }
-.toggle-btn[aria-pressed="true"] {
-  background: var(--marine);
-  color: #fff;
-}
+.toggle-btn[aria-pressed="true"] { background: var(--marine); color: #fff; }
 .toggle-btn:hover { background: var(--marine-dk); color: #fff; border-color: var(--marine-dk); }
-
-/* ===== ACTION BUTTON ===== */
 .action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 22px;
-  border-radius: var(--radius);
-  border: none;
-  background: var(--marine);
-  color: #fff;
-  font-weight: 700;
-  font-size: 1rem;
-  cursor: pointer;
-  min-height: 52px;
-  transition: background var(--tr), box-shadow var(--tr), transform var(--tr);
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 22px; border-radius: var(--radius); border: none;
+  background: var(--marine); color: #fff; font-weight: 700; font-size: 1rem;
+  cursor: pointer; min-height: 52px; transition: background var(--tr), box-shadow var(--tr), transform var(--tr);
 }
 .action-btn:hover { background: var(--marine-dk); box-shadow: var(--shadow-hv); }
 .action-btn:active { transform: scale(0.97); }
-.action-btn.secondary {
-  background: var(--or);
-  color: var(--encre);
-}
+.action-btn.secondary { background: var(--or); color: var(--encre); }
 .action-btn.secondary:hover { background: var(--or-lt); }
-.action-btn.danger {
-  background: #fee2e2;
-  color: var(--danger);
-  border: 2px solid #fca5a5;
-}
+.action-btn.danger { background: #fee2e2; color: var(--danger); border: 2px solid #fca5a5; }
 .action-btn.danger:hover { background: #fecaca; }
-
-/* ===== RANGE SLIDER ===== */
-input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 8px;
-  border-radius: 4px;
-  background: var(--border);
-  cursor: pointer;
-  width: 160px;
-  accent-color: var(--marine);
-}
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  background: var(--marine);
-  border: 3px solid #fff;
-  box-shadow: 0 0 0 2px var(--marine);
-}
-input[type="range"]:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 3px;
-}
+.action-btn.success-btn { background: var(--success); }
+.action-btn.success-btn:hover { background: #15693e; }
+.small-btn { padding: 8px 14px; font-size: 0.88rem; min-height: 44px; }
 
 /* ===== INFO BOX ===== */
 .info-box {
-  background: #e8f1fb;
-  border-left: 4px solid var(--marine);
+  background: #e8f1fb; border-left: 4px solid var(--marine);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  padding: 12px 16px;
-  font-size: 0.88rem;
-  color: var(--marine-dk);
-  margin-bottom: 16px;
-  line-height: 1.5;
+  padding: 12px 16px; font-size: 0.88rem; color: var(--marine-dk);
+  margin-bottom: 16px; line-height: 1.5;
 }
 .info-box strong { font-weight: 700; }
 
 /* ===== STAT BADGE ===== */
 .stat-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--fond);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 5px 14px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--marine);
-  font-variant-numeric: tabular-nums;
+  display: inline-flex; align-items: center; gap: 6px; background: var(--fond);
+  border: 1px solid var(--border); border-radius: 999px; padding: 5px 14px;
+  font-size: 0.85rem; font-weight: 600; color: var(--marine); font-variant-numeric: tabular-nums;
 }
 .stat-badge.success { background: #dcfce7; border-color: #86efac; color: var(--success); }
 .stat-badge.danger  { background: #fee2e2; border-color: #fca5a5; color: var(--danger); }
 
-/* ========================================
-   SECTION 1 — LISSAGE DU POINTEUR
-   ======================================== */
+/* ===== SECTION 1 — LISSAGE ===== */
 #drawing-wrap {
-  position: relative;
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: #fafcff;
-  touch-action: none;
-  user-select: none;
+  position: relative; border: 2px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; background: #fafcff; touch-action: none; user-select: none;
 }
-#drawing-wrap canvas {
-  display: block;
-  width: 100%;
-  height: 320px;
-}
+#draw-canvas { display: block; width: 100%; height: 300px; }
 #cursor-raw, #cursor-smooth {
-  position: absolute;
-  width: 14px; height: 14px;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  transition: top 0.01s, left 0.01s;
-  display: none;
+  position: absolute; width: 14px; height: 14px; border-radius: 50%;
+  transform: translate(-50%,-50%); pointer-events: none; display: none;
 }
 #cursor-raw    { background: rgba(185,28,28,0.7);  border: 2px solid #b91c1c; }
 #cursor-smooth { background: rgba(15,76,129,0.85); border: 2px solid #0F4C81; }
-#canvas-legend {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-  font-size: 0.85rem;
-}
-.legend-dot {
-  width: 12px; height: 12px;
-  border-radius: 50%;
-  display: inline-block;
-  margin-right: 5px;
-  vertical-align: middle;
-}
+#canvas-legend { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px; font-size: 0.85rem; }
+.legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; vertical-align: middle; }
 .legend-raw    { background: rgba(185,28,28,0.7); border: 2px solid #b91c1c; }
 .legend-smooth { background: rgba(15,76,129,0.85); border: 2px solid #0F4C81; }
-
-/* ========================================
-   SECTION 2 — DWELL (CLIC PAR MAINTIEN)
-   ======================================== */
-#dwell-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 16px;
-  margin-top: 8px;
+#drawing-mode-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.mode-pill {
+  padding: 6px 14px; border-radius: 999px; border: 2px solid var(--marine);
+  background: transparent; color: var(--marine); font-weight: 600; font-size: 0.85rem;
+  cursor: pointer; min-height: 44px; transition: background var(--tr), color var(--tr);
 }
+.mode-pill[aria-pressed="true"] { background: var(--marine); color: #fff; }
+
+/* ===== SECTION 2 — DWELL ===== */
+#dwell-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap: 16px; margin-top: 8px; }
 .dwell-target {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100px;
-  border-radius: var(--radius);
-  border: 3px solid var(--border);
-  background: var(--fond);
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--marine);
-  cursor: pointer;
-  overflow: hidden;
-  transition: border-color var(--tr), background var(--tr);
-  -webkit-user-select: none;
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 100px; border-radius: var(--radius); border: 3px solid var(--border);
+  background: var(--fond); font-size: 0.95rem; font-weight: 600; color: var(--marine);
+  cursor: pointer; overflow: hidden; transition: border-color var(--tr), background var(--tr);
   user-select: none;
 }
 .dwell-target:focus-visible { border-color: var(--focus-ring); }
-.dwell-target .dwell-icon { font-size: 1.8rem; margin-bottom: 4px; }
+.dwell-target .dwell-icon  { font-size: 1.8rem; margin-bottom: 4px; }
 .dwell-target .dwell-label { font-size: 0.85rem; text-align: center; padding: 0 6px; }
-.dwell-target .dwell-bar {
-  position: absolute;
-  bottom: 0; left: 0;
-  height: 5px;
-  width: 0%;
-  background: var(--or);
-  border-radius: 0 0 0 0;
-  transition: width linear;
-}
-.dwell-target.active { border-color: var(--or); background: #fffbeb; }
-.dwell-target.activated {
-  border-color: var(--success);
-  background: #dcfce7;
-  animation: pulseSuccess 0.4s ease;
-}
-@keyframes pulseSuccess {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .dwell-target.activated { animation: none; }
-}
-#dwell-result {
-  margin-top: 14px;
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--success);
-  min-height: 28px;
-}
+.dwell-target .dwell-bar   { position: absolute; bottom: 0; left: 0; height: 5px; width: 0%; background: var(--or); }
+.dwell-target.active     { border-color: var(--or); background: #fffbeb; }
+.dwell-target.activated  { border-color: var(--success); background: #dcfce7; animation: pulseOK 0.4s ease; }
+@keyframes pulseOK { 0%{transform:scale(1)} 50%{transform:scale(1.05)} 100%{transform:scale(1)} }
+@media (prefers-reduced-motion: reduce) { .dwell-target.activated { animation: none; } }
+#dwell-result { margin-top: 14px; font-size: 1rem; font-weight: 700; color: var(--success); min-height: 28px; }
 
-/* ========================================
-   SECTION 3 — ANTI-DOUBLE-DÉCLENCHEMENT
-   ======================================== */
-#debounce-pad {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  max-width: 400px;
-  margin-top: 8px;
-}
+/* ===== SECTION 3 — ANTI-REBOND ===== */
+#debounce-pad { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; max-width: 400px; margin-top: 8px; }
 .debounce-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 4px;
-  min-height: 80px;
-  border-radius: var(--radius);
-  border: 2px solid var(--marine);
-  background: var(--marine);
-  color: #fff;
-  font-weight: 700;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: background var(--tr), transform var(--tr), opacity var(--tr);
-  -webkit-user-select: none;
-  user-select: none;
+  display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 4px;
+  min-height: 80px; border-radius: var(--radius); border: 2px solid var(--marine);
+  background: var(--marine); color: #fff; font-weight: 700; font-size: 1.1rem;
+  cursor: pointer; transition: background var(--tr), transform var(--tr), opacity var(--tr); user-select: none;
 }
 .debounce-btn:hover  { background: var(--marine-dk); }
 .debounce-btn:active { transform: scale(0.94); }
-.debounce-btn.locked {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
+.debounce-btn.locked { opacity: 0.4; cursor: not-allowed; }
 .debounce-btn span.db-sub { font-size: 0.7rem; font-weight: 400; opacity: 0.75; }
-#debounce-stats {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 14px;
-}
-#debounce-log {
-  margin-top: 12px;
-  font-size: 0.83rem;
-  color: #555;
-  min-height: 22px;
-  font-style: italic;
-}
+#debounce-stats { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+#debounce-log { margin-top: 12px; font-size: 0.83rem; color: #555; min-height: 22px; font-style: italic; }
+#debounce-sequence { font-family: monospace; font-size: 1.1rem; color: var(--marine); font-weight: 700; letter-spacing: 2px; }
 
-/* ========================================
-   SECTION 4 — CIBLES AGRANDIES
-   ======================================== */
-#targets-wrap {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  margin-top: 12px;
+/* ===== SECTION 4 — MINI-JEU ===== */
+#game-area {
+  position: relative; background: #0a1929; border-radius: var(--radius);
+  overflow: hidden; user-select: none; touch-action: none;
+  min-height: 340px; cursor: crosshair;
 }
-#targets-demo {
-  flex: 1;
-  min-width: 260px;
-  background: var(--fond);
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  min-height: 180px;
-  position: relative;
-  transition: padding var(--tr);
+.game-target {
+  position: absolute; border-radius: 50%;
+  background: var(--or); border: 3px solid #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; color: var(--encre); font-size: 1rem;
+  transition: transform 0.1s ease, background 0.15s ease;
+  cursor: pointer; transform: translate(-50%,-50%);
+  box-shadow: 0 0 12px rgba(244,184,28,0.6);
 }
-.big-target {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 4px;
-  border-radius: var(--radius);
-  border: 3px solid var(--marine);
-  background: var(--marine);
-  color: #fff;
-  font-weight: 700;
-  cursor: pointer;
-  transition: width var(--tr), height var(--tr), font-size var(--tr), border-radius var(--tr), background var(--tr);
-  -webkit-user-select: none;
-  user-select: none;
-  overflow: hidden;
-  white-space: nowrap;
+.game-target:hover { transform: translate(-50%,-50%) scale(1.08); }
+.game-target.hit-good { background: #22c55e; border-color: #86efac; animation: pop 0.3s ease forwards; }
+.game-target.hit-miss { background: var(--danger); border-color: #fca5a5; animation: pop 0.3s ease forwards; }
+@keyframes pop { 0%{opacity:1;transform:translate(-50%,-50%) scale(1.2)} 100%{opacity:0;transform:translate(-50%,-50%) scale(0.5)} }
+@media (prefers-reduced-motion: reduce) { .game-target.hit-good,.game-target.hit-miss { animation: none; opacity: 0; } }
+#game-hud {
+  display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; align-items: center;
 }
-.big-target:hover { background: var(--marine-dk); box-shadow: var(--shadow-hv); }
-.big-target:active { transform: scale(0.96); }
-.big-target.hit {
-  background: var(--success);
-  border-color: var(--success);
-  animation: hitPulse 0.35s ease;
+#game-score-display { font-size: 1.1rem; font-weight: 800; color: var(--marine); }
+#game-timer-bar-wrap { flex: 1; min-width: 120px; background: var(--border); border-radius: 4px; height: 10px; overflow: hidden; }
+#game-timer-bar { height: 100%; background: var(--success); border-radius: 4px; width: 100%; transition: width 0.1s linear, background 0.3s; }
+#game-result {
+  margin-top: 14px; padding: 16px; background: var(--fond); border-radius: var(--radius);
+  border: 2px solid var(--border); display: none;
 }
-@keyframes hitPulse {
-  0%   { transform: scale(1); }
-  40%  { transform: scale(1.08); }
-  100% { transform: scale(1); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .big-target.hit { animation: none; }
-}
-#targets-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 200px;
-}
-.targets-stat-row { font-size: 0.88rem; color: var(--marine-dk); }
-.targets-stat-row strong { font-size: 1.1rem; color: var(--marine); }
-#targets-score-bar-wrap {
-  background: var(--border);
-  border-radius: 4px;
-  height: 10px;
-  margin-top: 4px;
-  overflow: hidden;
-}
-#targets-score-bar {
-  height: 100%;
-  background: var(--success);
-  border-radius: 4px;
-  width: 0%;
-  transition: width 0.35s ease;
-}
+#game-result.visible { display: block; }
+#game-result h3 { font-size: 1.1rem; color: var(--marine); margin-bottom: 10px; }
+.game-result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.result-col { background: var(--surface); border-radius: var(--radius-sm); padding: 12px; border: 2px solid var(--border); }
+.result-col h4 { font-size: 0.85rem; font-weight: 700; margin-bottom: 6px; color: var(--marine-dk); }
+.result-num { font-size: 1.8rem; font-weight: 800; color: var(--marine); }
+.result-improved { color: var(--success); }
+@media (max-width: 500px) { .game-result-grid { grid-template-columns: 1fr; } }
 
-/* ========================================
-   SECTION 5 — COMPARAISON AVANT/APRÈS
-   ======================================== */
-#compare-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 8px;
+/* ===== SECTION 5 — CLAVIER ADAPTATIF ===== */
+#adaptive-keyboard {
+  background: var(--marine-dk); border-radius: var(--radius); padding: 16px; margin-top: 12px;
+  touch-action: none;
 }
-.compare-col {
-  border-radius: var(--radius);
-  overflow: hidden;
-  border: 2px solid var(--border);
+.kb-row { display: flex; gap: 6px; margin-bottom: 6px; justify-content: center; flex-wrap: wrap; }
+.kb-key {
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; border: 2px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.12); color: #fff; font-weight: 700;
+  cursor: pointer; user-select: none; transition: background var(--tr), transform var(--tr), width 0.15s ease, height 0.15s ease, font-size 0.15s ease;
+  min-width: 44px; min-height: 48px; font-size: 1rem; padding: 0 6px;
 }
-.compare-head {
-  padding: 10px 16px;
-  font-weight: 700;
-  font-size: 0.95rem;
-  text-align: center;
+.kb-key:hover { background: rgba(244,184,28,0.35); border-color: var(--or); }
+.kb-key:active { transform: scale(0.9); background: var(--or); color: var(--encre); }
+.kb-key.space-key { min-width: 200px; }
+.kb-key.action-key { background: rgba(15,76,129,0.6); border-color: var(--marine-lt); font-size: 0.78rem; min-width: 56px; }
+.kb-key.enlarged {
+  background: rgba(244,184,28,0.25); border-color: var(--or);
+  transform: scale(1.18); z-index: 1; box-shadow: 0 0 0 3px rgba(244,184,28,0.4);
 }
+#kb-output {
+  margin-bottom: 12px; min-height: 56px; padding: 10px 14px;
+  background: var(--surface); border-radius: var(--radius-sm); border: 2px solid var(--border);
+  font-size: 1.1rem; color: var(--encre); word-break: break-word; line-height: 1.5;
+}
+#kb-phrase-target {
+  font-size: 0.88rem; color: var(--marine-dk); background: #e8f1fb;
+  border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 12px;
+  border: 1px solid var(--border); line-height: 1.6;
+}
+#kb-phrase-target span.matched { color: var(--success); font-weight: 700; }
+#kb-phrase-target span.current { background: var(--or-lt); border-radius: 2px; }
+.kb-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+.kb-stat { font-size: 0.85rem; color: var(--marine-dk); font-weight: 600; }
+#kb-correction-log { font-size: 0.82rem; color: var(--success); min-height: 20px; margin-top: 8px; font-style: italic; }
+
+/* ===== SECTION 6 — PROFILS ===== */
+#profiles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 14px; margin-top: 12px; }
+.profile-card {
+  background: var(--fond); border: 2px solid var(--border); border-radius: var(--radius);
+  padding: 14px; cursor: pointer; transition: border-color var(--tr), background var(--tr);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.profile-card:hover { border-color: var(--marine-lt); background: #eef5ff; }
+.profile-card.active { border-color: var(--marine); background: #e8f1fb; }
+.profile-card h3 { font-size: 0.95rem; font-weight: 700; color: var(--marine); }
+.profile-card p  { font-size: 0.82rem; color: #555; line-height: 1.4; }
+.profile-card .profile-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
+.profile-tag { font-size: 0.72rem; padding: 2px 8px; border-radius: 999px; background: var(--marine); color: #fff; font-weight: 600; }
+#profiles-custom { margin-top: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 600px) { #profiles-custom { grid-template-columns: 1fr; } }
+#profile-name-input {
+  padding: 10px 14px; border-radius: var(--radius-sm); border: 2px solid var(--border);
+  font-size: 0.95rem; color: var(--encre); width: 100%; margin-bottom: 10px;
+  background: var(--surface);
+}
+#profile-name-input:focus { border-color: var(--marine); outline: none; box-shadow: 0 0 0 3px rgba(244,184,28,0.5); }
+#profile-status { margin-top: 10px; font-size: 0.88rem; font-weight: 600; min-height: 22px; }
+
+/* ===== SECTION 7 — COMPARAISON ===== */
+#compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+.compare-col { border-radius: var(--radius); overflow: hidden; border: 2px solid var(--border); }
+.compare-head { padding: 10px 16px; font-weight: 700; font-size: 0.95rem; text-align: center; }
 .compare-head.avant { background: #fee2e2; color: var(--danger); }
 .compare-head.apres { background: #dcfce7; color: var(--success); }
-.compare-body {
-  padding: 16px;
-  background: var(--fond);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.compare-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.88rem;
-  line-height: 1.4;
-}
+.compare-body { padding: 16px; background: var(--fond); display: flex; flex-direction: column; gap: 10px; }
+.compare-row { display: flex; align-items: center; gap: 10px; font-size: 0.88rem; line-height: 1.4; }
 .compare-row .ci { font-size: 1.1rem; flex-shrink: 0; }
+@media (max-width: 600px) { #compare-grid { grid-template-columns: 1fr; } }
 
-@media (max-width: 600px) {
-  #compare-grid { grid-template-columns: 1fr; }
-}
-
-/* ===== STICKY SETTINGS PANEL ===== */
+/* ===== STICKY PANEL ===== */
 #settings-panel {
-  position: sticky;
-  bottom: 0;
-  background: var(--marine-dk);
-  color: #fff;
-  padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-  z-index: 20;
-  border-top: 3px solid var(--or);
-  font-size: 0.85rem;
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--marine-dk); color: #fff;
+  padding: 10px 20px; display: flex; align-items: center;
+  gap: 16px; flex-wrap: wrap; z-index: 20; border-top: 3px solid var(--or);
+  font-size: 0.82rem;
 }
-#settings-panel .sp-label { font-weight: 700; color: var(--or-lt); }
-#settings-panel .sp-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+#settings-panel .sp-label { font-weight: 700; color: var(--or-lt); white-space: nowrap; }
+#settings-panel .sp-values { display: flex; gap: 10px; flex-wrap: wrap; flex: 1; }
+#sp-tts-btn {
+  display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px;
+  border-radius: var(--radius-sm); border: 2px solid var(--or);
+  background: transparent; color: var(--or-lt); font-weight: 700; font-size: 0.82rem;
+  cursor: pointer; min-height: 40px; transition: background var(--tr); white-space: nowrap;
+}
+#sp-tts-btn:hover { background: rgba(244,184,28,0.15); }
 
-/* ===== SEPARATOR ===== */
-.separator { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
+/* ===== TARGETS SECTION ===== */
+#targets-wrap { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; margin-top: 12px; }
+#targets-demo {
+  flex: 1; min-width: 260px; background: var(--fond); border: 2px solid var(--border);
+  border-radius: var(--radius); padding: 20px; display: flex; gap: 12px; flex-wrap: wrap;
+  align-items: center; justify-content: center; min-height: 180px; position: relative;
+}
+.big-target {
+  display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 4px;
+  border-radius: var(--radius); border: 3px solid var(--marine); background: var(--marine);
+  color: #fff; font-weight: 700; cursor: pointer;
+  transition: width var(--tr), height var(--tr), font-size var(--tr), background var(--tr);
+  user-select: none; overflow: hidden; white-space: nowrap;
+}
+.big-target:hover { background: var(--marine-dk); box-shadow: var(--shadow-hv); }
+.big-target.hit { background: var(--success); border-color: var(--success); animation: hitPulse 0.35s ease; }
+@keyframes hitPulse { 0%{transform:scale(1)} 40%{transform:scale(1.08)} 100%{transform:scale(1)} }
+@media (prefers-reduced-motion: reduce) { .big-target.hit { animation: none; } }
+#targets-stats { display: flex; flex-direction: column; gap: 10px; min-width: 180px; }
+.targets-stat-row { font-size: 0.88rem; color: var(--marine-dk); }
+.targets-stat-row strong { font-size: 1.1rem; color: var(--marine); }
+#targets-score-bar-wrap { background: var(--border); border-radius: 4px; height: 10px; margin-top: 4px; overflow: hidden; }
+#targets-score-bar { height: 100%; background: var(--success); border-radius: 4px; width: 0%; transition: width 0.35s ease; }
 </style>
 </head>
 <body>
 
-<!-- SKIP LINK -->
 <a href="#main-content" id="skip-link">Aller au contenu principal</a>
-
-<!-- LIVE REGION -->
-<div id="live-announce" aria-live="polite" aria-atomic="true"></div>
+<div id="live-announce" aria-live="polite" aria-atomic="true" aria-hidden="true"></div>
 
 <!-- HEADER -->
 <header id="app-header" role="banner">
   <div id="header-left">
-    <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y">← LibreA11y</a>
-    <h1 id="app-title">✋ SteadyTouch — démo</h1>
+    <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y">&#8592; LibreA11y</a>
+    <h1 id="app-title"><span aria-hidden="true">&#x270B;</span> SteadyTouch</h1>
   </div>
-  <div id="header-notice" aria-label="Information">
-    démo · 100% hors-ligne · aucune donnée envoyée
+  <div id="header-right">
+    <button id="install-btn" aria-label="Installer SteadyTouch comme application">
+      <span aria-hidden="true">&#128190;</span> Installer
+    </button>
+    <div id="header-notice">PWA &middot; 100&nbsp;% hors-ligne &middot; aucune donn&eacute;e envoy&eacute;e</div>
   </div>
 </header>
 
-<!-- MAIN -->
+<!-- NAV TABS -->
+<nav id="nav-tabs" aria-label="Sections de SteadyTouch" role="tablist">
+  <button class="nav-tab" role="tab" aria-selected="true"  data-section="s1">&#x270A; Lissage</button>
+  <button class="nav-tab" role="tab" aria-selected="false" data-section="s2">&#x23F1; Dwell</button>
+  <button class="nav-tab" role="tab" aria-selected="false" data-section="s3">&#x1F6E1; Anti-rebond</button>
+  <button class="nav-tab" role="tab" aria-selected="false" data-section="s4">&#x1F3AF; Mini-jeu</button>
+  <button class="nav-tab" role="tab" aria-selected="false" data-section="s5">&#x2328; Clavier</button>
+  <button class="nav-tab" role="tab" aria-selected="false" data-section="s6">&#x1F464; Profils</button>
+  <button class="nav-tab" role="tab" aria-selected="false" data-section="s7">&#x2696; Avant/Apr&egrave;s</button>
+</nav>
+
 <main id="main-content" tabindex="-1">
 
-  <!-- =============================================
-       SECTION 1 — LISSAGE DU POINTEUR
-       ============================================= -->
-  <section class="section-card" aria-labelledby="s1-title">
+  <!-- ===================== S1 — LISSAGE ===================== -->
+  <section class="section-card" id="s1" aria-labelledby="s1-title">
     <div class="section-head">
-      <span class="section-icon" aria-hidden="true">🖊️</span>
+      <span class="section-icon" aria-hidden="true">&#x270A;</span>
       <div>
-        <div class="section-title" id="s1-title">1 — Lissage du pointeur</div>
-        <div class="section-desc">Dessinez dans la zone : voyez la différence entre le curseur réel (rouge) et le curseur lissé (bleu).</div>
+        <div class="section-title" id="s1-title">1 &mdash; Lissage du pointeur</div>
+        <div class="section-desc">Dessinez : voyez la diff&eacute;rence entre le tracé réel (rouge) et le tracé liss&eacute; (bleu). Comparaison cot&eacute; &agrave; cot&eacute;.</div>
       </div>
     </div>
     <div class="section-body">
       <div class="info-box">
-        <strong>Comment ça marche ?</strong> Un filtre One Euro atténue les micro-tremblements en temps réel.
-        Activez le lissage et bougez lentement pour voir l'effet. Comparez les deux traits en dessinant.
+        <strong>Filtre One Euro (G&eacute;ry Casiez, 2012)</strong> &mdash; att&eacute;nue les micro-tremblements en temps r&eacute;el sans retarder les gestes rapides.
+        Activez le lissage, bougez lentement et observez l&apos;effet. R&eacute;glez l&apos;intensit&eacute; selon vos besoins.
       </div>
       <div class="ctrl-row">
         <button class="toggle-btn" id="smooth-toggle" aria-pressed="true">
-          <span aria-hidden="true">✅</span> Lissage activé
+          <span aria-hidden="true">&#x2705;</span> Lissage activ&eacute;
         </button>
-        <label class="ctrl-label" for="smooth-slider">Intensité :</label>
-        <input type="range" id="smooth-slider" min="1" max="20" value="10" aria-label="Intensité du lissage de 1 (faible) à 20 (fort)" style="width:140px">
+        <div id="drawing-mode-row" role="group" aria-label="Mode de visualisation">
+          <button class="mode-pill" id="mode-overlay" aria-pressed="true">Superpos&eacute;</button>
+          <button class="mode-pill" id="mode-split"   aria-pressed="false">Cot&eacute; &agrave; cot&eacute;</button>
+        </div>
+      </div>
+      <div class="ctrl-row">
+        <label class="ctrl-label" for="smooth-slider">Intensit&eacute;&nbsp;:</label>
+        <input type="range" id="smooth-slider" min="1" max="20" value="10"
+          aria-label="Intensit&eacute; du lissage de 1 (faible) &agrave; 20 (fort)">
         <span class="ctrl-value" id="smooth-val" aria-live="polite">10</span>
-        <button class="action-btn secondary" id="clear-canvas" style="min-height:48px;padding:8px 16px;font-size:0.9rem;">
-          🗑️ Effacer
+        <button class="action-btn secondary small-btn" id="clear-canvas" aria-label="Effacer le dessin">
+          <span aria-hidden="true">&#x1F5D1;</span> Effacer
+        </button>
+        <button class="action-btn small-btn" id="tts-drawing" aria-label="Lire l'explication à voix haute">
+          <span aria-hidden="true">&#x1F508;</span> Lire
         </button>
       </div>
-      <div id="drawing-wrap" role="img" aria-label="Zone de dessin interactive. Bougez la souris pour dessiner et voir le lissage.">
+      <!-- Split vs overlay -->
+      <div id="drawing-wrap" role="img" aria-label="Zone de dessin interactive. Cliquez ou touchez pour dessiner.">
         <canvas id="draw-canvas"></canvas>
+        <canvas id="draw-canvas-raw" style="display:none;position:absolute;top:0;left:0;width:50%;height:100%;border-right:2px dashed var(--or);"></canvas>
         <div id="cursor-raw"    aria-hidden="true"></div>
         <div id="cursor-smooth" aria-hidden="true"></div>
+        <div id="split-labels" aria-hidden="true" style="display:none;position:absolute;top:6px;left:0;width:100%;pointer-events:none;display:none;">
+          <span style="position:absolute;left:10px;background:rgba(185,28,28,0.85);color:#fff;font-size:0.72rem;padding:2px 8px;border-radius:4px;">Tr&eacute;mbl&eacute;</span>
+          <span style="position:absolute;right:10px;background:rgba(15,76,129,0.9);color:#fff;font-size:0.72rem;padding:2px 8px;border-radius:4px;">Liss&eacute;</span>
+        </div>
       </div>
-      <div id="canvas-legend" aria-hidden="true">
-        <span><span class="legend-dot legend-raw"></span> Curseur réel (tremblé)</span>
-        <span><span class="legend-dot legend-smooth"></span> Curseur lissé (stabilisé)</span>
+      <div id="canvas-legend" aria-hidden="true" style="margin-top:10px;display:flex;gap:20px;flex-wrap:wrap;font-size:0.85rem;">
+        <span><span class="legend-dot legend-raw"></span> Trait r&eacute;el (trembl&eacute;)</span>
+        <span><span class="legend-dot legend-smooth"></span> Trait liss&eacute; (stabilis&eacute;)</span>
       </div>
     </div>
   </section>
 
-  <!-- =============================================
-       SECTION 2 — CLIC PAR MAINTIEN (DWELL)
-       ============================================= -->
-  <section class="section-card" aria-labelledby="s2-title">
+  <!-- ===================== S2 — DWELL ===================== -->
+  <section class="section-card" id="s2" aria-labelledby="s2-title">
     <div class="section-head">
-      <span class="section-icon" aria-hidden="true">⏱️</span>
+      <span class="section-icon" aria-hidden="true">&#x23F1;</span>
       <div>
-        <div class="section-title" id="s2-title">2 — Clic par maintien (dwell)</div>
-        <div class="section-desc">Maintenez le pointeur sur une cible sans cliquer. Elle s'active automatiquement.</div>
+        <div class="section-title" id="s2-title">2 &mdash; Clic par maintien (dwell)</div>
+        <div class="section-desc">Maintenez le pointeur sur une cible sans cliquer : elle s&apos;active automatiquement.</div>
       </div>
     </div>
     <div class="section-body">
       <div class="info-box">
-        <strong>Problème résolu :</strong> Les tremblements provoquent des clics involontaires ou manqués.
-        Avec le dwell, on maintient simplement le curseur immobile — <em>aucun clic nécessaire</em>.
+        <strong>D&eacute;lai d&apos;intention :</strong> la cible ne s&apos;active qu&apos;apr&egrave;s un contact <em>stable</em> (le curseur ne doit pas quitter la zone).
+        L&apos;anti-double-d&eacute;clenchement emp&ecirc;che une nouvelle activation trop vite apr&egrave;s la pr&eacute;c&eacute;dente.
+        Appuyez Entr&eacute;e ou Espace sur clavier pour activer imm&eacute;diatement.
       </div>
       <div class="ctrl-row">
         <button class="toggle-btn" id="dwell-toggle" aria-pressed="true">
-          <span aria-hidden="true">✅</span> Dwell activé
+          <span aria-hidden="true">&#x2705;</span> Dwell activ&eacute;
         </button>
-        <label class="ctrl-label" for="dwell-slider">Délai :</label>
-        <input type="range" id="dwell-slider" min="300" max="3000" step="100" value="1000" aria-label="Délai de maintien de 300 ms à 3 secondes" style="width:140px">
+        <label class="ctrl-label" for="dwell-slider">D&eacute;lai&nbsp;:</label>
+        <input type="range" id="dwell-slider" min="300" max="3000" step="100" value="1000"
+          aria-label="D&eacute;lai de maintien de 300 ms &agrave; 3 secondes">
         <span class="ctrl-value" id="dwell-val" aria-live="polite">1,0 s</span>
       </div>
-      <div id="dwell-grid" role="list" aria-label="Cibles à activer par maintien">
-        <div class="dwell-target" role="listitem" tabindex="0" data-action="Envoyer" aria-label="Envoyer — cible dwell">
-          <span class="dwell-icon" aria-hidden="true">📤</span>
+      <div class="ctrl-row">
+        <label class="ctrl-label" for="dwell-cooldown-slider">Refroidissement&nbsp;:</label>
+        <input type="range" id="dwell-cooldown-slider" min="200" max="2000" step="100" value="600"
+          aria-label="Délai de refroidissement anti-double-déclenchement dwell">
+        <span class="ctrl-value" id="dwell-cooldown-val" aria-live="polite">600 ms</span>
+      </div>
+      <div id="dwell-grid" role="list" aria-label="Cibles &agrave; activer par maintien">
+        <div class="dwell-target" role="listitem" tabindex="0" data-action="Envoyer" aria-label="Envoyer">
+          <span class="dwell-icon" aria-hidden="true">&#x1F4E4;</span>
           <span class="dwell-label">Envoyer</span>
           <div class="dwell-bar" aria-hidden="true"></div>
         </div>
-        <div class="dwell-target" role="listitem" tabindex="0" data-action="Ouvrir" aria-label="Ouvrir — cible dwell">
-          <span class="dwell-icon" aria-hidden="true">📂</span>
+        <div class="dwell-target" role="listitem" tabindex="0" data-action="Ouvrir" aria-label="Ouvrir">
+          <span class="dwell-icon" aria-hidden="true">&#x1F4C2;</span>
           <span class="dwell-label">Ouvrir</span>
           <div class="dwell-bar" aria-hidden="true"></div>
         </div>
-        <div class="dwell-target" role="listitem" tabindex="0" data-action="Sauvegarder" aria-label="Sauvegarder — cible dwell">
-          <span class="dwell-icon" aria-hidden="true">💾</span>
+        <div class="dwell-target" role="listitem" tabindex="0" data-action="Sauvegarder" aria-label="Sauvegarder">
+          <span class="dwell-icon" aria-hidden="true">&#x1F4BE;</span>
           <span class="dwell-label">Sauvegarder</span>
           <div class="dwell-bar" aria-hidden="true"></div>
         </div>
-        <div class="dwell-target" role="listitem" tabindex="0" data-action="Imprimer" aria-label="Imprimer — cible dwell">
-          <span class="dwell-icon" aria-hidden="true">🖨️</span>
+        <div class="dwell-target" role="listitem" tabindex="0" data-action="Imprimer" aria-label="Imprimer">
+          <span class="dwell-icon" aria-hidden="true">&#x1F5A8;</span>
           <span class="dwell-label">Imprimer</span>
           <div class="dwell-bar" aria-hidden="true"></div>
         </div>
-        <div class="dwell-target" role="listitem" tabindex="0" data-action="Supprimer" aria-label="Supprimer — cible dwell">
-          <span class="dwell-icon" aria-hidden="true">🗑️</span>
+        <div class="dwell-target" role="listitem" tabindex="0" data-action="Supprimer" aria-label="Supprimer">
+          <span class="dwell-icon" aria-hidden="true">&#x1F5D1;</span>
           <span class="dwell-label">Supprimer</span>
           <div class="dwell-bar" aria-hidden="true"></div>
         </div>
-        <div class="dwell-target" role="listitem" tabindex="0" data-action="Accueil" aria-label="Accueil — cible dwell">
-          <span class="dwell-icon" aria-hidden="true">🏠</span>
+        <div class="dwell-target" role="listitem" tabindex="0" data-action="Accueil" aria-label="Accueil">
+          <span class="dwell-icon" aria-hidden="true">&#x1F3E0;</span>
           <span class="dwell-label">Accueil</span>
           <div class="dwell-bar" aria-hidden="true"></div>
         </div>
@@ -694,33 +536,31 @@ input[type="range"]:focus-visible {
     </div>
   </section>
 
-  <!-- =============================================
-       SECTION 3 — ANTI-DOUBLE-DÉCLENCHEMENT
-       ============================================= -->
-  <section class="section-card" aria-labelledby="s3-title">
+  <!-- ===================== S3 — ANTI-REBOND ===================== -->
+  <section class="section-card" id="s3" aria-labelledby="s3-title">
     <div class="section-head">
-      <span class="section-icon" aria-hidden="true">🛡️</span>
+      <span class="section-icon" aria-hidden="true">&#x1F6E1;</span>
       <div>
-        <div class="section-title" id="s3-title">3 — Anti-double-déclenchement</div>
-        <div class="section-desc">Un délai minimal ignore les appuis répétés involontaires (spasmes, rebonds).</div>
+        <div class="section-title" id="s3-title">3 &mdash; Anti-double-d&eacute;clenchement</div>
+        <div class="section-desc">Un d&eacute;lai minimal ignore les appuis r&eacute;p&eacute;t&eacute;s involontaires (spasmes, rebonds).</div>
       </div>
     </div>
     <div class="section-body">
       <div class="info-box">
-        <strong>Problème résolu :</strong> Un tremblement peut provoquer plusieurs clics en rafale sur le même bouton.
-        Le filtre anti-rebond bloque tout déclenchement survenant trop vite après le précédent.
-        Appuyez rapidement plusieurs fois pour voir les « appuis ignorés ».
+        <strong>Probl&egrave;me r&eacute;solu&nbsp;:</strong> un tremblement peut provoquer plusieurs clics en rafale.
+        Ce filtre bloque tout d&eacute;clenchement survenant trop vite apr&egrave;s le pr&eacute;c&eacute;dent, <em>par touche</em>.
+        Appuyez rapidement plusieurs fois pour voir les appuis ignor&eacute;s.
       </div>
       <div class="ctrl-row">
-        <label class="ctrl-label" for="debounce-slider">Délai minimal :</label>
+        <label class="ctrl-label" for="debounce-slider">D&eacute;lai minimal&nbsp;:</label>
         <input type="range" id="debounce-slider" min="0" max="2000" step="50" value="600"
-          aria-label="Délai anti-rebond de 0 à 2000 ms" style="width:140px">
+          aria-label="D&eacute;lai anti-rebond de 0 &agrave; 2000 ms">
         <span class="ctrl-value" id="debounce-val" aria-live="polite">600 ms</span>
-        <button class="action-btn danger" id="reset-debounce" style="min-height:48px;padding:8px 16px;font-size:0.9rem;">
-          🔄 Réinitialiser
+        <button class="action-btn danger small-btn" id="reset-debounce" aria-label="R&eacute;initialiser les statistiques">
+          <span aria-hidden="true">&#x1F504;</span> R&eacute;init.
         </button>
       </div>
-      <div id="debounce-pad" role="group" aria-label="Pavé numérique avec anti-double-déclenchement">
+      <div id="debounce-pad" role="group" aria-label="Pav&eacute; num&eacute;rique avec anti-double-d&eacute;clenchement">
         <button class="debounce-btn" data-digit="1" aria-label="Touche 1">1</button>
         <button class="debounce-btn" data-digit="2" aria-label="Touche 2">2</button>
         <button class="debounce-btn" data-digit="3" aria-label="Touche 3">3</button>
@@ -731,99 +571,224 @@ input[type="range"]:focus-visible {
         <button class="debounce-btn" data-digit="8" aria-label="Touche 8">8</button>
         <button class="debounce-btn" data-digit="9" aria-label="Touche 9">9</button>
       </div>
-      <div id="debounce-stats" aria-live="polite">
-        <span class="stat-badge success" id="db-accepted">✔ 0 acceptés</span>
-        <span class="stat-badge danger"  id="db-ignored">✕ 0 ignorés</span>
+      <div id="debounce-stats" aria-live="polite" style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap;">
+        <span class="stat-badge success" id="db-accepted">&#x2714; 0 accept&eacute;s</span>
+        <span class="stat-badge danger"  id="db-ignored">&#x2715; 0 ignor&eacute;s</span>
       </div>
       <div id="debounce-log" aria-live="polite" aria-atomic="true"></div>
       <div style="margin-top:10px;">
-        <span class="ctrl-label">Séquence saisie : </span>
-        <span id="debounce-sequence" style="font-family:monospace;font-size:1.1rem;color:var(--marine);font-weight:700;letter-spacing:2px;">&nbsp;</span>
+        <span class="ctrl-label">S&eacute;quence saisie&nbsp;: </span>
+        <span id="debounce-sequence" aria-live="polite">&nbsp;</span>
       </div>
     </div>
   </section>
 
-  <!-- =============================================
-       SECTION 4 — CIBLES AGRANDIES + ZONES TAMPONS
-       ============================================= -->
-  <section class="section-card" aria-labelledby="s4-title">
+  <!-- ===================== S4 — MINI-JEU ===================== -->
+  <section class="section-card" id="s4" aria-labelledby="s4-title">
     <div class="section-head">
-      <span class="section-icon" aria-hidden="true">🎯</span>
+      <span class="section-icon" aria-hidden="true">&#x1F3AF;</span>
       <div>
-        <div class="section-title" id="s4-title">4 — Cibles agrandies + zones tampons</div>
-        <div class="section-desc">Augmentez la taille des cibles et leur marge pour réduire les erreurs.</div>
+        <div class="section-title" id="s4-title">4 &mdash; Mini-jeu de pr&eacute;cision</div>
+        <div class="section-desc">Touchez les cibles avec ou sans lissage — mesurez l&apos;am&eacute;lioration concr&egrave;te.</div>
       </div>
     </div>
     <div class="section-body">
       <div class="info-box">
-        <strong>Loi de Fitts :</strong> plus une cible est grande et proche, plus elle est facile à atteindre
-        même avec des tremblements. Les zones tampons ajoutent une marge invisible autour de la cible.
-        Essayez de cliquer sur les boutons dans les deux modes.
+        <strong>Mode&nbsp;: </strong>
+        Jouez d&apos;abord <em>sans lissage</em> (30 s), puis <em>avec lissage</em> (30 s). Le jeu calcule votre am&eacute;lioration.
+        Les cibles apparaissent al&eacute;atoirement ; cliquez ou touchez. Les cibles agrandies r&eacute;duisent les erreurs (Loi de Fitts).
+      </div>
+      <div id="game-hud">
+        <div id="game-score-display" aria-live="polite" aria-atomic="true">Score&nbsp;: 0</div>
+        <div id="game-phase-badge" class="stat-badge">Prêt</div>
+        <div id="game-timer-bar-wrap" aria-hidden="true"><div id="game-timer-bar"></div></div>
+        <span id="game-time-left" aria-live="polite" style="font-size:0.85rem;color:var(--marine-dk);">30 s</span>
       </div>
       <div class="ctrl-row">
-        <label class="ctrl-label" for="target-size-slider">Taille des cibles :</label>
-        <input type="range" id="target-size-slider" min="40" max="120" value="60"
-          aria-label="Taille des cibles de 40 à 120 pixels" style="width:140px">
-        <span class="ctrl-value" id="target-size-val" aria-live="polite">60 px</span>
-      </div>
-      <div class="ctrl-row">
-        <label class="ctrl-label" for="target-margin-slider">Marge tampon :</label>
-        <input type="range" id="target-margin-slider" min="0" max="30" value="4"
-          aria-label="Marge tampon de 0 à 30 pixels" style="width:140px">
-        <span class="ctrl-value" id="target-margin-val" aria-live="polite">4 px</span>
-        <button class="action-btn danger" id="reset-target-stats" style="min-height:48px;padding:8px 16px;font-size:0.9rem;">
-          🔄 Stats
+        <label class="ctrl-label" for="game-size-slider">Taille cible&nbsp;:</label>
+        <input type="range" id="game-size-slider" min="30" max="100" value="55"
+          aria-label="Taille des cibles du jeu">
+        <span class="ctrl-value" id="game-size-val" aria-live="polite">55 px</span>
+        <button class="action-btn success-btn small-btn" id="game-start" aria-label="D&eacute;marrer le mini-jeu sans lissage">
+          <span aria-hidden="true">&#x25B6;</span> D&eacute;marrer (sans lissage)
+        </button>
+        <button class="action-btn secondary small-btn" id="game-start-smooth" aria-label="D&eacute;marrer le mini-jeu avec lissage">
+          <span aria-hidden="true">&#x25B6;</span> Avec lissage
         </button>
       </div>
-      <div id="targets-wrap">
-        <div id="targets-demo" aria-label="Zone de cibles interactives">
-          <!-- targets injected by JS -->
-        </div>
-        <div id="targets-stats" aria-live="polite">
-          <div class="targets-stat-row">Clics réussis : <strong id="t-hits">0</strong></div>
-          <div class="targets-stat-row">Clics manqués : <strong id="t-miss">0</strong></div>
-          <div class="targets-stat-row">Taux de réussite :</div>
-          <div id="targets-score-bar-wrap" aria-hidden="true">
-            <div id="targets-score-bar"></div>
+      <div id="game-area" role="region" aria-label="Zone de jeu — touchez les cibles dor&eacute;es" aria-live="off">
+        <!-- targets injected by JS -->
+      </div>
+      <div id="game-result" role="region" aria-labelledby="game-result-title" aria-live="polite">
+        <h3 id="game-result-title">R&eacute;sultats de la s&eacute;ance</h3>
+        <div class="game-result-grid">
+          <div class="result-col">
+            <h4>Sans lissage</h4>
+            <div class="result-num" id="res-no-smooth">—</div>
+            <div style="font-size:0.82rem;color:#555;">touches / 30 s</div>
           </div>
-          <div id="t-rate" style="font-size:1.4rem;font-weight:800;color:var(--marine);margin-top:4px;">—</div>
+          <div class="result-col">
+            <h4>Avec lissage</h4>
+            <div class="result-num result-improved" id="res-smooth">—</div>
+            <div style="font-size:0.82rem;color:#555;">touches / 30 s</div>
+          </div>
         </div>
+        <div id="game-improvement" style="margin-top:12px;font-size:1rem;font-weight:700;color:var(--success);"></div>
       </div>
     </div>
   </section>
 
-  <!-- =============================================
-       SECTION 5 — COMPARAISON AVANT / APRÈS
-       ============================================= -->
-  <section class="section-card" aria-labelledby="s5-title">
+  <!-- ===================== S5 — CLAVIER ADAPTATIF ===================== -->
+  <section class="section-card" id="s5" aria-labelledby="s5-title">
     <div class="section-head">
-      <span class="section-icon" aria-hidden="true">⚖️</span>
+      <span class="section-icon" aria-hidden="true">&#x2328;</span>
       <div>
-        <div class="section-title" id="s5-title">5 — Résumé Avant / Après</div>
-        <div class="section-desc">Ce que SteadyTouch change concrètement pour les personnes avec tremblements.</div>
+        <div class="section-title" id="s5-title">5 &mdash; Clavier adaptatif</div>
+        <div class="section-desc">Touches qui s&apos;agrandissent &agrave; l&apos;approche, correction renforc&eacute;e, saisie malgr&eacute; le tremblement.</div>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="info-box">
+        <strong>Comment &ccedil;a marche&nbsp;:</strong> la touche la plus proche du curseur s&apos;agrandit pour faciliter le clic.
+        La correction auto remplace la derni&egrave;re touche par la plus probable selon la position du clic.
+        Tapez la phrase sugg&eacute;r&eacute;e.
+      </div>
+      <div class="kb-controls">
+        <button class="toggle-btn" id="kb-enlarge-toggle" aria-pressed="true">
+          <span aria-hidden="true">&#x2705;</span> Agrandissement
+        </button>
+        <button class="toggle-btn" id="kb-correct-toggle" aria-pressed="true">
+          <span aria-hidden="true">&#x2705;</span> Correction auto
+        </button>
+        <label class="ctrl-label" for="kb-size-slider">Taille touche&nbsp;:</label>
+        <input type="range" id="kb-size-slider" min="36" max="72" value="48"
+          aria-label="Taille des touches en pixels">
+        <span class="ctrl-value" id="kb-size-val" aria-live="polite">48 px</span>
+        <button class="action-btn danger small-btn" id="kb-clear" aria-label="Effacer la saisie">
+          <span aria-hidden="true">&#x1F5D1;</span> Effacer
+        </button>
+        <button class="action-btn small-btn" id="tts-kb" aria-label="Lire le texte saisi &agrave; voix haute">
+          <span aria-hidden="true">&#x1F508;</span> Lire
+        </button>
+      </div>
+      <div id="kb-phrase-target" aria-label="Phrase &agrave; reproduire">
+        Phrase&nbsp;: <span id="kb-phrase-text"></span>
+      </div>
+      <div id="kb-output" role="textbox" aria-label="Texte saisi" aria-multiline="false" aria-readonly="true"></div>
+      <div id="kb-correction-log" aria-live="polite" aria-atomic="true"></div>
+      <div id="adaptive-keyboard" role="group" aria-label="Clavier adaptatif">
+        <!-- rows injected by JS -->
+      </div>
+      <div style="margin-top:10px;" class="kb-stat">
+        Touches correctes&nbsp;: <span id="kb-correct-count">0</span> &nbsp;|&nbsp;
+        Corrections apport&eacute;es&nbsp;: <span id="kb-corrections-count">0</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== S6 — PROFILS ===================== -->
+  <section class="section-card" id="s6" aria-labelledby="s6-title">
+    <div class="section-head">
+      <span class="section-icon" aria-hidden="true">&#x1F464;</span>
+      <div>
+        <div class="section-title" id="s6-title">6 &mdash; Profils de r&eacute;glages</div>
+        <div class="section-desc">Sauvegardez vos r&eacute;glages personnalis&eacute;s et chargez-les en un clic.</div>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="info-box">
+        <strong>Explication des r&eacute;glages&nbsp;:</strong>
+        <ul style="margin-top:6px;padding-left:18px;line-height:1.7;font-size:0.88rem;">
+          <li><strong>Lissage (1-20)</strong>&nbsp;: att&eacute;nue les micro-tremblements. Valeur &eacute;lev&eacute;e = trait plus lisse mais l&eacute;g&egrave;rement plus lent.</li>
+          <li><strong>D&eacute;lai dwell (ms)</strong>&nbsp;: temps de maintien pour activer une cible sans clic. Plus long = moins d&apos;activations accidentelles.</li>
+          <li><strong>Anti-rebond (ms)</strong>&nbsp;: bloque les appuis trop rapides. 0 = d&eacute;sactiv&eacute;. 600 ms est un bon d&eacute;part.</li>
+          <li><strong>Taille cibles (px)</strong>&nbsp;: taille minimale recommand&eacute;e : 48 px (WCAG 2.5.5).</li>
+        </ul>
+      </div>
+      <div id="profiles-grid" role="list" aria-label="Profils pr&eacute;d&eacute;finis">
+        <!-- injected by JS -->
+      </div>
+      <hr style="margin:18px 0;border-color:var(--border);">
+      <h3 style="font-size:0.95rem;font-weight:700;color:var(--marine);margin-bottom:10px;">Profil personnalis&eacute;</h3>
+      <label for="profile-name-input" class="ctrl-label" style="display:block;margin-bottom:6px;">Nom du profil</label>
+      <input type="text" id="profile-name-input" placeholder="Ex : Matin, Bureau, Téléphone…" maxlength="40"
+        aria-describedby="profile-name-hint">
+      <span id="profile-name-hint" style="font-size:0.8rem;color:#555;">40 caract&egrave;res max</span>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
+        <button class="action-btn small-btn" id="save-profile" aria-label="Sauvegarder le profil actuel">
+          <span aria-hidden="true">&#x1F4BE;</span> Sauvegarder
+        </button>
+        <button class="action-btn danger small-btn" id="delete-profile" aria-label="Supprimer le profil s&eacute;lectionn&eacute;">
+          <span aria-hidden="true">&#x1F5D1;</span> Supprimer
+        </button>
+      </div>
+      <div id="profile-status" aria-live="polite" aria-atomic="true"></div>
+    </div>
+  </section>
+
+  <!-- ===================== S7 — AVANT/APRES ===================== -->
+  <section class="section-card" id="s7" aria-labelledby="s7-title">
+    <div class="section-head">
+      <span class="section-icon" aria-hidden="true">&#x2696;</span>
+      <div>
+        <div class="section-title" id="s7-title">7 &mdash; R&eacute;sum&eacute; Avant / Apr&egrave;s</div>
+        <div class="section-desc">Ce que SteadyTouch change concr&egrave;tement pour les personnes avec tremblements.</div>
       </div>
     </div>
     <div class="section-body">
       <div id="compare-grid">
         <div class="compare-col">
-          <div class="compare-head avant">❌ Sans SteadyTouch</div>
+          <div class="compare-head avant">Sans SteadyTouch</div>
           <div class="compare-body">
-            <div class="compare-row"><span class="ci">↪️</span> Trait de dessin saccadé et imprévisible</div>
-            <div class="compare-row"><span class="ci">🖱️</span> Clics nécessaires, souvent ratés</div>
-            <div class="compare-row"><span class="ci">⚡</span> Doubles-clics involontaires fréquents</div>
-            <div class="compare-row"><span class="ci">🎯</span> Petites cibles difficiles à atteindre</div>
-            <div class="compare-row"><span class="ci">😤</span> Fatigue et frustration élevées</div>
+            <div class="compare-row"><span class="ci" aria-hidden="true">&#x21AA;</span> Trait de dessin sacc&agrave;d&eacute; et impr&eacute;visible</div>
+            <div class="compare-row"><span class="ci" aria-hidden="true">&#x1F5B1;</span> Clics n&eacute;cessaires, souvent rat&eacute;s</div>
+            <div class="compare-row"><span class="ci" aria-hidden="true">&#x26A1;</span> Doubles-clics involontaires fr&eacute;quents</div>
+            <div class="compare-row"><span class="ci" aria-hidden="true">&#x1F3AF;</span> Petites cibles difficiles &agrave; atteindre</div>
+            <div class="compare-row"><span class="ci" aria-hidden="true">&#x1F624;</span> Fatigue et frustration &eacute;lev&eacute;es</div>
+            <div class="compare-row"><span class="ci" aria-hidden="true">&#x2328;</span> Fautes de frappe fr&eacute;quentes, correction manuelle</div>
           </div>
         </div>
         <div class="compare-col">
-          <div class="compare-head apres">✅ Avec SteadyTouch</div>
+          <div class="compare-head apres">Avec SteadyTouch</div>
           <div class="compare-body">
-            <div class="compare-row"><span class="ci">✏️</span> Trait lissé par filtre One Euro en temps réel</div>
-            <div class="compare-row"><span class="ci">⏱️</span> Activation par maintien — zéro clic requis</div>
-            <div class="compare-row"><span class="ci">🛡️</span> Délai anti-rebond élimine les appuis parasites</div>
-            <div class="compare-row"><span class="ci">🎯</span> Cibles agrandies + marges de tolérance</div>
-            <div class="compare-row"><span class="ci">😌</span> Saisie autonome et moins stressante</div>
+            <div class="compare-row"><span class="ci" aria-hidden="true">&#x270F;</span> Trait liss&eacute; par filtre One Euro en temps r&eacute;el</div>
+            <div class="compare-row"><span class="ci" aria-hidden="true">&#x23F1;</span> Activation par maintien &mdash; z&eacute;ro clic requis</div>
+            <div class="compare-row"><span class="ci" aria-hidden="true">&#x1F6E1;</span> D&eacute;lai anti-rebond &eacute;limine les appuis parasites</div>
+            <div class="compare-row"><span class="ci" aria-hidden="true">&#x1F3AF;</span> Cibles agrandies + marges de tol&eacute;rance</div>
+            <div class="compare-row"><span class="ci" aria-hidden="true">&#x1F60C;</span> Saisie autonome et moins stressante</div>
+            <div class="compare-row"><span class="ci" aria-hidden="true">&#x2328;</span> Clavier adaptatif + correction auto des fautes</div>
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CIBLES AGRANDIES (intégrées dans mini-jeu section 4, mais aussi section dédiée) -->
+  <section class="section-card" id="s4b" aria-labelledby="s4b-title" style="display:none;">
+    <div class="section-head">
+      <span class="section-icon" aria-hidden="true">&#x1F3AF;</span>
+      <div>
+        <div class="section-title" id="s4b-title">Cibles agrandies &amp; zones tampons</div>
+        <div class="section-desc">Augmentez la taille et la marge pour r&eacute;duire les erreurs.</div>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="ctrl-row">
+        <label class="ctrl-label" for="target-size-slider">Taille&nbsp;:</label>
+        <input type="range" id="target-size-slider" min="40" max="120" value="60" aria-label="Taille des cibles">
+        <span class="ctrl-value" id="target-size-val" aria-live="polite">60 px</span>
+        <label class="ctrl-label" for="target-margin-slider">Marge&nbsp;:</label>
+        <input type="range" id="target-margin-slider" min="0" max="30" value="4" aria-label="Marge tampon">
+        <span class="ctrl-value" id="target-margin-val" aria-live="polite">4 px</span>
+        <button class="action-btn danger small-btn" id="reset-target-stats">R&eacute;init. stats</button>
+      </div>
+      <div id="targets-wrap">
+        <div id="targets-demo" aria-label="Zone de cibles interactives"></div>
+        <div id="targets-stats" aria-live="polite">
+          <div class="targets-stat-row">Clics r&eacute;ussis&nbsp;: <strong id="t-hits">0</strong></div>
+          <div class="targets-stat-row">Clics manqu&eacute;s&nbsp;: <strong id="t-miss">0</strong></div>
+          <div id="targets-score-bar-wrap" aria-hidden="true"><div id="targets-score-bar"></div></div>
+          <div id="t-rate" style="font-size:1.4rem;font-weight:800;color:var(--marine);margin-top:4px;">&mdash;</div>
         </div>
       </div>
     </div>
@@ -831,493 +796,916 @@ input[type="range"]:focus-visible {
 
 </main>
 
-<!-- STICKY SETTINGS SUMMARY -->
-<div id="settings-panel" role="status" aria-label="Réglages actifs en cours">
-  <span class="sp-label">⚙️ Réglages actifs :</span>
-  <span class="sp-group">
+<!-- STICKY PANEL -->
+<div id="settings-panel" role="status" aria-label="R&eacute;glages actifs">
+  <span class="sp-label">&#x2699; R&eacute;glages :</span>
+  <div class="sp-values">
     <span id="sp-smooth"></span>
     <span id="sp-dwell"></span>
     <span id="sp-debounce"></span>
-    <span id="sp-targets"></span>
-  </span>
+  </div>
+  <button id="sp-tts-btn" aria-label="Lire les r&eacute;glages &agrave; voix haute">
+    <span aria-hidden="true">&#x1F508;</span> Lire
+  </button>
 </div>
 
 <script>
-/* ============================================================
-   UTILITAIRES
-   ============================================================ */
-const $ = id => document.getElementById(id);
-const announce = msg => { const el=$('live-announce'); el.textContent=''; requestAnimationFrame(()=>el.textContent=msg); };
+/* ================================================================
+   STEADYTOUCH — Script principal
+   ================================================================ */
+'use strict';
 
-/* ============================================================
-   ONE EURO FILTER
-   Implémentation minimale (Géry Casiez, 2012)
-   ============================================================ */
-class OneEuroFilter {
-  constructor(freq=60, minCutoff=1.0, beta=0.007, dCutoff=1.0) {
-    this.freq = freq;
-    this.minCutoff = minCutoff;
-    this.beta = beta;
-    this.dCutoff = dCutoff;
-    this._x = null;
-    this._dx = 0;
-    this._lastT = null;
-  }
-  _alpha(cutoff) {
-    const te = 1 / this.freq;
-    const tau = 1 / (2 * Math.PI * cutoff);
-    return 1 / (1 + tau / te);
-  }
-  filter(x, timestamp) {
-    if (this._lastT !== null) {
-      this.freq = 1000 / (timestamp - this._lastT);
-      if (!isFinite(this.freq) || this.freq <= 0) this.freq = 60;
-    }
-    this._lastT = timestamp;
-    if (this._x === null) { this._x = x; return x; }
-    const dx = (x - this._x) * this.freq;
-    const edx = this._dx + this._alpha(this.dCutoff) * (dx - this._dx);
-    this._dx = edx;
-    const cutoff = this.minCutoff + this.beta * Math.abs(edx);
-    const xf = this._x + this._alpha(cutoff) * (x - this._x);
-    this._x = xf;
-    return xf;
-  }
-  reset() { this._x = null; this._dx = 0; this._lastT = null; }
+/* ---- Utilitaires ---- */
+const $ = id => document.getElementById(id);
+const announce = msg => {
+  const el = $('live-announce');
+  el.textContent = '';
+  requestAnimationFrame(() => { el.textContent = msg; });
+};
+
+/* ---- localStorage safe ---- */
+const LS = {
+  get(k, def) {
+    try { const v = localStorage.getItem(k); return v !== null ? JSON.parse(v) : def; }
+    catch(_) { return def; }
+  },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(_) {} },
+  remove(k)  { try { localStorage.removeItem(k); } catch(_) {} }
+};
+
+/* ---- speechSynthesis FR ---- */
+let ttsVoice = null;
+function loadVoices() {
+  const voices = speechSynthesis.getVoices();
+  ttsVoice = voices.find(v => v.lang.startsWith('fr')) || voices[0] || null;
+}
+if (typeof speechSynthesis !== 'undefined') {
+  speechSynthesis.addEventListener('voiceschanged', loadVoices);
+  loadVoices();
+}
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  try {
+    speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = 'fr-FR';
+    if (ttsVoice) utt.voice = ttsVoice;
+    utt.rate = 0.95;
+    speechSynthesis.speak(utt);
+  } catch(_) {}
 }
 
-/* ============================================================
-   SECTION 1 — LISSAGE DU POINTEUR
-   ============================================================ */
+/* ---- prefers-reduced-motion ---- */
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ================================================================
+   ONE EURO FILTER (Géry Casiez, 2012)
+   ================================================================ */
+class OneEuroFilter {
+  constructor(freq=60, minCutoff=1.0, beta=0.007, dCutoff=1.0) {
+    this.freq=freq; this.minCutoff=minCutoff; this.beta=beta; this.dCutoff=dCutoff;
+    this._x=null; this._dx=0; this._lastT=null;
+  }
+  _alpha(c) { const te=1/this.freq, tau=1/(2*Math.PI*c); return 1/(1+tau/te); }
+  filter(x, ts) {
+    if (this._lastT !== null) {
+      const dt = ts - this._lastT;
+      if (dt > 0 && isFinite(dt)) this.freq = 1000/dt;
+    }
+    this._lastT = ts;
+    if (this._x === null) { this._x=x; return x; }
+    const dx  = (x - this._x) * this.freq;
+    const edx = this._dx + this._alpha(this.dCutoff)*(dx - this._dx);
+    this._dx  = edx;
+    const c   = this.minCutoff + this.beta * Math.abs(edx);
+    const xf  = this._x + this._alpha(c)*(x - this._x);
+    this._x   = xf;
+    return xf;
+  }
+  reset() { this._x=null; this._dx=0; this._lastT=null; }
+}
+
+/* ================================================================
+   STATE GLOBAL (partagé entre modules)
+   ================================================================ */
+const STATE = {
+  smoothOn: true,
+  smoothStrength: 10,
+  dwellOn: true,
+  dwellDelay: 1000,
+  dwellCooldown: 600,
+  debounceDelay: 600,
+  targetSize: 60,
+  targetMargin: 4,
+  kbSize: 48,
+  kbEnlarge: true,
+  kbCorrect: true,
+  gameSmooth: false,
+};
+
+/* ================================================================
+   NAV TABS (scroll to section)
+   ================================================================ */
 (function() {
-  const canvas = $('draw-canvas');
-  const ctx = canvas.getContext('2d');
-  const wrap = $('drawing-wrap');
-  const curRaw = $('cursor-raw');
+  const tabs = document.querySelectorAll('.nav-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.setAttribute('aria-selected','false'));
+      tab.setAttribute('aria-selected','true');
+      const sec = $(tab.dataset.section);
+      if (sec) {
+        sec.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
+        sec.focus();
+      }
+    });
+  });
+})();
+
+/* ================================================================
+   SECTION 1 — LISSAGE DU POINTEUR + COMPARAISON CÔTE À CÔTE
+   ================================================================ */
+(function() {
+  const canvas    = $('draw-canvas');
+  const ctx       = canvas.getContext('2d');
+  const wrap      = $('drawing-wrap');
+  const curRaw    = $('cursor-raw');
   const curSmooth = $('cursor-smooth');
   const toggleBtn = $('smooth-toggle');
-  const slider = $('smooth-slider');
-  const valDisplay = $('smooth-val');
+  const slider    = $('smooth-slider');
+  const valDisplay= $('smooth-val');
+  const modePills = document.querySelectorAll('.mode-pill');
+  const splitLabels = $('split-labels');
 
-  let smoothOn = true;
-  let drawing = false;
-  let lastRawX = 0, lastRawY = 0;
-  let lastSmX = 0, lastSmY = 0;
+  const filterX = new OneEuroFilter(60,1.0,0.007);
+  const filterY = new OneEuroFilter(60,1.0,0.007);
 
-  // Two filters: one per axis
-  const filterX = new OneEuroFilter(60, 1.0, 0.007);
-  const filterY = new OneEuroFilter(60, 1.0, 0.007);
+  let drawing=false, splitMode=false;
+  let lastRawX=0,lastRawY=0,lastSmX=0,lastSmY=0;
 
-  function resizeCanvas() {
-    const rect = wrap.getBoundingClientRect();
-    canvas.width  = rect.width;
-    canvas.height = 320;
+  function resize() {
+    const r = wrap.getBoundingClientRect();
+    canvas.width  = Math.round(r.width);
+    canvas.height = 300;
   }
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
+  resize();
+  window.addEventListener('resize', () => { resize(); });
 
-  function updateFilterStrength() {
+  function applyStrength() {
     const v = parseFloat(slider.value);
     valDisplay.textContent = v;
-    // beta = 0 means heavy lag (smooth), higher = more responsive
-    // We invert: slider 1 (max smooth) => beta=0.0001, slider 20 => beta=0.05
-    const beta = 0.0001 + (v / 20) * 0.049;
-    const minC = 0.5 + (20 - v) / 20 * 1.5; // lower minCutoff = smoother
-    [filterX, filterY].forEach(f => { f.beta = beta; f.minCutoff = minC; });
-    updateSettingsPanel();
+    STATE.smoothStrength = v;
+    filterX.beta = filterY.beta = 0.0001 + (v/20)*0.049;
+    filterX.minCutoff = filterY.minCutoff = 0.5 + (20-v)/20*1.5;
+    updatePanel();
   }
-  updateFilterStrength();
-
-  slider.addEventListener('input', updateFilterStrength);
+  applyStrength();
+  slider.addEventListener('input', applyStrength);
 
   toggleBtn.addEventListener('click', () => {
-    smoothOn = !smoothOn;
-    toggleBtn.setAttribute('aria-pressed', smoothOn);
-    toggleBtn.innerHTML = smoothOn
-      ? '<span aria-hidden="true">✅</span> Lissage activé'
-      : '<span aria-hidden="true">⬜</span> Lissage désactivé';
+    STATE.smoothOn = !STATE.smoothOn;
+    toggleBtn.setAttribute('aria-pressed', STATE.smoothOn);
+    toggleBtn.innerHTML = STATE.smoothOn
+      ? '<span aria-hidden="true">&#x2705;</span> Lissage activ&eacute;'
+      : '<span aria-hidden="true">&#x25FB;</span> Lissage d&eacute;sactiv&eacute;';
     filterX.reset(); filterY.reset();
-    announce(smoothOn ? 'Lissage activé' : 'Lissage désactivé');
-    updateSettingsPanel();
+    announce(STATE.smoothOn ? 'Lissage activé' : 'Lissage désactivé');
+    updatePanel();
+  });
+
+  modePills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      modePills.forEach(p => p.setAttribute('aria-pressed','false'));
+      pill.setAttribute('aria-pressed','true');
+      splitMode = pill.id === 'mode-split';
+      splitLabels.style.display = splitMode ? 'block' : 'none';
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      filterX.reset(); filterY.reset();
+      announce(splitMode ? 'Mode côte à côte activé' : 'Mode superposé activé');
+    });
   });
 
   $('clear-canvas').addEventListener('click', () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
     filterX.reset(); filterY.reset();
     announce('Zone de dessin effacée');
   });
 
+  $('tts-drawing').addEventListener('click', () => {
+    speak('Le filtre One Euro atténue les micro-tremblements en temps réel sans retarder les gestes rapides. Activez le lissage et bougez lentement pour voir la différence entre le trait tremblé en rouge et le trait lissé en bleu.');
+  });
+
   function getPos(e) {
-    const rect = canvas.getBoundingClientRect();
-    if (e.touches) {
-      return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
-    }
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    const r = canvas.getBoundingClientRect();
+    if (e.touches) return { x: e.touches[0].clientX-r.left, y: e.touches[0].clientY-r.top };
+    return { x: e.clientX-r.left, y: e.clientY-r.top };
   }
 
   function onMove(e) {
     e.preventDefault();
-    const { x, y } = getPos(e);
+    const {x,y} = getPos(e);
     const now = performance.now();
+    const sx = filterX.filter(x,now), sy = filterY.filter(y,now);
 
-    // Raw
-    const rx = x, ry = y;
-    // Smooth
-    const sx = filterX.filter(x, now);
-    const sy = filterY.filter(y, now);
-
-    // Cursors
-    curRaw.style.display = 'block';
-    curRaw.style.left = rx + 'px';
-    curRaw.style.top  = ry + 'px';
-    curSmooth.style.display = 'block';
-    curSmooth.style.left = sx + 'px';
-    curSmooth.style.top  = sy + 'px';
+    curRaw.style.cssText    += `;display:block;left:${x}px;top:${y}px`;
+    curSmooth.style.cssText += `;display:block;left:${sx}px;top:${sy}px`;
 
     if (drawing) {
-      // Raw trail (red, faint)
-      ctx.beginPath();
-      ctx.strokeStyle = 'rgba(185,28,28,0.45)';
-      ctx.lineWidth = 2;
-      ctx.lineCap = 'round';
-      ctx.moveTo(lastRawX, lastRawY);
-      ctx.lineTo(rx, ry);
-      ctx.stroke();
-
-      // Smooth trail (blue)
-      if (smoothOn) {
+      if (splitMode) {
+        // Left half: raw
+        ctx.save();
+        ctx.beginPath(); ctx.rect(0,0,canvas.width/2,canvas.height); ctx.clip();
         ctx.beginPath();
-        ctx.strokeStyle = 'rgba(15,76,129,0.85)';
-        ctx.lineWidth = 3;
-        ctx.lineCap = 'round';
-        ctx.moveTo(lastSmX, lastSmY);
-        ctx.lineTo(sx, sy);
-        ctx.stroke();
+        ctx.strokeStyle='rgba(185,28,28,0.7)'; ctx.lineWidth=2; ctx.lineCap='round';
+        ctx.moveTo(Math.min(lastRawX,canvas.width/2), lastRawY);
+        ctx.lineTo(Math.min(x,canvas.width/2), y);
+        ctx.stroke(); ctx.restore();
+        // Right half: smooth
+        ctx.save();
+        ctx.beginPath(); ctx.rect(canvas.width/2,0,canvas.width/2,canvas.height); ctx.clip();
+        const msx=Math.max(canvas.width/2, sx), mlx=Math.max(canvas.width/2, lastSmX);
+        ctx.beginPath();
+        ctx.strokeStyle='rgba(15,76,129,0.85)'; ctx.lineWidth=3; ctx.lineCap='round';
+        ctx.moveTo(mlx,lastSmY); ctx.lineTo(msx,sy);
+        ctx.stroke(); ctx.restore();
+      } else {
+        // Raw (red, faint)
+        ctx.beginPath();
+        ctx.strokeStyle='rgba(185,28,28,0.45)'; ctx.lineWidth=2; ctx.lineCap='round';
+        ctx.moveTo(lastRawX,lastRawY); ctx.lineTo(x,y); ctx.stroke();
+        // Smooth (blue)
+        if (STATE.smoothOn) {
+          ctx.beginPath();
+          ctx.strokeStyle='rgba(15,76,129,0.85)'; ctx.lineWidth=3; ctx.lineCap='round';
+          ctx.moveTo(lastSmX,lastSmY); ctx.lineTo(sx,sy); ctx.stroke();
+        }
       }
     }
-    lastRawX = rx; lastRawY = ry;
-    lastSmX = sx;  lastSmY = sy;
+    lastRawX=x; lastRawY=y; lastSmX=sx; lastSmY=sy;
   }
 
   function onStart(e) {
-    e.preventDefault();
-    drawing = true;
-    const { x, y } = getPos(e);
-    lastRawX = x; lastRawY = y;
-    const now = performance.now();
-    lastSmX = filterX.filter(x, now);
-    lastSmY = filterY.filter(y, now);
+    e.preventDefault(); drawing=true;
+    const {x,y}=getPos(e);
+    lastRawX=x; lastRawY=y;
+    const now=performance.now();
+    lastSmX=filterX.filter(x,now); lastSmY=filterY.filter(y,now);
   }
-  function onEnd(e) { drawing = false; }
+  function onEnd() { drawing=false; }
 
   canvas.addEventListener('mousedown',  onStart);
-  canvas.addEventListener('mousemove',  onMove, { passive: false });
+  canvas.addEventListener('mousemove',  onMove, {passive:false});
   canvas.addEventListener('mouseup',    onEnd);
   canvas.addEventListener('mouseleave', onEnd);
-  canvas.addEventListener('touchstart', onStart, { passive: false });
-  canvas.addEventListener('touchmove',  onMove,  { passive: false });
+  canvas.addEventListener('touchstart', onStart, {passive:false});
+  canvas.addEventListener('touchmove',  onMove,  {passive:false});
   canvas.addEventListener('touchend',   onEnd);
-
-  window._smoothOn = () => smoothOn;
-  window._smoothStrength = () => slider.value;
 })();
 
-/* ============================================================
+/* ================================================================
    SECTION 2 — DWELL
-   ============================================================ */
+   ================================================================ */
 (function() {
-  const toggleBtn = $('dwell-toggle');
-  const slider = $('dwell-slider');
+  const toggleBtn  = $('dwell-toggle');
+  const slider     = $('dwell-slider');
   const valDisplay = $('dwell-val');
-  const result = $('dwell-result');
-  const targets = document.querySelectorAll('.dwell-target');
+  const cdSlider   = $('dwell-cooldown-slider');
+  const cdVal      = $('dwell-cooldown-val');
+  const result     = $('dwell-result');
+  const targets    = document.querySelectorAll('.dwell-target');
 
-  let dwellOn = true;
-  let dwellDelay = 1000;
-  let activeTarget = null;
-  let dwellTimer = null;
-  let barTimer = null;
+  let activeTarget=null, dwellTimer=null, barAF=null;
+  let lastActivated=0;
 
-  function getDwellDelay() { return dwellDelay; }
-
-  function fmtMs(ms) {
-    return ms >= 1000 ? (ms/1000).toFixed(1).replace('.',',') + ' s' : ms + ' ms';
-  }
+  function fmtMs(ms) { return ms>=1000 ? (ms/1000).toFixed(1).replace('.',',')+'&nbsp;s' : ms+'&nbsp;ms'; }
 
   slider.addEventListener('input', () => {
-    dwellDelay = parseInt(slider.value);
-    valDisplay.textContent = fmtMs(dwellDelay);
-    updateSettingsPanel();
+    STATE.dwellDelay = parseInt(slider.value);
+    valDisplay.innerHTML = fmtMs(STATE.dwellDelay);
+    updatePanel();
+  });
+  cdSlider.addEventListener('input', () => {
+    STATE.dwellCooldown = parseInt(cdSlider.value);
+    cdVal.innerHTML = fmtMs(STATE.dwellCooldown);
   });
 
   toggleBtn.addEventListener('click', () => {
-    dwellOn = !dwellOn;
-    toggleBtn.setAttribute('aria-pressed', dwellOn);
-    toggleBtn.innerHTML = dwellOn
-      ? '<span aria-hidden="true">✅</span> Dwell activé'
-      : '<span aria-hidden="true">⬜</span> Dwell désactivé';
+    STATE.dwellOn = !STATE.dwellOn;
+    toggleBtn.setAttribute('aria-pressed', STATE.dwellOn);
+    toggleBtn.innerHTML = STATE.dwellOn
+      ? '<span aria-hidden="true">&#x2705;</span> Dwell activ&eacute;'
+      : '<span aria-hidden="true">&#x25FB;</span> Dwell d&eacute;sactiv&eacute;';
     clearActive();
-    announce(dwellOn ? 'Clic par maintien activé' : 'Clic par maintien désactivé');
-    updateSettingsPanel();
+    announce(STATE.dwellOn ? 'Clic par maintien activé' : 'Clic par maintien désactivé');
+    updatePanel();
   });
 
   function clearActive() {
     if (activeTarget) {
       activeTarget.classList.remove('active');
       const bar = activeTarget.querySelector('.dwell-bar');
-      bar.style.transition = 'none';
-      bar.style.width = '0%';
-      activeTarget = null;
+      bar.style.transition='none'; bar.style.width='0%';
+      activeTarget=null;
     }
     clearTimeout(dwellTimer);
-    cancelAnimationFrame(barTimer);
+    if (barAF) cancelAnimationFrame(barAF);
   }
 
-  function activateTarget(target) {
-    target.classList.remove('active');
-    target.classList.add('activated');
-    const action = target.dataset.action;
-    result.textContent = '✅ ' + action + ' — activé par maintien !';
+  function activateTarget(t) {
+    const now = Date.now();
+    if (now - lastActivated < STATE.dwellCooldown) { clearActive(); return; }
+    lastActivated = now;
+    t.classList.remove('active'); t.classList.add('activated');
+    const action = t.dataset.action;
+    result.textContent = '✅ ' + action + ' — activé par maintien !';
     announce(action + ' activé');
-    setTimeout(() => target.classList.remove('activated'), 800);
+    speak(action + ' activé');
+    setTimeout(() => t.classList.remove('activated'), 800);
     clearActive();
   }
 
-  function startDwell(target) {
-    if (!dwellOn) return;
-    if (activeTarget === target) return;
+  function startDwell(t) {
+    if (!STATE.dwellOn) return;
+    if (activeTarget===t) return;
     clearActive();
-    activeTarget = target;
-    target.classList.add('active');
-    const bar = target.querySelector('.dwell-bar');
-    bar.style.transition = 'none';
-    bar.style.width = '0%';
-
-    const start = performance.now();
-    const delay = getDwellDelay();
-
+    activeTarget=t; t.classList.add('active');
+    const bar=t.querySelector('.dwell-bar');
+    bar.style.transition='none'; bar.style.width='0%';
+    const start=performance.now();
+    const delay=STATE.dwellDelay;
     function animBar(now) {
-      const pct = Math.min(100, (now - start) / delay * 100);
-      bar.style.width = pct + '%';
-      if (pct < 100 && activeTarget === target) {
-        barTimer = requestAnimationFrame(animBar);
-      }
+      const pct=Math.min(100,(now-start)/delay*100);
+      bar.style.width=pct+'%';
+      if (pct<100 && activeTarget===t) barAF=requestAnimationFrame(animBar);
     }
-    requestAnimationFrame(animBar);
-
-    dwellTimer = setTimeout(() => {
-      if (activeTarget === target) activateTarget(target);
-    }, delay);
+    if (!prefersReducedMotion) requestAnimationFrame(animBar);
+    dwellTimer=setTimeout(() => { if(activeTarget===t) activateTarget(t); }, delay);
   }
 
   targets.forEach(t => {
     t.addEventListener('mouseenter', () => startDwell(t));
-    t.addEventListener('mouseleave', () => { if (activeTarget === t) clearActive(); });
-    t.addEventListener('touchstart', e => { e.preventDefault(); startDwell(t); }, { passive: false });
-    t.addEventListener('touchend',   () => { if (activeTarget === t) clearActive(); });
-    // Keyboard: Enter/Space activates immediately
+    t.addEventListener('mouseleave', () => { if(activeTarget===t) clearActive(); });
+    t.addEventListener('touchstart',  e => { e.preventDefault(); startDwell(t); }, {passive:false});
+    t.addEventListener('touchend',    () => { if(activeTarget===t) clearActive(); });
     t.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        activateTarget(t);
-      }
+      if (e.key==='Enter'||e.key===' ') { e.preventDefault(); activateTarget(t); }
     });
   });
-
-  window._dwellOn = () => dwellOn;
-  window._dwellDelay = () => dwellDelay;
 })();
 
-/* ============================================================
+/* ================================================================
    SECTION 3 — ANTI-DOUBLE-DÉCLENCHEMENT
-   ============================================================ */
+   ================================================================ */
 (function() {
-  const slider = $('debounce-slider');
+  const slider     = $('debounce-slider');
   const valDisplay = $('debounce-val');
   const dbAccepted = $('db-accepted');
-  const dbIgnored = $('db-ignored');
-  const dbLog = $('debounce-log');
-  const seqEl = $('debounce-sequence');
-  const buttons = document.querySelectorAll('.debounce-btn');
+  const dbIgnored  = $('db-ignored');
+  const dbLog      = $('debounce-log');
+  const seqEl      = $('debounce-sequence');
+  const buttons    = document.querySelectorAll('.debounce-btn');
 
-  let delay = 600;
-  let accepted = 0, ignored = 0;
-  let lastTime = {}; // per button
-  let sequence = '';
+  let accepted=0, ignored=0, lastTime={}, sequence='';
 
   slider.addEventListener('input', () => {
-    delay = parseInt(slider.value);
-    valDisplay.textContent = delay + ' ms';
-    updateSettingsPanel();
+    STATE.debounceDelay = parseInt(slider.value);
+    valDisplay.textContent = STATE.debounceDelay+' ms';
+    updatePanel();
   });
 
   $('reset-debounce').addEventListener('click', () => {
-    accepted = 0; ignored = 0; sequence = '';
-    Object.keys(lastTime).forEach(k => delete lastTime[k]);
-    dbAccepted.textContent = '✔ 0 acceptés';
-    dbIgnored.textContent  = '✕ 0 ignorés';
-    dbLog.textContent = '';
-    seqEl.textContent = ' ';
-    buttons.forEach(b => b.classList.remove('locked'));
+    accepted=0; ignored=0; sequence=''; lastTime={};
+    dbAccepted.textContent='✔ 0 acceptés';
+    dbIgnored.textContent ='✕ 0 ignorés';
+    dbLog.textContent=''; seqEl.textContent=' ';
+    buttons.forEach(b=>b.classList.remove('locked'));
     announce('Statistiques réinitialisées');
   });
 
   function handlePress(btn) {
     const digit = btn.dataset.digit;
     const now = Date.now();
-    const last = lastTime[digit] || 0;
-    const diff = now - last;
-
-    if (diff < delay && delay > 0) {
-      // Ignored
+    const diff = now - (lastTime[digit]||0);
+    if (STATE.debounceDelay>0 && diff<STATE.debounceDelay) {
       ignored++;
-      dbIgnored.textContent = '✕ ' + ignored + ' ignoré' + (ignored > 1 ? 's' : '');
-      dbLog.textContent = '⚠️ Appui ignoré (délai ' + diff + ' ms < ' + delay + ' ms)';
-      // Visual flash on button
+      dbIgnored.textContent='✕ '+ignored+' ignoré'+(ignored>1?'s':'');
+      dbLog.textContent='⚠ Appui ignoré ('+diff+' ms < '+STATE.debounceDelay+' ms)';
       btn.classList.add('locked');
-      setTimeout(() => btn.classList.remove('locked'), delay - diff + 50);
-      announce('Appui ignoré sur ' + digit);
+      setTimeout(()=>btn.classList.remove('locked'), STATE.debounceDelay-diff+50);
+      announce('Appui ignoré sur '+digit);
     } else {
       accepted++;
-      lastTime[digit] = now;
+      lastTime[digit]=now;
       sequence += digit;
-      if (sequence.length > 20) sequence = sequence.slice(-20);
-      seqEl.textContent = sequence;
-      dbAccepted.textContent = '✔ ' + accepted + ' accepté' + (accepted > 1 ? 's' : '');
-      dbLog.textContent = '✔ Touche ' + digit + ' enregistrée';
-      announce('Touche ' + digit + ' enregistrée');
+      if (sequence.length>20) sequence=sequence.slice(-20);
+      seqEl.textContent=sequence;
+      dbAccepted.textContent='✔ '+accepted+' accepté'+(accepted>1?'s':'');
+      dbLog.textContent='✔ Touche '+digit+' enregistrée';
+      announce('Touche '+digit+' enregistrée');
     }
   }
 
   buttons.forEach(btn => {
     btn.addEventListener('click', () => handlePress(btn));
     btn.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        handlePress(btn);
-      }
+      if (e.key==='Enter'||e.key===' ') { e.preventDefault(); handlePress(btn); }
     });
   });
-
-  window._debounceDelay = () => delay;
 })();
 
-/* ============================================================
-   SECTION 4 — CIBLES AGRANDIES
-   ============================================================ */
+/* ================================================================
+   SECTION 4 — MINI-JEU DE PRÉCISION
+   ================================================================ */
 (function() {
-  const sizeSlider   = $('target-size-slider');
-  const marginSlider = $('target-margin-slider');
-  const sizeVal      = $('target-size-val');
-  const marginVal    = $('target-margin-val');
-  const demo         = $('targets-demo');
-  const resetBtn     = $('reset-target-stats');
-  const hitsEl       = $('t-hits');
-  const missEl       = $('t-miss');
-  const rateEl       = $('t-rate');
-  const bar          = $('targets-score-bar');
+  const area       = $('game-area');
+  const startBtn   = $('game-start');
+  const startSmBtn = $('game-start-smooth');
+  const sizeSlider = $('game-size-slider');
+  const sizeVal    = $('game-size-val');
+  const scoreEl    = $('game-score-display');
+  const timerBar   = $('game-timer-bar');
+  const timeLeft   = $('game-time-left');
+  const phaseBadge = $('game-phase-badge');
+  const resultEl   = $('game-result');
+  const resNoSmEl  = $('res-no-smooth');
+  const resSmEl    = $('res-smooth');
+  const improveEl  = $('game-improvement');
 
-  let targetSize = 60;
-  let targetMargin = 4;
-  let hits = 0, misses = 0;
-
-  const TARGETS = [
-    { label: 'OK', icon: '✓' },
-    { label: 'Non', icon: '✗' },
-    { label: '→',  icon: '→' },
-    { label: '←',  icon: '←' },
-    { label: '↑',  icon: '↑' },
-    { label: '↓',  icon: '↓' },
-  ];
-
-  function renderTargets() {
-    demo.innerHTML = '';
-    demo.style.padding = targetMargin + 'px';
-    TARGETS.forEach(t => {
-      const btn = document.createElement('button');
-      btn.className = 'big-target';
-      btn.style.width  = targetSize + 'px';
-      btn.style.height = targetSize + 'px';
-      btn.style.fontSize = Math.max(14, targetSize * 0.3) + 'px';
-      btn.style.margin = targetMargin + 'px';
-      btn.innerHTML = `<span aria-hidden="true" style="font-size:${Math.max(16,targetSize*0.35)}px">${t.icon}</span><span style="font-size:${Math.max(10,targetSize*0.2)}px">${t.label}</span>`;
-      btn.setAttribute('aria-label', t.label + ' — cible ' + targetSize + 'px');
-      btn.addEventListener('click', () => {
-        hits++;
-        hitsEl.textContent = hits;
-        updateRate();
-        btn.classList.add('hit');
-        setTimeout(() => btn.classList.remove('hit'), 400);
-        announce(t.label + ' — touché !');
-      });
-      demo.appendChild(btn);
-    });
-
-    // Miss zone: clicking on the demo container but NOT a target
-    demo.onclick = (e) => {
-      if (e.target === demo) {
-        misses++;
-        missEl.textContent = misses;
-        updateRate();
-        announce('Raté');
-      }
-    };
-  }
-
-  function updateRate() {
-    const total = hits + misses;
-    const pct = total > 0 ? Math.round(hits / total * 100) : 0;
-    rateEl.textContent = total > 0 ? pct + '%' : '—';
-    bar.style.width = pct + '%';
-    bar.style.background = pct >= 80 ? '#1a7f4b' : pct >= 50 ? '#f4b81c' : '#b91c1c';
-  }
+  let targetSize=55, running=false, score=0;
+  let timerAF=null, gameTimeout=null, endTime=0;
+  let scores={noSmooth:null, smooth:null};
+  let currentTarget=null;
+  const GAME_DURATION=30000;
 
   sizeSlider.addEventListener('input', () => {
-    targetSize = parseInt(sizeSlider.value);
-    sizeVal.textContent = targetSize + ' px';
-    renderTargets();
-    updateSettingsPanel();
+    targetSize=parseInt(sizeSlider.value);
+    sizeVal.textContent=targetSize+' px';
   });
 
-  marginSlider.addEventListener('input', () => {
-    targetMargin = parseInt(marginSlider.value);
-    marginVal.textContent = targetMargin + ' px';
-    renderTargets();
-    updateSettingsPanel();
-  });
+  function spawnTarget() {
+    if (currentTarget) currentTarget.remove();
+    const rect=area.getBoundingClientRect();
+    const w=rect.width||300, h=rect.height||340;
+    const margin=targetSize/2+4;
+    const lx=margin+Math.random()*(w-2*margin);
+    const ly=margin+Math.random()*(h-2*margin);
+    const el=document.createElement('div');
+    el.className='game-target';
+    el.style.cssText=`left:${lx}px;top:${ly}px;width:${targetSize}px;height:${targetSize}px;font-size:${Math.max(12,targetSize*0.35)}px;`;
+    el.setAttribute('role','button');
+    el.setAttribute('aria-label','Cible — cliquez');
+    el.setAttribute('tabindex','0');
+    el.addEventListener('click', onHit);
+    el.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();onHit();} });
+    area.appendChild(el);
+    currentTarget=el;
+  }
 
-  resetBtn.addEventListener('click', () => {
-    hits = 0; misses = 0;
-    hitsEl.textContent = '0';
-    missEl.textContent = '0';
-    updateRate();
-    announce('Statistiques réinitialisées');
-  });
+  function onHit() {
+    if (!running) return;
+    score++;
+    scoreEl.textContent='Score : '+score;
+    if (currentTarget) {
+      currentTarget.classList.add('hit-good');
+      setTimeout(()=>{ if(currentTarget){currentTarget.remove();currentTarget=null;} spawnTarget(); }, prefersReducedMotion?0:250);
+    }
+  }
 
-  renderTargets();
+  function tickTimer() {
+    const remaining=endTime-performance.now();
+    if (remaining<=0) { endGame(); return; }
+    const pct=remaining/GAME_DURATION*100;
+    timerBar.style.width=pct+'%';
+    timerBar.style.background=pct>40?'var(--success)':pct>15?'var(--or)':'var(--danger)';
+    timeLeft.textContent=Math.ceil(remaining/1000)+' s';
+    timerAF=requestAnimationFrame(tickTimer);
+  }
 
-  window._targetSize   = () => targetSize;
-  window._targetMargin = () => targetMargin;
+  function startGame(withSmooth) {
+    if (running) endGame();
+    STATE.gameSmooth=withSmooth;
+    score=0; running=true;
+    scoreEl.textContent='Score : 0';
+    phaseBadge.textContent=withSmooth?'Avec lissage':'Sans lissage';
+    phaseBadge.className='stat-badge '+(withSmooth?'success':'danger');
+    resultEl.classList.remove('visible');
+    area.innerHTML='';
+    currentTarget=null;
+    endTime=performance.now()+GAME_DURATION;
+    spawnTarget();
+    timerAF=requestAnimationFrame(tickTimer);
+    gameTimeout=setTimeout(endGame, GAME_DURATION+100);
+    announce('Mini-jeu démarré — '+(withSmooth?'avec lissage':'sans lissage'));
+  }
+
+  function endGame() {
+    running=false;
+    clearTimeout(gameTimeout);
+    if (timerAF) cancelAnimationFrame(timerAF);
+    timerBar.style.width='0%';
+    timeLeft.textContent='0 s';
+    if (currentTarget) { currentTarget.remove(); currentTarget=null; }
+    if (STATE.gameSmooth) scores.smooth=score;
+    else scores.noSmooth=score;
+    phaseBadge.textContent='Terminé';
+    phaseBadge.className='stat-badge';
+    resNoSmEl.textContent = scores.noSmooth!==null?scores.noSmooth:'—';
+    resSmEl.textContent   = scores.smooth!==null?scores.smooth:'—';
+    if (scores.noSmooth!==null && scores.smooth!==null) {
+      const diff=scores.smooth-scores.noSmooth;
+      const pct=scores.noSmooth>0?Math.round(diff/scores.noSmooth*100):0;
+      improveEl.textContent = diff>=0
+        ? '🎉 Amélioration : +'+diff+' cibles (+'+pct+' %)'
+        : '📊 Différence : '+diff+' cibles ('+pct+' %)';
+      speak('Résultat : '+(diff>=0?'amélioration de '+diff+' cibles':'diminution de '+Math.abs(diff)+' cibles'));
+    }
+    resultEl.classList.add('visible');
+    announce('Jeu terminé — score : '+score);
+  }
+
+  startBtn.addEventListener('click',   () => startGame(false));
+  startSmBtn.addEventListener('click', () => startGame(true));
 })();
 
-/* ============================================================
-   PANNEAU RÉGLAGES (sticky)
-   ============================================================ */
-function updateSettingsPanel() {
-  const smoothOn = typeof window._smoothOn === 'function' ? window._smoothOn() : true;
-  const smoothStr = typeof window._smoothStrength === 'function' ? window._smoothStrength() : 10;
-  const dwellOn  = typeof window._dwellOn === 'function' ? window._dwellOn() : true;
-  const dwellDly = typeof window._dwellDelay === 'function' ? window._dwellDelay() : 1000;
-  const dbDly    = typeof window._debounceDelay === 'function' ? window._debounceDelay() : 600;
-  const tSize    = typeof window._targetSize === 'function' ? window._targetSize() : 60;
-  const tMargin  = typeof window._targetMargin === 'function' ? window._targetMargin() : 4;
+/* ================================================================
+   SECTION 5 — CLAVIER ADAPTATIF
+   ================================================================ */
+(function() {
+  const ROWS = [
+    ['A','Z','E','R','T','Y','U','I','O','P'],
+    ['Q','S','D','F','G','H','J','K','L','M'],
+    ['W','X','C','V','B','N','&#x21D0;','&#x21B5;']
+  ];
+  const PHRASES = [
+    'Bonjour le monde',
+    'La technologie aide',
+    'Je peux écrire',
+    'Accessibilité pour tous',
+    'Saisie sans effort',
+  ];
 
-  $('sp-smooth').textContent   = '✏️ Lissage ' + (smoothOn ? 'ON ' + smoothStr : 'OFF');
-  $('sp-dwell').textContent    = ' · ⏱️ Dwell ' + (dwellOn ? (dwellDly >= 1000 ? (dwellDly/1000).toFixed(1).replace('.',',')+'s' : dwellDly+'ms') : 'OFF');
-  $('sp-debounce').textContent = ' · 🛡️ Anti-rebond ' + dbDly + 'ms';
-  $('sp-targets').textContent  = ' · 🎯 Cibles ' + tSize + 'px +' + tMargin + 'px';
+  const kbEl       = $('adaptive-keyboard');
+  const output     = $('kb-output');
+  const phraseEl   = $('kb-phrase-text');
+  const corrLog    = $('kb-correction-log');
+  const correctCnt = $('kb-correct-count');
+  const corrCnt    = $('kb-corrections-count');
+  const enlargeBtn = $('kb-enlarge-toggle');
+  const correctBtn = $('kb-correct-toggle');
+  const sizeSlider = $('kb-size-slider');
+  const sizeVal    = $('kb-size-val');
+
+  let kbText='', correctCount=0, correctionsMade=0;
+  let currentPhrase='', phraseIndex=0;
+  let mouseX=0, mouseY=0;
+
+  function nextPhrase() {
+    phraseIndex = (phraseIndex+1) % PHRASES.length;
+    currentPhrase = PHRASES[phraseIndex];
+    renderPhraseTarget();
+  }
+  function renderPhraseTarget() {
+    const target = currentPhrase.toUpperCase();
+    const typed  = kbText.toUpperCase();
+    let html='';
+    for (let i=0;i<target.length;i++) {
+      if (i<typed.length) {
+        const ok=typed[i]===target[i];
+        html+=`<span class="${ok?'matched':''}">${target[i]}</span>`;
+      } else if (i===typed.length) {
+        html+=`<span class="current">${target[i]}</span>`;
+      } else {
+        html+=`<span>${target[i]}</span>`;
+      }
+    }
+    phraseEl.innerHTML=html;
+  }
+
+  function buildKeyboard() {
+    kbEl.innerHTML='';
+    ROWS.forEach((row,ri) => {
+      const rowEl=document.createElement('div');
+      rowEl.className='kb-row';
+      row.forEach((key,ki) => {
+        const btn=document.createElement('button');
+        btn.className='kb-key';
+        const isBack=key==='&#x21D0;', isEnter=key==='&#x21B5;';
+        if (isBack||isEnter) btn.classList.add('action-key');
+        btn.innerHTML=key;
+        btn.dataset.key=key; btn.dataset.ri=ri; btn.dataset.ki=ki;
+        btn.style.width=btn.style.height=STATE.kbSize+'px';
+        btn.style.fontSize=Math.max(12,STATE.kbSize*0.4)+'px';
+        btn.setAttribute('aria-label', isBack?'Effacer':isEnter?'Entrée':key);
+        btn.addEventListener('click', e => handleKey(btn, e));
+        btn.addEventListener('keydown', e=>{
+          if (e.key==='Enter'||e.key===' ') { e.preventDefault(); handleKey(btn,e); }
+        });
+        rowEl.appendChild(btn);
+      });
+      kbEl.appendChild(rowEl);
+    });
+  }
+
+  function handleKey(btn, e) {
+    const key=btn.dataset.key;
+    if (key==='&#x21D0;') {
+      kbText=kbText.slice(0,-1);
+    } else if (key==='&#x21B5;') {
+      kbText+=' ';
+    } else {
+      let ch = btn.innerHTML.replace(/&[^;]+;/,'');
+      // Auto-correct: find closest key if mouse is near border
+      if (STATE.kbCorrect && e && e.clientX) {
+        const allKeys = Array.from(kbEl.querySelectorAll('.kb-key:not(.action-key)'));
+        let closest=null, minDist=Infinity;
+        allKeys.forEach(k => {
+          const r=k.getBoundingClientRect();
+          const cx=r.left+r.width/2, cy=r.top+r.height/2;
+          const d=Math.hypot(e.clientX-cx,e.clientY-cy);
+          if (d<minDist) { minDist=d; closest=k; }
+        });
+        if (closest && closest!==btn && minDist<STATE.kbSize*0.8) {
+          const proposed=closest.innerHTML.replace(/&[^;]+;/g,'').trim();
+          if (proposed && proposed!==ch && proposed.length===1) {
+            const expected=(currentPhrase.toUpperCase()[kbText.length]||'');
+            if (proposed===expected) {
+              ch=proposed;
+              correctionsMade++;
+              corrCnt.textContent=correctionsMade;
+              corrLog.textContent='✔ Correction : '+btn.innerHTML+' → '+proposed;
+              setTimeout(()=>corrLog.textContent='',2000);
+            }
+          }
+        }
+      }
+      kbText += ch;
+      // Count correct
+      const expected=(currentPhrase.toUpperCase()[kbText.length-1]||'');
+      if (ch===expected) correctCount++;
+      correctCnt.textContent=correctCount;
+    }
+    output.textContent=kbText||' ';
+    renderPhraseTarget();
+    // Check complete
+    if (kbText.toUpperCase()===currentPhrase.toUpperCase()) {
+      corrLog.textContent='🎉 Phrase complète ! Prochaine phrase…';
+      setTimeout(()=>{ kbText=''; nextPhrase(); output.textContent=' '; corrLog.textContent=''; },1200);
+      announce('Phrase complète !');
+      speak('Bravo ! Phrase complète.');
+    }
+  }
+
+  function updateKeySize() {
+    STATE.kbSize=parseInt(sizeSlider.value);
+    sizeVal.textContent=STATE.kbSize+' px';
+    document.querySelectorAll('.kb-key').forEach(k=>{
+      k.style.width=k.style.height=STATE.kbSize+'px';
+      k.style.fontSize=Math.max(12,STATE.kbSize*0.4)+'px';
+    });
+  }
+
+  function updateEnlarge() {
+    const x=mouseX, y=mouseY;
+    if (!STATE.kbEnlarge) {
+      document.querySelectorAll('.kb-key').forEach(k=>k.classList.remove('enlarged'));
+      return;
+    }
+    const allKeys=Array.from(kbEl.querySelectorAll('.kb-key'));
+    let closest=null, minDist=Infinity;
+    allKeys.forEach(k=>{
+      const r=k.getBoundingClientRect();
+      const cx=r.left+r.width/2, cy=r.top+r.height/2;
+      const d=Math.hypot(x-cx,y-cy);
+      if (d<minDist) { minDist=d; closest=k; }
+    });
+    allKeys.forEach(k=>k.classList.remove('enlarged'));
+    if (closest && minDist<STATE.kbSize*2.5) closest.classList.add('enlarged');
+  }
+
+  document.addEventListener('mousemove', e => { mouseX=e.clientX; mouseY=e.clientY; if(!prefersReducedMotion) updateEnlarge(); });
+
+  enlargeBtn.addEventListener('click', () => {
+    STATE.kbEnlarge=!STATE.kbEnlarge;
+    enlargeBtn.setAttribute('aria-pressed',STATE.kbEnlarge);
+    enlargeBtn.innerHTML=STATE.kbEnlarge
+      ? '<span aria-hidden="true">&#x2705;</span> Agrandissement'
+      : '<span aria-hidden="true">&#x25FB;</span> Agrandissement';
+    announce(STATE.kbEnlarge?'Agrandissement activé':'Agrandissement désactivé');
+  });
+
+  correctBtn.addEventListener('click', () => {
+    STATE.kbCorrect=!STATE.kbCorrect;
+    correctBtn.setAttribute('aria-pressed',STATE.kbCorrect);
+    correctBtn.innerHTML=STATE.kbCorrect
+      ? '<span aria-hidden="true">&#x2705;</span> Correction auto'
+      : '<span aria-hidden="true">&#x25FB;</span> Correction auto';
+    announce(STATE.kbCorrect?'Correction automatique activée':'Correction automatique désactivée');
+  });
+
+  sizeSlider.addEventListener('input', updateKeySize);
+
+  $('kb-clear').addEventListener('click', () => {
+    kbText=''; correctCount=0; correctionsMade=0;
+    output.textContent=' ';
+    correctCnt.textContent='0'; corrCnt.textContent='0';
+    corrLog.textContent='';
+    renderPhraseTarget();
+    announce('Saisie effacée');
+  });
+
+  $('tts-kb').addEventListener('click', () => {
+    speak(kbText || 'Aucun texte saisi');
+  });
+
+  currentPhrase=PHRASES[0];
+  buildKeyboard();
+  renderPhraseTarget();
+})();
+
+/* ================================================================
+   SECTION 6 — PROFILS
+   ================================================================ */
+(function() {
+  const grid       = $('profiles-grid');
+  const nameInput  = $('profile-name-input');
+  const saveBtn    = $('save-profile');
+  const deleteBtn  = $('delete-profile');
+  const statusEl   = $('profile-status');
+
+  const PRESETS = [
+    { name:'L&eacute;ger', desc:'Tremblement faible. Lissage doux, dwell court.', tags:['Lissage 5','Dwell 0,7s','Anti-rebond 300ms'],
+      data:{ smoothStrength:5, dwellDelay:700, dwellCooldown:400, debounceDelay:300, targetSize:60, kbSize:48 }},
+    { name:'Mod&eacute;r&eacute;', desc:'Usage quotidien. R&eacute;glages &eacute;quilibr&eacute;s.', tags:['Lissage 10','Dwell 1s','Anti-rebond 600ms'],
+      data:{ smoothStrength:10, dwellDelay:1000, dwellCooldown:600, debounceDelay:600, targetSize:72, kbSize:52 }},
+    { name:'Fort', desc:'Tremblement important. Lissage maximal, larges cibles.', tags:['Lissage 18','Dwell 1,5s','Anti-rebond 1s'],
+      data:{ smoothStrength:18, dwellDelay:1500, dwellCooldown:800, debounceDelay:1000, targetSize:96, kbSize:60 }},
+    { name:'Tactile', desc:'Usage sur tablette ou t&eacute;l&eacute;phone. Grandes cibles.', tags:['Cibles 80px','Dwell 1,2s'],
+      data:{ smoothStrength:12, dwellDelay:1200, dwellCooldown:600, debounceDelay:500, targetSize:80, kbSize:56 }},
+  ];
+
+  let customProfiles = LS.get('steadytouch_profiles', {});
+  let selectedCustom = null;
+
+  function applyProfile(data) {
+    STATE.smoothStrength = data.smoothStrength ?? STATE.smoothStrength;
+    STATE.dwellDelay     = data.dwellDelay     ?? STATE.dwellDelay;
+    STATE.dwellCooldown  = data.dwellCooldown  ?? STATE.dwellCooldown;
+    STATE.debounceDelay  = data.debounceDelay  ?? STATE.debounceDelay;
+    STATE.targetSize     = data.targetSize     ?? STATE.targetSize;
+    STATE.kbSize         = data.kbSize         ?? STATE.kbSize;
+
+    // Update UI controls
+    const sl = $('smooth-slider'); if(sl){sl.value=STATE.smoothStrength; sl.dispatchEvent(new Event('input'));}
+    const dl = $('dwell-slider'); if(dl){dl.value=STATE.dwellDelay; dl.dispatchEvent(new Event('input'));}
+    const dc = $('dwell-cooldown-slider'); if(dc){dc.value=STATE.dwellCooldown; dc.dispatchEvent(new Event('input'));}
+    const db = $('debounce-slider'); if(db){db.value=STATE.debounceDelay; db.dispatchEvent(new Event('input'));}
+    const ks = $('kb-size-slider'); if(ks){ks.value=STATE.kbSize; ks.dispatchEvent(new Event('input'));}
+    updatePanel();
+  }
+
+  function renderGrid() {
+    grid.innerHTML='';
+
+    // Presets
+    PRESETS.forEach((p,i) => {
+      const card=document.createElement('div');
+      card.className='profile-card';
+      card.setAttribute('role','listitem');
+      card.setAttribute('tabindex','0');
+      card.setAttribute('aria-label','Profil '+p.name.replace(/&[^;]+;/g,''));
+      card.innerHTML=`<h3>${p.name}</h3><p>${p.desc}</p><div class="profile-tags">${p.tags.map(t=>`<span class="profile-tag">${t}</span>`).join('')}</div>`;
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.profile-card').forEach(c=>c.classList.remove('active'));
+        card.classList.add('active');
+        selectedCustom=null;
+        applyProfile(p.data);
+        statusEl.textContent='✅ Profil activé : '+p.name.replace(/&[^;]+;/g,'');
+        statusEl.style.color='var(--success)';
+        announce('Profil '+p.name.replace(/&[^;]+;/g,'')+' appliqué');
+        speak('Profil '+p.name.replace(/&[^;]+;/g,'')+' appliqué');
+      });
+      card.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();card.click();} });
+      grid.appendChild(card);
+    });
+
+    // Custom
+    Object.entries(customProfiles).forEach(([name, data]) => {
+      const card=document.createElement('div');
+      card.className='profile-card';
+      card.setAttribute('role','listitem');
+      card.setAttribute('tabindex','0');
+      card.setAttribute('aria-label','Profil personnalisé : '+name);
+      card.innerHTML=`<h3>${name}</h3><p>Profil personnalis&eacute;</p><div class="profile-tags"><span class="profile-tag">Perso</span></div>`;
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.profile-card').forEach(c=>c.classList.remove('active'));
+        card.classList.add('active');
+        selectedCustom=name;
+        nameInput.value=name;
+        applyProfile(data);
+        statusEl.textContent='✅ Profil activé : '+name;
+        statusEl.style.color='var(--success)';
+        announce('Profil '+name+' appliqué');
+      });
+      card.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();card.click();} });
+      grid.appendChild(card);
+    });
+  }
+
+  saveBtn.addEventListener('click', () => {
+    const name=(nameInput.value||'').trim();
+    if (!name) { statusEl.textContent='⚠ Entrez un nom.'; statusEl.style.color='var(--danger)'; return; }
+    customProfiles[name]={
+      smoothStrength: STATE.smoothStrength,
+      dwellDelay:     STATE.dwellDelay,
+      dwellCooldown:  STATE.dwellCooldown,
+      debounceDelay:  STATE.debounceDelay,
+      targetSize:     STATE.targetSize,
+      kbSize:         STATE.kbSize,
+    };
+    LS.set('steadytouch_profiles', customProfiles);
+    selectedCustom=name;
+    renderGrid();
+    statusEl.textContent='✅ Profil « '+name+' » sauvegardé !';
+    statusEl.style.color='var(--success)';
+    announce('Profil '+name+' sauvegardé');
+    speak('Profil '+name+' sauvegardé');
+  });
+
+  deleteBtn.addEventListener('click', () => {
+    const name=selectedCustom||(nameInput.value||'').trim();
+    if (!name||!customProfiles[name]) {
+      statusEl.textContent='⚠ Sélectionnez un profil personnalisé à supprimer.';
+      statusEl.style.color='var(--danger)'; return;
+    }
+    delete customProfiles[name];
+    LS.set('steadytouch_profiles', customProfiles);
+    selectedCustom=null; nameInput.value='';
+    renderGrid();
+    statusEl.textContent='🗑 Profil « '+name+' » supprimé.';
+    statusEl.style.color='var(--marine)';
+    announce('Profil '+name+' supprimé');
+  });
+
+  renderGrid();
+})();
+
+/* ================================================================
+   PANNEAU STICKY
+   ================================================================ */
+function updatePanel() {
+  const sm = STATE.smoothOn;
+  const ss = STATE.smoothStrength;
+  const dw = STATE.dwellOn;
+  const dd = STATE.dwellDelay;
+  const db = STATE.debounceDelay;
+  $('sp-smooth').textContent  = '✏ Lissage '+(sm?'ON '+ss:'OFF');
+  $('sp-dwell').textContent   = ' · ⏱ Dwell '+(dw?(dd>=1000?(dd/1000).toFixed(1).replace('.',',')+' s':dd+' ms'):'OFF');
+  $('sp-debounce').textContent= ' · 🛡 Anti-rebond '+db+' ms';
 }
-updateSettingsPanel();
+updatePanel();
+
+$('sp-tts-btn').addEventListener('click', () => {
+  const sm=STATE.smoothOn, ss=STATE.smoothStrength, dw=STATE.dwellOn, dd=STATE.dwellDelay, db=STATE.debounceDelay;
+  speak('Réglages actifs. Lissage '+(sm?'activé intensité '+ss:'désactivé')+'. Dwell '+(dw?'activé délai '+(dd/1000).toFixed(1)+' secondes':'désactivé')+'. Anti-rebond '+db+' millisecondes.');
+});
+
+/* ================================================================
+   TTS — bouton global dans le sticky
+   ================================================================ */
+$('tts-drawing') && $('tts-drawing').addEventListener && void 0; // already wired above
+
+/* ================================================================
+   PWA — Install prompt
+   ================================================================ */
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt=e;
+  const btn=$('install-btn');
+  btn.classList.add('visible');
+  btn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const {outcome} = await deferredPrompt.userChoice;
+    deferredPrompt=null;
+    btn.classList.remove('visible');
+    announce(outcome==='accepted'?'Application installée !':'Installation annulée');
+  });
+});
+window.addEventListener('appinstalled', () => {
+  $('install-btn').classList.remove('visible');
+  announce('SteadyTouch installé avec succès');
+});
+
+/* ================================================================
+   SERVICE WORKER
+   ================================================================ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => { console.log('[SW] registered', reg.scope); })
+      .catch(err => { console.warn('[SW] registration failed:', err); });
+  });
+}
 </script>
 </body>
 </html>

@@ -1,0 +1,38 @@
+{
+  "name": "MathEase — Dyscalculie",
+  "short_name": "MathEase",
+  "description": "Représentations multiples, opérations visuelles, argent, horloge et fractions. 100 % hors-ligne.",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F7F9FC",
+  "theme_color": "#0F4C81",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%230F4C81'/%3E%3Ctext x='96' y='132' font-size='110' text-anchor='middle' font-family='system-ui' fill='%23F4B81C'%3E%F0%9F%94%A2%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230F4C81'/%3E%3Ctext x='256' y='350' font-size='300' text-anchor='middle' font-family='system-ui' fill='%23F4B81C'%3E%F0%9F%94%A2%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "accessibility"],
+  "shortcuts": [
+    {
+      "name": "Représentations",
+      "url": "./index.html#repr",
+      "description": "Voir un nombre de 5 façons"
+    },
+    {
+      "name": "Entraînement",
+      "url": "./index.html#train",
+      "description": "S'entraîner aux opérations"
+    }
+  ]
+}

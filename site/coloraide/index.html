@@ -3,1128 +3,1624 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ColorAide — Démo | LibreA11y</title>
-<meta name="description" content="Assistance au daltonisme : simulation, filtres de correction et identification de couleurs. Démo hors-ligne, aucune donnée envoyée.">
+<title>ColorAide — Assistance daltonisme | LibreA11y</title>
+<meta name="description" content="Filtres de correction, caméra temps réel, identification de couleurs, vérificateur d'accessibilité et palettes sûres. 100% hors-ligne sauf caméra.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0F4C81">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
-/* ===== VARIABLES & RESET ===== */
+/* ===== TOKENS & RESET ===== */
 :root {
   --marine:    #0F4C81;
   --marine-dk: #0A3A63;
+  --marine-lt: #1A6AAF;
   --or:        #F4B81C;
   --or-lt:     #FFD45E;
   --encre:     #16202E;
   --fond:      #F7F9FC;
   --surface:   #FFFFFF;
   --border:    #D0D9E8;
-  --focus-ring: #F4B81C;
+  --focus-ring:#F4B81C;
   --radius:    12px;
   --radius-sm: 8px;
-  --shadow:    0 2px 8px rgba(15,76,129,0.12);
-  --shadow-hv: 0 4px 16px rgba(15,76,129,0.22);
+  --shadow:    0 2px 8px rgba(15,76,129,.12);
+  --shadow-hv: 0 4px 16px rgba(15,76,129,.22);
   --tr:        0.18s ease;
-  --success:   #1A7A1A;
-  --danger:    #C0392B;
+  --success:   #155724;
+  --success-bg:#d4edda;
+  --danger:    #721c24;
+  --danger-bg: #f8d7da;
+  --warn:      #7B4F00;
+  --warn-bg:   #FFF3CD;
 }
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body {
-  min-height: 100%;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  background: var(--fond);
-  color: var(--encre);
-  font-size: 16px;
-  line-height: 1.5;
-}
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
-}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--fond);color:var(--encre);font-size:16px;line-height:1.5}
+img,svg{max-width:100%}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
 
 /* ===== SKIP LINK ===== */
-.skip-link {
-  position: absolute;
-  left: -9999px;
-  top: 8px;
-  background: var(--or);
-  color: var(--encre);
-  font-weight: 700;
-  padding: 10px 18px;
-  border-radius: var(--radius-sm);
-  z-index: 9999;
-  text-decoration: none;
-  font-size: 0.95rem;
-}
-.skip-link:focus { left: 8px; }
+.skip-link{position:absolute;left:-9999px;top:8px;background:var(--or);color:var(--encre);font-weight:700;padding:10px 18px;border-radius:var(--radius-sm);z-index:9999;text-decoration:none;font-size:.95rem}
+.skip-link:focus{left:8px}
 
 /* ===== FOCUS ===== */
-:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 3px;
-  border-radius: 4px;
-}
+:focus-visible{outline:3px solid var(--focus-ring);outline-offset:3px;border-radius:4px}
 
 /* ===== HEADER ===== */
-#app-header {
-  background: var(--marine);
-  color: #fff;
-  padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  box-shadow: 0 2px 8px rgba(10,58,99,0.3);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  flex-wrap: wrap;
-}
-#header-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-#back-link {
-  color: var(--or-lt);
-  text-decoration: none;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-  transition: background var(--tr);
-  min-height: 48px;
-}
-#back-link:hover, #back-link:focus-visible { background: rgba(255,255,255,0.15); color: #fff; }
-#app-title {
-  font-size: 1.35rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-#header-notice {
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.70);
-  background: rgba(0,0,0,0.18);
-  padding: 4px 10px;
-  border-radius: 20px;
-  white-space: nowrap;
-}
+#app-header{background:var(--marine);color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 2px 8px rgba(10,58,99,.3);position:sticky;top:0;z-index:100;flex-wrap:wrap}
+#header-left{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+#back-link{color:var(--or-lt);text-decoration:none;font-size:.9rem;display:flex;align-items:center;gap:4px;padding:8px 12px;border-radius:var(--radius-sm);white-space:nowrap;transition:background var(--tr);min-height:48px}
+#back-link:hover,#back-link:focus-visible{background:rgba(255,255,255,.15);color:#fff}
+#app-title{font-size:1.25rem;font-weight:700}
+#header-notice{font-size:.72rem;color:rgba(255,255,255,.70);background:rgba(0,0,0,.18);padding:4px 10px;border-radius:20px;white-space:nowrap}
+#install-btn{display:none;align-items:center;gap:6px;padding:8px 14px;min-height:44px;background:var(--or);color:var(--encre);border:none;border-radius:var(--radius-sm);font-size:.85rem;font-weight:700;cursor:pointer;transition:background var(--tr)}
+#install-btn:hover{background:var(--or-lt)}
+#install-btn.visible{display:flex}
+
+/* ===== TABS NAV ===== */
+#tabs-nav{background:var(--marine-dk);display:flex;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+#tabs-nav::-webkit-scrollbar{display:none}
+.tab-btn{flex-shrink:0;padding:13px 20px;background:none;border:none;color:rgba(255,255,255,.72);font-size:.88rem;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;transition:color var(--tr),border-color var(--tr);white-space:nowrap;min-height:48px}
+.tab-btn:hover{color:#fff}
+.tab-btn[aria-selected="true"]{color:var(--or);border-bottom-color:var(--or)}
 
 /* ===== MAIN ===== */
-#main {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 28px 20px 60px;
-  display: flex;
-  flex-direction: column;
-  gap: 36px;
-}
+#main{max-width:1100px;margin:0 auto;padding:24px 20px 60px;display:flex;flex-direction:column;gap:32px}
+.tab-panel{display:none}
+.tab-panel.active{display:flex;flex-direction:column;gap:28px}
 
 /* ===== SECTION CARD ===== */
-.section-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 28px;
-  box-shadow: var(--shadow);
-}
-.section-card h2 {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--marine);
-  margin-bottom: 6px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.section-desc {
-  font-size: 0.88rem;
-  color: #4a5568;
-  margin-bottom: 18px;
-  line-height: 1.55;
-}
+.section-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow)}
+.section-card h2{font-size:1.1rem;font-weight:700;color:var(--marine);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.section-desc{font-size:.88rem;color:#4a5568;margin-bottom:16px;line-height:1.55}
 
-/* ===== FILTER CONTROLS ===== */
-.filter-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-.filter-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 10px 18px;
-  min-height: 48px;
-  border: 2px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--encre);
-  font-size: 0.92rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background var(--tr), border-color var(--tr), color var(--tr);
-}
-.filter-btn .icon-shape {
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  display: inline-block;
-}
-.filter-btn:hover { border-color: var(--marine); background: var(--fond); }
-.filter-btn.active {
-  background: var(--marine);
-  color: #fff;
-  border-color: var(--marine);
-}
-.filter-btn.active .btn-label-abbr { display: none; }
+/* ===== BUTTONS ===== */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;min-height:48px;border:2px solid transparent;border-radius:var(--radius-sm);font-size:.92rem;font-weight:600;cursor:pointer;transition:background var(--tr),border-color var(--tr),color var(--tr)}
+.btn-primary{background:var(--marine);color:#fff;border-color:var(--marine)}
+.btn-primary:hover{background:var(--marine-dk)}
+.btn-secondary{background:var(--surface);color:var(--encre);border-color:var(--border)}
+.btn-secondary:hover{border-color:var(--marine);background:var(--fond)}
+.btn-danger{background:#C0392B;color:#fff;border-color:#C0392B}
+.btn-danger:hover{background:#992d22}
+.btn:disabled{opacity:.5;cursor:not-allowed}
 
-.simulate-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 18px;
-  padding: 12px 16px;
-  background: var(--fond);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-}
-.toggle-label {
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.toggle-switch {
-  position: relative;
-  width: 48px; height: 26px;
-  flex-shrink: 0;
-}
-.toggle-switch input {
-  opacity: 0; width: 0; height: 0; position: absolute;
-}
-.toggle-track {
-  position: absolute; inset: 0;
-  background: #ccc;
-  border-radius: 13px;
-  transition: background var(--tr);
-  cursor: pointer;
-}
-.toggle-track::after {
-  content: '';
-  position: absolute;
-  width: 20px; height: 20px;
-  background: #fff;
-  border-radius: 50%;
-  top: 3px; left: 3px;
-  transition: transform var(--tr);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
-}
-.toggle-switch input:checked + .toggle-track { background: var(--marine); }
-.toggle-switch input:checked + .toggle-track::after { transform: translateX(22px); }
-.toggle-switch input:focus-visible + .toggle-track {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-.simulate-desc {
-  font-size: 0.82rem;
-  color: #555;
-  flex: 1;
-}
+/* ===== FILTER BUTTONS ===== */
+.filter-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.filter-btn{display:inline-flex;align-items:center;gap:7px;padding:10px 16px;min-height:48px;border:2px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--encre);font-size:.88rem;font-weight:600;cursor:pointer;transition:background var(--tr),border-color var(--tr),color var(--tr)}
+.filter-btn .icon-shape{width:18px;height:18px;border-radius:50%;flex-shrink:0;display:inline-block;border:1px solid rgba(0,0,0,.15)}
+.filter-btn:hover{border-color:var(--marine);background:var(--fond)}
+.filter-btn[aria-pressed="true"]{background:var(--marine);color:#fff;border-color:var(--marine)}
+
+/* ===== TOGGLE ===== */
+.simulate-row{display:flex;align-items:center;gap:14px;margin-bottom:16px;padding:12px 16px;background:var(--fond);border-radius:var(--radius-sm);border:1px solid var(--border);flex-wrap:wrap}
+.toggle-label{font-size:.9rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:10px;min-height:48px}
+.toggle-switch{position:relative;width:48px;height:26px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:#ccc;border-radius:13px;transition:background var(--tr);cursor:pointer}
+.toggle-track::after{content:'';position:absolute;width:20px;height:20px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform var(--tr);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.toggle-switch input:checked+.toggle-track{background:var(--marine)}
+.toggle-switch input:checked+.toggle-track::after{transform:translateX(22px)}
+.toggle-switch input:focus-visible+.toggle-track{outline:3px solid var(--focus-ring);outline-offset:2px}
+.simulate-desc{font-size:.82rem;color:#555;flex:1}
+
+/* ===== SEVERITY SLIDER ===== */
+.severity-row{display:flex;align-items:center;gap:12px;padding:10px 0;flex-wrap:wrap}
+.severity-row label{font-size:.88rem;font-weight:600;white-space:nowrap}
+#severity-slider{flex:1;min-width:120px;height:6px;accent-color:var(--marine);cursor:pointer}
+#severity-val{font-size:.88rem;font-weight:700;color:var(--marine);min-width:36px;text-align:right}
 
 /* ===== MODE DESCRIPTION ===== */
-#mode-description {
-  padding: 10px 14px;
-  background: #EFF4FB;
-  border-left: 4px solid var(--marine);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  font-size: 0.87rem;
-  color: var(--encre);
-  line-height: 1.55;
-  margin-bottom: 18px;
-}
+#mode-description{padding:10px 14px;background:#EFF4FB;border-left:4px solid var(--marine);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:.87rem;line-height:1.55;margin-bottom:16px}
 
-/* ===== SCENE SVG ===== */
-#scene-wrapper {
-  position: relative;
-  background: #fff;
-  border: 2px solid var(--border);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-#scene-svg {
-  width: 100%;
-  display: block;
-  max-height: 420px;
-}
+/* ===== CANVAS / SCENE ===== */
+.scene-tabs{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.scene-tab-btn{padding:8px 16px;min-height:44px;background:var(--fond);border:2px solid var(--border);border-radius:var(--radius-sm);font-size:.85rem;font-weight:600;cursor:pointer;transition:background var(--tr),border-color var(--tr)}
+.scene-tab-btn[aria-selected="true"]{background:var(--marine);color:#fff;border-color:var(--marine)}
+#scene-wrapper,#camera-wrapper{position:relative;background:#111;border:2px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;display:none}
+#scene-wrapper.active,#camera-wrapper.active{display:block}
+#scene-svg{width:100%;display:block;max-height:420px}
+#camera-canvas{width:100%;display:block;max-height:420px;background:#111}
+#camera-video{display:none}
+.camera-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(15,20,30,.85);color:#fff;text-align:center;padding:20px}
+.camera-overlay p{font-size:.95rem;max-width:340px}
+#camera-status{font-size:.8rem;color:rgba(255,255,255,.7);text-align:center;padding:6px;background:#000}
 
-/* ===== COLOR ID SECTION ===== */
-.swatch-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 18px;
-}
-.swatch-btn {
-  width: 56px; height: 56px;
-  border-radius: var(--radius-sm);
-  border: 3px solid transparent;
-  cursor: pointer;
-  transition: border-color var(--tr), transform var(--tr), box-shadow var(--tr);
-  position: relative;
-  overflow: hidden;
-}
-.swatch-btn:hover {
-  border-color: var(--marine);
-  transform: scale(1.08);
-  box-shadow: var(--shadow-hv);
-}
-.swatch-btn.selected {
-  border-color: var(--marine);
-  box-shadow: 0 0 0 3px var(--or);
-}
-.swatch-btn .swatch-pattern {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-}
-/* cross-hatch pattern for colorblind-safe identification */
-.swatch-btn::after {
-  content: attr(data-symbol);
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.3rem;
-  line-height: 1;
-  color: rgba(0,0,0,0.55);
-  text-shadow: 0 0 3px rgba(255,255,255,0.7);
-}
+/* ===== EYEDROPPER / COLOR ID ===== */
+.swatch-grid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.swatch-btn{width:56px;height:56px;border-radius:var(--radius-sm);border:3px solid transparent;cursor:pointer;transition:border-color var(--tr),transform var(--tr),box-shadow var(--tr);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+.swatch-btn:hover{border-color:var(--marine);transform:scale(1.08);box-shadow:var(--shadow-hv)}
+.swatch-btn[aria-pressed="true"]{border-color:var(--marine);box-shadow:0 0 0 3px var(--or)}
+.color-input-row{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+.color-input-row label{font-size:.92rem;font-weight:600}
+#color-picker{width:56px;height:56px;border:none;border-radius:var(--radius-sm);padding:2px;cursor:pointer;background:none}
+#color-result{display:flex;align-items:center;gap:16px;padding:14px 16px;background:var(--fond);border:1px solid var(--border);border-radius:var(--radius-sm);flex-wrap:wrap}
+#result-swatch{width:56px;height:56px;border-radius:var(--radius-sm);border:2px solid var(--border);flex-shrink:0}
+#result-name{font-size:1.15rem;font-weight:700}
+#result-hex{font-size:.9rem;color:#555;font-family:monospace}
+#result-dist{font-size:.8rem;color:#777;margin-top:2px}
+.result-rgb{font-size:.8rem;color:#666;font-family:monospace;margin-top:1px}
+/* Eyedropper from image */
+.eyedropper-zone{position:relative;display:inline-block;cursor:crosshair}
+#eyedropper-canvas{max-width:100%;border-radius:var(--radius-sm);border:2px solid var(--border);display:block}
+.eyedropper-hint{font-size:.8rem;color:#666;margin-top:4px}
 
-.color-input-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 18px;
-  flex-wrap: wrap;
-}
-.color-input-row label {
-  font-size: 0.92rem;
-  font-weight: 600;
-}
-#color-picker {
-  width: 56px; height: 56px;
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: 2px;
-  cursor: pointer;
-  background: none;
-}
-#color-picker:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 3px;
-}
+/* ===== ACCESSIBILITY CHECKER ===== */
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:32px 20px;text-align:center;cursor:pointer;transition:border-color var(--tr),background var(--tr);position:relative}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--marine);background:#EFF4FB}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-zone .upload-icon{font-size:2.5rem;display:block;margin-bottom:8px;color:var(--marine)}
+.upload-zone p{font-size:.9rem;color:#555}
+#checker-canvas-wrapper{display:none;margin-top:16px}
+#checker-canvas{max-width:100%;border-radius:var(--radius-sm);border:2px solid var(--border);cursor:crosshair}
+#checker-results{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+.issue-card{padding:12px 16px;border-radius:var(--radius-sm);border-left:4px solid;display:flex;flex-direction:column;gap:4px}
+.issue-card.error{border-color:#C0392B;background:#fdf0ee}
+.issue-card.warning{border-color:#E67E22;background:#fdf5e8}
+.issue-card.ok{border-color:#27AE60;background:#edfbf2}
+.issue-title{font-size:.9rem;font-weight:700}
+.issue-body{font-size:.82rem;color:#444;line-height:1.45}
+.issue-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.75rem;font-weight:700}
+.badge-error{background:#C0392B;color:#fff}
+.badge-warn{background:#E67E22;color:#fff}
+.badge-ok{background:#27AE60;color:#fff}
+.color-pair-preview{display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap}
+.pair-swatch{width:40px;height:40px;border-radius:6px;border:1px solid rgba(0,0,0,.15);flex-shrink:0}
+.pair-combo{width:80px;height:40px;border-radius:6px;border:1px solid rgba(0,0,0,.15);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700}
 
-#color-result {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 14px 16px;
-  background: var(--fond);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  flex-wrap: wrap;
-}
-#result-swatch {
-  width: 56px; height: 56px;
-  border-radius: var(--radius-sm);
-  border: 2px solid var(--border);
-  flex-shrink: 0;
-}
-#result-name {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--encre);
-}
-#result-hex {
-  font-size: 0.9rem;
-  color: #555;
-  font-family: monospace;
-}
-#result-dist {
-  font-size: 0.82rem;
-  color: #777;
-}
-#speak-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 10px 16px;
-  min-height: 48px;
-  background: var(--marine);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.92rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background var(--tr);
-}
-#speak-btn:hover { background: var(--marine-dk); }
-#speak-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* ===== PALETTE ===== */
+.palette-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.palette-name-input{padding:8px 12px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:.9rem;flex:1;min-width:140px;min-height:44px}
+.palette-name-input:focus-visible{outline:3px solid var(--focus-ring)}
+.palette-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.palette-item{border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow)}
+.palette-color{height:76px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;position:relative}
+.palette-copy-btn{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.4);color:#fff;border:none;border-radius:4px;padding:3px 7px;font-size:.72rem;cursor:pointer;opacity:0;transition:opacity .15s}
+.palette-item:hover .palette-copy-btn,.palette-item:focus-within .palette-copy-btn{opacity:1}
+.palette-info{padding:8px 10px;background:var(--surface)}
+.palette-name{font-size:.82rem;font-weight:700}
+.palette-hex{font-size:.78rem;color:#555;font-family:monospace}
+.palette-why{font-size:.74rem;color:#666;margin-top:2px;line-height:1.3}
+.export-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
 
-/* ===== SAFE PALETTE ===== */
-.palette-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
-}
-.palette-item {
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-.palette-color {
-  height: 72px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.6rem;
-}
-.palette-info {
-  padding: 8px 10px;
-  background: var(--surface);
-}
-.palette-name {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--encre);
-}
-.palette-hex {
-  font-size: 0.78rem;
-  color: #555;
-  font-family: monospace;
-}
-.palette-why {
-  font-size: 0.74rem;
-  color: #666;
-  margin-top: 2px;
-  line-height: 1.3;
-}
-
-/* ===== LIVE REGION ===== */
-#aria-live {
-  position: absolute;
-  left: -9999px;
-  width: 1px; height: 1px;
-  overflow: hidden;
-}
+/* ===== STATUS MESSAGES ===== */
+.status-msg{padding:10px 14px;border-radius:var(--radius-sm);font-size:.87rem;line-height:1.5;display:flex;align-items:flex-start;gap:8px}
+.status-msg.success{background:var(--success-bg);color:var(--success);border:1px solid #b8dfc4}
+.status-msg.error{background:var(--danger-bg);color:var(--danger);border:1px solid #f5b8bc}
+.status-msg.warn{background:var(--warn-bg);color:var(--warn);border:1px solid #ffe08a}
+.status-icon{font-size:1rem;flex-shrink:0;margin-top:1px}
 
 /* ===== LEGEND ===== */
-.legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 10px;
-}
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.82rem;
-  color: #444;
-}
-.legend-dot {
-  width: 14px; height: 14px;
-  border-radius: 3px;
-  flex-shrink: 0;
-  border: 1px solid rgba(0,0,0,0.15);
-}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:.82rem;color:#444}
+.legend-dot{width:14px;height:14px;border-radius:3px;flex-shrink:0;border:1px solid rgba(0,0,0,.15)}
+
+/* ===== ARIA LIVE ===== */
+#aria-live{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 
 /* ===== RESPONSIVE ===== */
-@media (max-width: 640px) {
-  .section-card { padding: 18px; }
-  #main { padding: 16px 12px 48px; gap: 24px; }
-  .palette-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+@media(max-width:640px){
+  .section-card{padding:16px}
+  #main{padding:16px 12px 48px;gap:20px}
+  .palette-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+  .tab-btn{font-size:.8rem;padding:11px 14px}
 }
 </style>
 </head>
 <body>
 
-<!-- SKIP LINK -->
 <a class="skip-link" href="#main">Aller au contenu principal</a>
-
-<!-- LIVE REGION pour les annonces vocales -->
 <div id="aria-live" role="status" aria-live="polite" aria-atomic="true"></div>
 
-<!-- SVG DEFS : filtres daltonisme (cachés, référencés par #scene-svg) -->
+<!-- SVG FILTER DEFS (hidden) -->
 <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true" focusable="false">
   <defs>
-    <!-- PROTANOPIE (absence cônes rouges) — correction (aide) -->
     <filter id="f-proto-correct" color-interpolation-filters="linearRGB">
-      <feColorMatrix type="matrix" values="
-        0.566 0.434 0     0 0
-        0.055 0.945 0     0 0
-        0     0.018 0.982 0 0
-        0     0     0     1 0"/>
+      <feColorMatrix type="matrix" values="0.566 0.434 0 0 0  0.055 0.945 0 0 0  0 0.018 0.982 0 0  0 0 0 1 0"/>
     </filter>
-    <!-- DEUTÉRANOPIE (absence cônes verts) — correction (aide) -->
     <filter id="f-deut-correct" color-interpolation-filters="linearRGB">
-      <feColorMatrix type="matrix" values="
-        0.625 0.375 0     0 0
-        0.7   0.3   0     0 0
-        0     0.3   0.7   0 0
-        0     0     0     1 0"/>
+      <feColorMatrix type="matrix" values="0.625 0.375 0 0 0  0.7 0.3 0 0 0  0 0.3 0.7 0 0  0 0 0 1 0"/>
     </filter>
-    <!-- TRITANOPIE (absence cônes bleus) — correction (aide) -->
     <filter id="f-trit-correct" color-interpolation-filters="linearRGB">
-      <feColorMatrix type="matrix" values="
-        0.95  0.05  0     0 0
-        0     0.433 0.567 0 0
-        0     0.475 0.525 0 0
-        0     0     0     1 0"/>
+      <feColorMatrix type="matrix" values="0.95 0.05 0 0 0  0 0.433 0.567 0 0  0 0.475 0.525 0 0  0 0 0 1 0"/>
     </filter>
-
-    <!-- PROTANOPIE — SIMULATION (comment le daltonien voit) -->
     <filter id="f-proto-sim" color-interpolation-filters="linearRGB">
-      <feColorMatrix type="matrix" values="
-        0.1126 0.8874 0      0 0
-        0.1126 0.8874 0      0 0
-        0.0042 -0.0042 1     0 0
-        0      0      0      1 0"/>
+      <feColorMatrix type="matrix" values="0.1126 0.8874 0 0 0  0.1126 0.8874 0 0 0  0.0042 -0.0042 1 0 0  0 0 0 1 0"/>
     </filter>
-    <!-- DEUTÉRANOPIE — SIMULATION -->
     <filter id="f-deut-sim" color-interpolation-filters="linearRGB">
-      <feColorMatrix type="matrix" values="
-        0.2126 0.7874 0     0 0
-        0.2126 0.7874 0     0 0
-        -0.0196 0.0196 1   0 0
-        0      0      0    1 0"/>
+      <feColorMatrix type="matrix" values="0.2126 0.7874 0 0 0  0.2126 0.7874 0 0 0  -0.0196 0.0196 1 0 0  0 0 0 1 0"/>
     </filter>
-    <!-- TRITANOPIE — SIMULATION -->
     <filter id="f-trit-sim" color-interpolation-filters="linearRGB">
-      <feColorMatrix type="matrix" values="
-        0.2126 0.7874  0      0 0
-        0      0.2126  0.7874 0 0
-        0      0.2126  0.7874 0 0
-        0      0       0      1 0"/>
+      <feColorMatrix type="matrix" values="0.2126 0.7874 0 0 0  0 0.2126 0.7874 0 0  0 0.2126 0.7874 0 0  0 0 0 1 0"/>
     </filter>
+    <pattern id="hatch-a" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#fff" stroke-width="3"/>
+    </pattern>
+    <pattern id="hatch-b" patternUnits="userSpaceOnUse" width="8" height="8">
+      <line x1="0" y1="0" x2="8" y2="8" stroke="#fff" stroke-width="2"/>
+      <line x1="8" y1="0" x2="0" y2="8" stroke="#fff" stroke-width="2"/>
+    </pattern>
   </defs>
 </svg>
 
-<!-- EN-TÊTE -->
+<!-- HEADER -->
 <header id="app-header" role="banner">
   <div id="header-left">
-    <a id="back-link" href="../index.html" aria-label="Retour à la page d'accueil LibreA11y">← LibreA11y</a>
-    <span id="app-title" aria-label="ColorAide — démo">🎨 ColorAide — démo</span>
+    <a id="back-link" href="../index.html" aria-label="Retour à la page d'accueil LibreA11y">&#8592; LibreA11y</a>
+    <span id="app-title" aria-label="ColorAide — Assistance daltonisme">
+      <span aria-hidden="true">&#127912;</span> ColorAide
+    </span>
   </div>
-  <div id="header-notice" aria-label="Informations">démo · 100 % hors-ligne · aucune donnée envoyée</div>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <button id="install-btn" aria-label="Installer ColorAide comme application">
+      <span aria-hidden="true">&#8659;</span> Installer
+    </button>
+    <div id="header-notice" aria-label="Informations">100&#8239;% hors-ligne &middot; aucune donn&eacute;e envoy&eacute;e</div>
+  </div>
 </header>
 
-<!-- CONTENU PRINCIPAL -->
+<!-- TABS NAV -->
+<nav id="tabs-nav" role="tablist" aria-label="Sections de l'application">
+  <button class="tab-btn" role="tab" id="tab-filters" aria-selected="true" aria-controls="panel-filters" tabindex="0">
+    <span aria-hidden="true">&#128065;&#65039;</span> Filtres &amp; Cam&eacute;ra
+  </button>
+  <button class="tab-btn" role="tab" id="tab-identify" aria-selected="false" aria-controls="panel-identify" tabindex="-1">
+    <span aria-hidden="true">&#128270;</span> Identifier
+  </button>
+  <button class="tab-btn" role="tab" id="tab-checker" aria-selected="false" aria-controls="panel-checker" tabindex="-1">
+    <span aria-hidden="true">&#9989;</span> V&eacute;rificateur
+  </button>
+  <button class="tab-btn" role="tab" id="tab-palette" aria-selected="false" aria-controls="panel-palette" tabindex="-1">
+    <span aria-hidden="true">&#127775;</span> Palettes s&ucirc;res
+  </button>
+</nav>
+
+<!-- MAIN -->
 <main id="main" role="main">
 
-  <!-- SECTION 1 : INTRO -->
-  <section class="section-card" aria-labelledby="h-intro">
-    <h1 id="h-intro" style="font-size:1.3rem;font-weight:800;color:var(--marine);margin-bottom:8px;">
-      🎨 Assistance au daltonisme
-    </h1>
-    <p class="section-desc">
-      ColorAide aide les personnes daltoniennes à percevoir et identifier les couleurs.
-      Appliquez des <strong>filtres de correction</strong> sur la scène d'exemple ou simulez
-      la vision daltonienne. Identifiez n'importe quelle couleur par son nom en français.
-      Tout fonctionne <strong>entièrement hors-ligne</strong>.
-    </p>
-  </section>
+  <!-- ═══════════════════════════════════════════════════════════
+       ONGLET 1 : FILTRES & CAMÉRA
+  ═══════════════════════════════════════════════════════════ -->
+  <div id="panel-filters" role="tabpanel" aria-labelledby="tab-filters" class="tab-panel active">
 
-  <!-- SECTION 2 : SCÈNE + FILTRES -->
-  <section class="section-card" aria-labelledby="h-scene">
-    <h2 id="h-scene"><span aria-hidden="true">👁️</span> Scène d'exemple avec filtres</h2>
-    <p class="section-desc">
-      La scène ci-dessous contient des éléments habituellement difficiles pour les daltoniens :
-      un graphique rouge/vert, un feu tricolore, et des pastilles de couleurs.
-      Les boutons appliquent soit une <em>correction</em> (aide à distinguer les couleurs)
-      soit une <em>simulation</em> (voir comme un daltonien).
-    </p>
-
-    <!-- FILTRES -->
-    <div role="group" aria-labelledby="filter-group-label">
-      <p id="filter-group-label" style="font-size:0.9rem;font-weight:700;margin-bottom:10px;">
-        Type de vision — correction :
+    <section class="section-card" aria-labelledby="h-filters">
+      <h2 id="h-filters"><span aria-hidden="true">&#128065;&#65039;</span> Filtres de daltonisation</h2>
+      <p class="section-desc">
+        Appliquez un filtre de <strong>correction</strong> (aide &agrave; distinguer les couleurs) ou de
+        <strong>simulation</strong> (voir comme un daltonien). La <strong>s&eacute;v&eacute;rit&eacute;</strong>
+        module l'intensit&eacute; du filtre. Fonctionne sur la sc&egrave;ne d'exemple ET en temps r&eacute;el sur la cam&eacute;ra.
       </p>
-      <div class="filter-row" role="radiogroup" aria-label="Correction du filtre de couleur">
-        <button class="filter-btn active" data-mode="none" aria-pressed="true" title="Vision normale, sans filtre">
-          <span class="icon-shape" style="background:linear-gradient(135deg,#e74c3c 50%,#2ecc71 50%)" aria-hidden="true"></span>
-          Aucun filtre
-        </button>
-        <button class="filter-btn" data-mode="proto" aria-pressed="false" title="Filtre de correction pour la protanopie">
-          <span class="icon-shape" style="background:linear-gradient(135deg,#8B4513 50%,#4CAF50 50%)" aria-hidden="true"></span>
-          Protanopie
-        </button>
-        <button class="filter-btn" data-mode="deut" aria-pressed="false" title="Filtre de correction pour la deutéranopie">
-          <span class="icon-shape" style="background:linear-gradient(135deg,#CD7F32 50%,#3498DB 50%)" aria-hidden="true"></span>
-          Deutéranopie
-        </button>
-        <button class="filter-btn" data-mode="trit" aria-pressed="false" title="Filtre de correction pour la tritanopie">
-          <span class="icon-shape" style="background:linear-gradient(135deg,#E91E63 50%,#009688 50%)" aria-hidden="true"></span>
-          Tritanopie
-        </button>
-      </div>
-    </div>
 
-    <!-- BASCULE SIMULATION -->
-    <div class="simulate-row">
-      <label class="toggle-label" for="toggle-simulate">
-        <span class="toggle-switch">
-          <input type="checkbox" id="toggle-simulate" role="switch" aria-checked="false"
-                 aria-describedby="simulate-desc-text">
-          <span class="toggle-track" aria-hidden="true"></span>
+      <!-- TYPE DE FILTRE -->
+      <div role="group" aria-labelledby="filter-group-lbl">
+        <p id="filter-group-lbl" style="font-size:.9rem;font-weight:700;margin-bottom:10px">Type de vision&nbsp;:</p>
+        <div class="filter-row" role="radiogroup" aria-label="Type de filtre de couleur">
+          <button class="filter-btn" data-mode="none" aria-pressed="true" title="Vision normale, sans filtre">
+            <span class="icon-shape" style="background:linear-gradient(135deg,#e74c3c 50%,#27ae60 50%)" aria-hidden="true"></span>
+            Aucun filtre
+          </button>
+          <button class="filter-btn" data-mode="proto" aria-pressed="false" title="Protanopie : absence de c&ocirc;nes rouges">
+            <span class="icon-shape" style="background:linear-gradient(135deg,#8B5E3C 50%,#4CAF50 50%)" aria-hidden="true"></span>
+            Protanopie
+          </button>
+          <button class="filter-btn" data-mode="deut" aria-pressed="false" title="Deut&eacute;ranopie : absence de c&ocirc;nes verts (la plus fr&eacute;quente)">
+            <span class="icon-shape" style="background:linear-gradient(135deg,#CD7F32 50%,#3498DB 50%)" aria-hidden="true"></span>
+            Deut&eacute;ranopie
+          </button>
+          <button class="filter-btn" data-mode="trit" aria-pressed="false" title="Tritanopie : absence de c&ocirc;nes bleus (rare)">
+            <span class="icon-shape" style="background:linear-gradient(135deg,#E91E63 50%,#009688 50%)" aria-hidden="true"></span>
+            Tritanopie
+          </button>
+        </div>
+      </div>
+
+      <!-- SIMULATION TOGGLE -->
+      <div class="simulate-row">
+        <label class="toggle-label" for="toggle-simulate">
+          <span class="toggle-switch">
+            <input type="checkbox" id="toggle-simulate" role="switch" aria-checked="false" aria-describedby="simulate-desc-text">
+            <span class="toggle-track" aria-hidden="true"></span>
+          </span>
+          Simuler la vision daltonienne
+        </label>
+        <span id="simulate-desc-text" class="simulate-desc">
+          <strong>Activ&eacute;&nbsp;:</strong> montre comment un daltonien voit.
+          <strong>D&eacute;sactiv&eacute;&nbsp;:</strong> applique un filtre de correction.
         </span>
-        Simuler la vision daltonienne
-      </label>
-      <span id="simulate-desc-text" class="simulate-desc">
-        Activé : montre comment une personne daltonienne perçoit la scène (sans aide).
-        Désactivé : applique un filtre de <em>correction</em>.
-      </span>
-    </div>
-
-    <!-- DESCRIPTION DU MODE ACTIF -->
-    <div id="mode-description" role="status" aria-live="polite" aria-atomic="true">
-      <strong>Mode actuel :</strong> Vision normale — aucun filtre appliqué.
-      La scène est affichée telle qu'une personne avec une vision normale des couleurs la verrait.
-    </div>
-
-    <!-- SCÈNE SVG -->
-    <figure id="scene-wrapper">
-      <svg id="scene-svg" viewBox="0 0 680 380" xmlns="http://www.w3.org/2000/svg"
-           role="img" aria-labelledby="scene-title scene-desc">
-        <title id="scene-title">Scène d'exemple : graphique à barres, feu tricolore et pastilles de couleurs</title>
-        <desc id="scene-desc">
-          Mini-graphique à barres avec des barres rouge et verte représentant deux séries de données ;
-          un feu de circulation avec trois feux (rouge, orange, vert) ;
-          et six pastilles de couleurs nommées avec symboles distinctifs.
-        </desc>
-
-        <!-- Fond -->
-        <rect width="680" height="380" fill="#F7F9FC"/>
-
-        <!-- ===== GRAPHIQUE À BARRES ===== -->
-        <g id="chart-group">
-          <text x="60" y="26" font-size="13" font-weight="700" fill="#16202E" font-family="system-ui,sans-serif">Graphique à barres (problème rouge/vert)</text>
-
-          <!-- Grille -->
-          <line x1="68" y1="40" x2="68" y2="175" stroke="#ccc" stroke-width="1"/>
-          <line x1="68" y1="175" x2="310" y2="175" stroke="#ccc" stroke-width="1"/>
-          <line x1="68" y1="138" x2="310" y2="138" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4 3"/>
-          <line x1="68" y1="102" x2="310" y2="102" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4 3"/>
-          <line x1="68" y1="66" x2="310" y2="66" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4 3"/>
-
-          <!-- Labels axe Y -->
-          <text x="60" y="178" font-size="10" fill="#666" text-anchor="end" font-family="system-ui">0</text>
-          <text x="60" y="142" font-size="10" fill="#666" text-anchor="end" font-family="system-ui">25</text>
-          <text x="60" y="106" font-size="10" fill="#666" text-anchor="end" font-family="system-ui">50</text>
-          <text x="60" y="70" font-size="10" fill="#666" text-anchor="end" font-family="system-ui">75</text>
-
-          <!-- Groupe A (rouge) — barres + motif hachuré -->
-          <rect x="80" y="80" width="30" height="95" fill="#e74c3c"/>
-          <rect x="80" y="80" width="30" height="95" fill="url(#hatch-a)" opacity="0.35"/>
-          <!-- Motif visible sans couleur -->
-          <text x="95" y="73" font-size="11" text-anchor="middle" font-family="system-ui" fill="#c0392b" font-weight="700">▲</text>
-
-          <rect x="150" y="100" width="30" height="75" fill="#e74c3c"/>
-          <rect x="150" y="100" width="30" height="75" fill="url(#hatch-a)" opacity="0.35"/>
-          <text x="165" y="93" font-size="11" text-anchor="middle" font-family="system-ui" fill="#c0392b" font-weight="700">▲</text>
-
-          <rect x="220" y="55" width="30" height="120" fill="#e74c3c"/>
-          <rect x="220" y="55" width="30" height="120" fill="url(#hatch-a)" opacity="0.35"/>
-          <text x="235" y="48" font-size="11" text-anchor="middle" font-family="system-ui" fill="#c0392b" font-weight="700">▲</text>
-
-          <!-- Groupe B (vert) -->
-          <rect x="113" y="115" width="30" height="60" fill="#27ae60"/>
-          <rect x="113" y="115" width="30" height="60" fill="url(#hatch-b)" opacity="0.4"/>
-          <text x="128" y="108" font-size="11" text-anchor="middle" font-family="system-ui" fill="#1a7a40" font-weight="700">●</text>
-
-          <rect x="183" y="90" width="30" height="85" fill="#27ae60"/>
-          <rect x="183" y="90" width="30" height="85" fill="url(#hatch-b)" opacity="0.4"/>
-          <text x="198" y="83" font-size="11" text-anchor="middle" font-family="system-ui" fill="#1a7a40" font-weight="700">●</text>
-
-          <rect x="253" y="130" width="30" height="45" fill="#27ae60"/>
-          <rect x="253" y="130" width="30" height="45" fill="url(#hatch-b)" opacity="0.4"/>
-          <text x="268" y="123" font-size="11" text-anchor="middle" font-family="system-ui" fill="#1a7a40" font-weight="700">●</text>
-
-          <!-- Légende graphique -->
-          <rect x="80" y="188" width="12" height="12" fill="#e74c3c"/>
-          <rect x="80" y="188" width="12" height="12" fill="url(#hatch-a)" opacity="0.35"/>
-          <text x="97" y="199" font-size="10" fill="#444" font-family="system-ui">Série A ▲</text>
-          <rect x="160" y="188" width="12" height="12" fill="#27ae60"/>
-          <rect x="160" y="188" width="12" height="12" fill="url(#hatch-b)" opacity="0.4"/>
-          <text x="177" y="199" font-size="10" fill="#444" font-family="system-ui">Série B ●</text>
-        </g>
-
-        <!-- Motifs hachures définis -->
-        <defs>
-          <pattern id="hatch-a" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
-            <line x1="0" y1="0" x2="0" y2="8" stroke="#fff" stroke-width="3"/>
-          </pattern>
-          <pattern id="hatch-b" patternUnits="userSpaceOnUse" width="8" height="8">
-            <line x1="0" y1="0" x2="8" y2="8" stroke="#fff" stroke-width="2"/>
-            <line x1="8" y1="0" x2="0" y2="8" stroke="#fff" stroke-width="2"/>
-          </pattern>
-        </defs>
-
-        <!-- Séparateur vertical -->
-        <line x1="330" y1="20" x2="330" y2="360" stroke="#D0D9E8" stroke-width="1.5"/>
-
-        <!-- ===== FEU TRICOLORE ===== -->
-        <g id="traffic-group">
-          <text x="360" y="26" font-size="13" font-weight="700" fill="#16202E" font-family="system-ui,sans-serif">Feu tricolore</text>
-
-          <!-- Corps du feu -->
-          <rect x="380" y="38" width="70" height="175" rx="14" fill="#1a1a2e"/>
-
-          <!-- Feu ROUGE (haut) -->
-          <circle cx="415" cy="78" r="25" fill="#e74c3c"/>
-          <!-- Symbole forme : croix -->
-          <line x1="405" y1="68" x2="425" y2="88" stroke="rgba(255,255,255,0.6)" stroke-width="3" stroke-linecap="round"/>
-          <line x1="425" y1="68" x2="405" y2="88" stroke="rgba(255,255,255,0.6)" stroke-width="3" stroke-linecap="round"/>
-          <text x="415" y="83" text-anchor="middle" font-size="11" fill="rgba(255,255,255,0.85)" font-weight="700" font-family="system-ui">✕</text>
-
-          <!-- Feu ORANGE (milieu) -->
-          <circle cx="415" cy="130" r="25" fill="#F39C12"/>
-          <!-- Symbole forme : triangle -->
-          <text x="415" y="136" text-anchor="middle" font-size="16" fill="rgba(255,255,255,0.85)" font-weight="700" font-family="system-ui">▲</text>
-
-          <!-- Feu VERT (bas) -->
-          <circle cx="415" cy="182" r="25" fill="#27ae60"/>
-          <!-- Symbole forme : cercle plein -->
-          <circle cx="415" cy="182" r="10" fill="rgba(255,255,255,0.5)"/>
-          <text x="415" y="187" text-anchor="middle" font-size="11" fill="rgba(0,0,0,0.6)" font-weight="700" font-family="system-ui">●</text>
-
-          <!-- Légende feu -->
-          <text x="460" y="83" font-size="11" fill="#444" font-family="system-ui" dominant-baseline="middle">STOP ✕</text>
-          <text x="460" y="130" font-size="11" fill="#444" font-family="system-ui" dominant-baseline="middle">ATTENTE ▲</text>
-          <text x="460" y="182" font-size="11" fill="#444" font-family="system-ui" dominant-baseline="middle">GO ●</text>
-
-          <!-- Pied -->
-          <rect x="400" y="213" width="30" height="30" fill="#555"/>
-          <rect x="390" y="240" width="50" height="10" rx="4" fill="#444"/>
-        </g>
-
-        <!-- ===== PASTILLES NOMMÉES ===== -->
-        <g id="swatches-group">
-          <text x="60" y="228" font-size="13" font-weight="700" fill="#16202E" font-family="system-ui,sans-serif">Pastilles de couleurs nommées</text>
-          <text x="60" y="244" font-size="10" fill="#666" font-family="system-ui">Chaque pastille porte un symbole distinctif (indépendant de la couleur)</text>
-
-          <!-- Rouge -->
-          <rect x="60" y="253" width="55" height="55" rx="10" fill="#e74c3c"/>
-          <text x="87" y="283" text-anchor="middle" font-size="22" fill="rgba(255,255,255,0.85)" font-family="system-ui">✕</text>
-          <text x="87" y="318" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Rouge</text>
-
-          <!-- Vert -->
-          <rect x="130" y="253" width="55" height="55" rx="10" fill="#27ae60"/>
-          <text x="157" y="283" text-anchor="middle" font-size="22" fill="rgba(255,255,255,0.85)" font-family="system-ui">●</text>
-          <text x="157" y="318" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Vert</text>
-
-          <!-- Bleu -->
-          <rect x="200" y="253" width="55" height="55" rx="10" fill="#2980b9"/>
-          <text x="227" y="283" text-anchor="middle" font-size="22" fill="rgba(255,255,255,0.85)" font-family="system-ui">▲</text>
-          <text x="227" y="318" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Bleu</text>
-
-          <!-- Jaune -->
-          <rect x="270" y="253" width="55" height="55" rx="10" fill="#F4B81C"/>
-          <text x="297" y="283" text-anchor="middle" font-size="22" fill="rgba(0,0,0,0.65)" font-family="system-ui">■</text>
-          <text x="297" y="318" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Jaune</text>
-
-          <!-- Violet -->
-          <rect x="340" y="253" width="55" height="55" rx="10" fill="#8e44ad"/>
-          <text x="367" y="283" text-anchor="middle" font-size="22" fill="rgba(255,255,255,0.85)" font-family="system-ui">◆</text>
-          <text x="367" y="318" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Violet</text>
-
-          <!-- Orange -->
-          <rect x="410" y="253" width="55" height="55" rx="10" fill="#e67e22"/>
-          <text x="437" y="283" text-anchor="middle" font-size="22" fill="rgba(255,255,255,0.85)" font-family="system-ui">★</text>
-          <text x="437" y="318" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Orange</text>
-
-          <!-- Cyan -->
-          <rect x="480" y="253" width="55" height="55" rx="10" fill="#16a085"/>
-          <text x="507" y="283" text-anchor="middle" font-size="22" fill="rgba(255,255,255,0.85)" font-family="system-ui">♦</text>
-          <text x="507" y="318" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Cyan</text>
-
-          <!-- Rose -->
-          <rect x="550" y="253" width="55" height="55" rx="10" fill="#e91e8c"/>
-          <text x="577" y="283" text-anchor="middle" font-size="22" fill="rgba(255,255,255,0.85)" font-family="system-ui">⬟</text>
-          <text x="577" y="318" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Rose</text>
-        </g>
-
-        <!-- Note de bas de scène -->
-        <text x="60" y="365" font-size="10" fill="#888" font-family="system-ui">
-          Les formes et symboles permettent d'identifier chaque couleur sans dépendre uniquement des teintes.
-        </text>
-      </svg>
-      <figcaption style="font-size:0.8rem;color:#555;padding:8px 12px;border-top:1px solid var(--border);background:var(--fond);">
-        Scène de démonstration. Les symboles (✕ ● ▲ ■ ◆ ★ ♦) identifient les couleurs indépendamment de la teinte.
-      </figcaption>
-    </figure>
-  </section>
-
-  <!-- SECTION 3 : IDENTIFICATEUR DE COULEUR -->
-  <section class="section-card" aria-labelledby="h-identify">
-    <h2 id="h-identify"><span aria-hidden="true">🔍</span> Identificateur de couleur</h2>
-    <p class="section-desc">
-      Cliquez sur une pastille ou choisissez une couleur personnalisée pour obtenir son
-      <strong>nom en français</strong> (distance euclidienne RVB sur ~30 couleurs nommées)
-      et entendre sa lecture vocale.
-    </p>
-
-    <!-- PASTILLES RAPIDES -->
-    <div class="swatch-grid" role="list" aria-label="Pastilles de couleurs rapides">
-      <!-- Les pastilles sont générées par JS -->
-    </div>
-
-    <!-- CHOIX LIBRE -->
-    <div class="color-input-row">
-      <label for="color-picker" style="font-size:0.92rem;font-weight:600;">Choisir une couleur :</label>
-      <input type="color" id="color-picker" value="#3498db" aria-describedby="color-picker-desc">
-      <span id="color-picker-desc" style="font-size:0.82rem;color:#555;">Sélectionnez n'importe quelle couleur pour l'identifier</span>
-    </div>
-
-    <!-- RÉSULTAT -->
-    <div id="color-result" aria-live="polite" aria-atomic="true" aria-label="Résultat de l'identification de couleur">
-      <div id="result-swatch" aria-hidden="true" style="background:#3498db"></div>
-      <div>
-        <div id="result-name" style="font-size:1.1rem;font-weight:700;">Bleu acier</div>
-        <div id="result-hex" style="font-family:monospace;font-size:0.88rem;color:#555;">#3498db</div>
-        <div id="result-dist" style="font-size:0.78rem;color:#777;"></div>
       </div>
-      <button id="speak-btn" aria-label="Lire le nom de la couleur à voix haute" title="Lecture vocale du nom de la couleur">
-        <span aria-hidden="true">🔊</span> Écouter
-      </button>
-    </div>
-  </section>
 
-  <!-- SECTION 4 : PALETTE SÛRE -->
-  <section class="section-card" aria-labelledby="h-safe">
-    <h2 id="h-safe"><span aria-hidden="true">✅</span> Palette sûre pour daltoniens</h2>
-    <p class="section-desc">
-      Ces couleurs sont <strong>distinguables</strong> par la grande majorité des personnes
-      daltoniennes (protanopes, deutéranopes, tritanopes). Elles ont été choisies pour
-      leur contraste en luminosité et leur séparation dans les différents espaces perceptuels.
-    </p>
-    <div class="palette-grid" role="list" aria-label="Palette de couleurs sûres pour daltoniens">
-      <!-- Généré par JS -->
-    </div>
-  </section>
+      <!-- SEVERITE -->
+      <div class="severity-row" role="group" aria-labelledby="sev-lbl">
+        <label id="sev-lbl" for="severity-slider">S&eacute;v&eacute;rit&eacute;&nbsp;:</label>
+        <input type="range" id="severity-slider" min="0" max="100" value="100"
+               aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"
+               aria-describedby="severity-val" aria-label="S&eacute;v&eacute;rit&eacute; du filtre de 0 &agrave; 100">
+        <span id="severity-val" aria-live="polite" aria-atomic="true">100&nbsp;%</span>
+      </div>
+
+      <!-- DESCRIPTION MODE -->
+      <div id="mode-description" role="status" aria-live="polite" aria-atomic="true">
+        <strong>Mode actuel&nbsp;:</strong> Vision normale &mdash; aucun filtre appliqu&eacute;.
+      </div>
+
+      <!-- SCENE / CAMERA TABS -->
+      <div class="scene-tabs" role="group" aria-label="Source de l'image">
+        <button class="scene-tab-btn" id="src-scene-btn" aria-selected="true" aria-controls="scene-wrapper">
+          <span aria-hidden="true">&#128444;&#65039;</span> Sc&egrave;ne d'exemple
+        </button>
+        <button class="scene-tab-btn" id="src-camera-btn" aria-selected="false" aria-controls="camera-wrapper">
+          <span aria-hidden="true">&#127910;</span> Cam&eacute;ra en direct
+        </button>
+      </div>
+
+      <!-- SCENE EXEMPLE -->
+      <div id="scene-wrapper" class="active" aria-label="Sc&egrave;ne d'exemple avec filtres">
+        <svg id="scene-svg" viewBox="0 0 680 380" xmlns="http://www.w3.org/2000/svg"
+             role="img" aria-labelledby="scene-title scene-desc">
+          <title id="scene-title">Sc&egrave;ne d'exemple : graphique &agrave; barres, feu tricolore et pastilles de couleurs</title>
+          <desc id="scene-desc">
+            Mini-graphique &agrave; barres avec des barres rouge (s&eacute;rie A, symbole triangle) et verte (s&eacute;rie B, symbole cercle) ;
+            un feu tricolore avec symboles distincts ; six pastilles de couleurs avec formes identifiantes.
+          </desc>
+          <rect width="680" height="380" fill="#F7F9FC"/>
+          <!-- GRAPHIQUE -->
+          <g id="chart-group">
+            <text x="60" y="26" font-size="13" font-weight="700" fill="#16202E" font-family="system-ui,sans-serif">Graphique (probl&egrave;me rouge/vert)</text>
+            <line x1="68" y1="40" x2="68" y2="175" stroke="#ccc" stroke-width="1"/>
+            <line x1="68" y1="175" x2="310" y2="175" stroke="#ccc" stroke-width="1"/>
+            <line x1="68" y1="138" x2="310" y2="138" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4 3"/>
+            <line x1="68" y1="102" x2="310" y2="102" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4 3"/>
+            <line x1="68" y1="66" x2="310" y2="66" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4 3"/>
+            <text x="60" y="178" font-size="10" fill="#666" text-anchor="end" font-family="system-ui">0</text>
+            <text x="60" y="142" font-size="10" fill="#666" text-anchor="end" font-family="system-ui">25</text>
+            <text x="60" y="106" font-size="10" fill="#666" text-anchor="end" font-family="system-ui">50</text>
+            <text x="60" y="70" font-size="10" fill="#666" text-anchor="end" font-family="system-ui">75</text>
+            <!-- Série A (rouge) -->
+            <rect x="80" y="80" width="30" height="95" fill="#e74c3c"/>
+            <rect x="80" y="80" width="30" height="95" fill="url(#hatch-a)" opacity="0.35"/>
+            <text x="95" y="73" font-size="11" text-anchor="middle" font-family="system-ui" fill="#c0392b" font-weight="700">&#9650;</text>
+            <rect x="150" y="100" width="30" height="75" fill="#e74c3c"/>
+            <rect x="150" y="100" width="30" height="75" fill="url(#hatch-a)" opacity="0.35"/>
+            <text x="165" y="93" font-size="11" text-anchor="middle" font-family="system-ui" fill="#c0392b" font-weight="700">&#9650;</text>
+            <rect x="220" y="55" width="30" height="120" fill="#e74c3c"/>
+            <rect x="220" y="55" width="30" height="120" fill="url(#hatch-a)" opacity="0.35"/>
+            <text x="235" y="48" font-size="11" text-anchor="middle" font-family="system-ui" fill="#c0392b" font-weight="700">&#9650;</text>
+            <!-- Série B (vert) -->
+            <rect x="113" y="115" width="30" height="60" fill="#27ae60"/>
+            <rect x="113" y="115" width="30" height="60" fill="url(#hatch-b)" opacity="0.4"/>
+            <text x="128" y="108" font-size="11" text-anchor="middle" font-family="system-ui" fill="#1a7a40" font-weight="700">&#9679;</text>
+            <rect x="183" y="90" width="30" height="85" fill="#27ae60"/>
+            <rect x="183" y="90" width="30" height="85" fill="url(#hatch-b)" opacity="0.4"/>
+            <text x="198" y="83" font-size="11" text-anchor="middle" font-family="system-ui" fill="#1a7a40" font-weight="700">&#9679;</text>
+            <rect x="253" y="130" width="30" height="45" fill="#27ae60"/>
+            <rect x="253" y="130" width="30" height="45" fill="url(#hatch-b)" opacity="0.4"/>
+            <text x="268" y="123" font-size="11" text-anchor="middle" font-family="system-ui" fill="#1a7a40" font-weight="700">&#9679;</text>
+            <!-- Légende -->
+            <rect x="80" y="188" width="12" height="12" fill="#e74c3c"/>
+            <rect x="80" y="188" width="12" height="12" fill="url(#hatch-a)" opacity="0.35"/>
+            <text x="97" y="199" font-size="10" fill="#444" font-family="system-ui">S&eacute;rie A &#9650;</text>
+            <rect x="160" y="188" width="12" height="12" fill="#27ae60"/>
+            <rect x="160" y="188" width="12" height="12" fill="url(#hatch-b)" opacity="0.4"/>
+            <text x="177" y="199" font-size="10" fill="#444" font-family="system-ui">S&eacute;rie B &#9679;</text>
+          </g>
+          <line x1="330" y1="20" x2="330" y2="360" stroke="#D0D9E8" stroke-width="1.5"/>
+          <!-- FEU -->
+          <g id="traffic-group">
+            <text x="360" y="26" font-size="13" font-weight="700" fill="#16202E" font-family="system-ui,sans-serif">Feu tricolore</text>
+            <rect x="380" y="38" width="70" height="175" rx="14" fill="#1a1a2e"/>
+            <circle cx="415" cy="78" r="25" fill="#e74c3c"/>
+            <text x="415" y="84" text-anchor="middle" font-size="18" fill="rgba(255,255,255,.85)" font-weight="700" font-family="system-ui">&#10005;</text>
+            <circle cx="415" cy="130" r="25" fill="#F39C12"/>
+            <text x="415" y="136" text-anchor="middle" font-size="16" fill="rgba(255,255,255,.85)" font-weight="700" font-family="system-ui">&#9650;</text>
+            <circle cx="415" cy="182" r="25" fill="#27ae60"/>
+            <text x="415" y="188" text-anchor="middle" font-size="16" fill="rgba(0,0,0,.6)" font-weight="700" font-family="system-ui">&#9679;</text>
+            <text x="460" y="83" font-size="11" fill="#444" font-family="system-ui" dominant-baseline="middle">STOP &#10005;</text>
+            <text x="460" y="130" font-size="11" fill="#444" font-family="system-ui" dominant-baseline="middle">ATTENTE &#9650;</text>
+            <text x="460" y="182" font-size="11" fill="#444" font-family="system-ui" dominant-baseline="middle">GO &#9679;</text>
+            <rect x="400" y="213" width="30" height="30" fill="#555"/>
+            <rect x="390" y="240" width="50" height="10" rx="4" fill="#444"/>
+          </g>
+          <!-- PASTILLES -->
+          <g id="swatches-group">
+            <text x="60" y="228" font-size="13" font-weight="700" fill="#16202E" font-family="system-ui,sans-serif">Pastilles nommées (symbole + texte)</text>
+            <rect x="60" y="241" width="55" height="55" rx="10" fill="#e74c3c"/>
+            <text x="87" y="271" text-anchor="middle" font-size="22" fill="rgba(255,255,255,.85)" font-family="system-ui">&#10005;</text>
+            <text x="87" y="307" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Rouge</text>
+            <rect x="130" y="241" width="55" height="55" rx="10" fill="#27ae60"/>
+            <text x="157" y="271" text-anchor="middle" font-size="22" fill="rgba(255,255,255,.85)" font-family="system-ui">&#9679;</text>
+            <text x="157" y="307" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Vert</text>
+            <rect x="200" y="241" width="55" height="55" rx="10" fill="#2980b9"/>
+            <text x="227" y="271" text-anchor="middle" font-size="22" fill="rgba(255,255,255,.85)" font-family="system-ui">&#9650;</text>
+            <text x="227" y="307" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Bleu</text>
+            <rect x="270" y="241" width="55" height="55" rx="10" fill="#F4B81C"/>
+            <text x="297" y="271" text-anchor="middle" font-size="22" fill="rgba(0,0,0,.65)" font-family="system-ui">&#9632;</text>
+            <text x="297" y="307" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Jaune</text>
+            <rect x="340" y="241" width="55" height="55" rx="10" fill="#8e44ad"/>
+            <text x="367" y="271" text-anchor="middle" font-size="22" fill="rgba(255,255,255,.85)" font-family="system-ui">&#9670;</text>
+            <text x="367" y="307" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Violet</text>
+            <rect x="410" y="241" width="55" height="55" rx="10" fill="#e67e22"/>
+            <text x="437" y="271" text-anchor="middle" font-size="22" fill="rgba(255,255,255,.85)" font-family="system-ui">&#9733;</text>
+            <text x="437" y="307" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Orange</text>
+            <rect x="480" y="241" width="55" height="55" rx="10" fill="#16a085"/>
+            <text x="507" y="271" text-anchor="middle" font-size="22" fill="rgba(255,255,255,.85)" font-family="system-ui">&#9830;</text>
+            <text x="507" y="307" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Cyan</text>
+            <rect x="550" y="241" width="55" height="55" rx="10" fill="#e91e8c"/>
+            <text x="577" y="271" text-anchor="middle" font-size="22" fill="rgba(255,255,255,.85)" font-family="system-ui">&#11039;</text>
+            <text x="577" y="307" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Rose</text>
+          </g>
+          <text x="60" y="360" font-size="10" fill="#888" font-family="system-ui">Les formes et symboles permettent d'identifier chaque couleur sans d&eacute;pendre uniquement des teintes.</text>
+        </svg>
+      </div>
+
+      <!-- CAMERA -->
+      <div id="camera-wrapper" aria-label="Vue cam&eacute;ra avec filtre en temps r&eacute;el">
+        <div class="camera-overlay" id="camera-overlay">
+          <p>La cam&eacute;ra vous permet d'appliquer les filtres de daltonisation en temps r&eacute;el sur votre environnement.</p>
+          <button class="btn btn-primary" id="start-camera-btn">
+            <span aria-hidden="true">&#127910;</span> Activer la cam&eacute;ra
+          </button>
+          <p style="font-size:.8rem;opacity:.75">L'image reste sur votre appareil. Aucune donn&eacute;e envoy&eacute;e.</p>
+        </div>
+        <video id="camera-video" autoplay playsinline muted aria-hidden="true"></video>
+        <canvas id="camera-canvas" role="img" aria-label="Vue cam&eacute;ra avec filtre daltonisme appliqu&eacute;"></canvas>
+        <div id="camera-status" role="status" aria-live="polite" style="display:none"></div>
+        <div style="padding:8px;display:flex;gap:8px;background:#111;flex-wrap:wrap">
+          <button class="btn btn-danger" id="stop-camera-btn" style="display:none;min-height:44px;font-size:.85rem">
+            <span aria-hidden="true">&#9209;&#65039;</span> Arr&ecirc;ter
+          </button>
+          <button class="btn btn-secondary" id="eyedrop-camera-btn" style="display:none;min-height:44px;font-size:.85rem;color:#fff;border-color:rgba(255,255,255,.3);background:transparent">
+            <span aria-hidden="true">&#128449;</span> Pipette (cliquer sur l'image)
+          </button>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span class="legend-item"><span class="legend-dot" style="background:#e74c3c"></span> Rouge &#10005;</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#27ae60"></span> Vert &#9679;</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#2980b9"></span> Bleu &#9650;</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#F4B81C;border-color:#ccc"></span> Jaune &#9632;</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#8e44ad"></span> Violet &#9670;</span>
+        <span class="legend-item">Chaque couleur porte un symbole distinct &mdash; jamais la couleur seule pour informer.</span>
+      </div>
+    </section>
+
+  </div><!-- /panel-filters -->
+
+  <!-- ═══════════════════════════════════════════════════════════
+       ONGLET 2 : IDENTIFICATEUR DE COULEUR
+  ═══════════════════════════════════════════════════════════ -->
+  <div id="panel-identify" role="tabpanel" aria-labelledby="tab-identify" class="tab-panel">
+
+    <section class="section-card" aria-labelledby="h-identify">
+      <h2 id="h-identify"><span aria-hidden="true">&#128270;</span> Identificateur de couleur</h2>
+      <p class="section-desc">
+        Cliquez sur une pastille, choisissez une couleur avec le s&eacute;lecteur, ou utilisez la
+        <strong>pipette sur image charg&eacute;e</strong> pour obtenir le nom fran&ccedil;ais le plus proche,
+        les valeurs HEX/RGB et une lecture vocale.
+      </p>
+
+      <!-- PASTILLES RAPIDES -->
+      <div id="swatch-grid" class="swatch-grid" role="group" aria-label="Pastilles de couleurs rapides">
+        <!-- Généré par JS -->
+      </div>
+
+      <!-- COLOR PICKER -->
+      <div class="color-input-row">
+        <label for="color-picker">Choisir une couleur&nbsp;:</label>
+        <input type="color" id="color-picker" value="#3498db" aria-describedby="color-picker-desc">
+        <span id="color-picker-desc" style="font-size:.82rem;color:#555">S&eacute;lectionnez n'importe quelle couleur pour l'identifier</span>
+      </div>
+
+      <!-- RÉSULTAT -->
+      <div id="color-result" aria-live="polite" aria-atomic="true" aria-label="R&eacute;sultat de l'identification">
+        <div id="result-swatch" role="img" aria-label="Aper&ccedil;u de la couleur s&eacute;lectionn&eacute;e" style="background:#3498db"></div>
+        <div style="flex:1">
+          <div id="result-name" style="font-size:1.1rem;font-weight:700">Bleu acier</div>
+          <div id="result-hex" style="font-family:monospace;font-size:.88rem;color:#555">#3498DB</div>
+          <div class="result-rgb" id="result-rgb">RVB : 52, 152, 219</div>
+          <div id="result-dist" style="font-size:.78rem;color:#777;margin-top:2px"></div>
+        </div>
+        <button id="speak-btn" class="btn btn-primary" aria-label="Lire le nom de la couleur &agrave; voix haute">
+          <span aria-hidden="true">&#128266;</span> &Eacute;couter
+        </button>
+        <button id="copy-hex-btn" class="btn btn-secondary" aria-label="Copier le code hexad&eacute;cimal">
+          <span aria-hidden="true">&#128203;</span> Copier HEX
+        </button>
+      </div>
+
+      <!-- PIPETTE SUR IMAGE UPLOADÉE -->
+      <div style="margin-top:20px">
+        <p style="font-size:.92rem;font-weight:700;margin-bottom:8px">&#128449;&#65039; Pipette sur image&nbsp;:</p>
+        <div class="upload-zone" id="eyedrop-upload-zone" style="padding:20px">
+          <input type="file" id="eyedrop-file" accept="image/*" aria-label="Charger une image pour utiliser la pipette">
+          <span class="upload-icon" aria-hidden="true">&#128444;&#65039;</span>
+          <p>Cliquez ou glissez une image ici, puis cliquez sur un pixel pour l'identifier</p>
+        </div>
+        <div id="eyedropper-canvas-wrap" style="display:none;margin-top:12px">
+          <canvas id="eyedropper-canvas" role="img" aria-label="Image charg&eacute;e — cliquez pour identifier une couleur" style="cursor:crosshair;max-width:100%;border-radius:8px;border:2px solid var(--border)"></canvas>
+          <p class="eyedropper-hint" role="note">Cliquez sur n'importe quel point de l'image pour identifier sa couleur.</p>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /panel-identify -->
+
+  <!-- ═══════════════════════════════════════════════════════════
+       ONGLET 3 : VÉRIFICATEUR D'ACCESSIBILITÉ
+  ═══════════════════════════════════════════════════════════ -->
+  <div id="panel-checker" role="tabpanel" aria-labelledby="tab-checker" class="tab-panel">
+
+    <section class="section-card" aria-labelledby="h-checker">
+      <h2 id="h-checker"><span aria-hidden="true">&#9989;</span> V&eacute;rificateur d'accessibilit&eacute; des couleurs</h2>
+      <p class="section-desc">
+        Chargez une image pour analyser ses couleurs dominantes, d&eacute;tecter les paires
+        probl&eacute;matiques (contraste insuffisant, confusion pour daltoniens) et obtenir des
+        suggestions d'alternatives accessibles.
+      </p>
+
+      <!-- UPLOAD -->
+      <div class="upload-zone" id="checker-upload-zone">
+        <input type="file" id="checker-file" accept="image/*" aria-label="Charger une image &agrave; analyser">
+        <span class="upload-icon" aria-hidden="true">&#128444;&#65039;</span>
+        <p><strong>Cliquez ou glissez une image</strong><br>
+        <span style="font-size:.82rem;color:#666">L'analyse se fait enti&egrave;rement dans votre navigateur.</span></p>
+      </div>
+
+      <!-- CANVAS D'ANALYSE -->
+      <div id="checker-canvas-wrapper">
+        <canvas id="checker-canvas" role="img" aria-label="Image &agrave; analyser — cliquez pour mesurer deux couleurs"></canvas>
+        <p style="font-size:.8rem;color:#666;margin-top:6px" role="note">Cliquez sur deux zones pour mesurer le contraste entre elles.</p>
+        <div id="pick-status" style="font-size:.85rem;font-weight:600;color:var(--marine);margin-top:4px" aria-live="polite"></div>
+      </div>
+
+      <!-- RÉSULTATS -->
+      <div id="checker-results" aria-live="polite" aria-atomic="false"></div>
+
+      <!-- BOUTON ANALYSER -->
+      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap" id="checker-actions" style="display:none">
+        <button class="btn btn-primary" id="analyse-btn" style="display:none">
+          <span aria-hidden="true">&#128269;</span> Analyser les couleurs dominantes
+        </button>
+        <button class="btn btn-secondary" id="reset-checker-btn" style="display:none">
+          <span aria-hidden="true">&#8635;</span> Nouvelle image
+        </button>
+      </div>
+    </section>
+
+  </div><!-- /panel-checker -->
+
+  <!-- ═══════════════════════════════════════════════════════════
+       ONGLET 4 : PALETTES SÛRES
+  ═══════════════════════════════════════════════════════════ -->
+  <div id="panel-palette" role="tabpanel" aria-labelledby="tab-palette" class="tab-panel">
+
+    <section class="section-card" aria-labelledby="h-palette">
+      <h2 id="h-palette"><span aria-hidden="true">&#127775;</span> G&eacute;n&eacute;rateur de palettes s&ucirc;res</h2>
+      <p class="section-desc">
+        Ces couleurs sont distinguables par la grande majorit&eacute; des personnes daltoniennes
+        (protanopes, deut&eacute;ranopes, tritanopes). Nommez votre palette, exportez en HEX ou copiez au
+        presse-papier.
+      </p>
+
+      <div class="palette-controls">
+        <label for="palette-name-input" style="font-size:.9rem;font-weight:700;align-self:center">Nom de la palette&nbsp;:</label>
+        <input type="text" id="palette-name-input" class="palette-name-input"
+               value="Ma palette sûre" aria-label="Nom de la palette">
+        <button class="btn btn-primary" id="add-custom-color-btn">
+          <span aria-hidden="true">&#43;</span> Ajouter une couleur
+        </button>
+      </div>
+
+      <!-- Ajout couleur personnalisée -->
+      <div id="custom-color-panel" style="display:none;margin-bottom:16px;padding:14px;background:var(--fond);border:1px solid var(--border);border-radius:var(--radius-sm)">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <label for="custom-color-pick" style="font-size:.9rem;font-weight:600">Couleur&nbsp;:</label>
+          <input type="color" id="custom-color-pick" value="#0072B2" style="width:56px;height:44px;border:none;border-radius:6px;cursor:pointer">
+          <label for="custom-color-why" style="font-size:.9rem;font-weight:600">Description&nbsp;:</label>
+          <input type="text" id="custom-color-why" value="" placeholder="Pourquoi cette couleur est-elle sûre ?"
+                 style="flex:1;padding:8px 12px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:.88rem;min-width:160px">
+          <button class="btn btn-primary" id="confirm-custom-color" style="min-height:44px">Ajouter</button>
+          <button class="btn btn-secondary" id="cancel-custom-color" style="min-height:44px">Annuler</button>
+        </div>
+      </div>
+
+      <div class="palette-grid" id="palette-grid" role="list" aria-label="Palette de couleurs s&ucirc;res pour daltoniens">
+        <!-- Généré par JS -->
+      </div>
+
+      <div class="export-row">
+        <button class="btn btn-primary" id="export-hex-btn">
+          <span aria-hidden="true">&#128229;</span> Exporter HEX (.txt)
+        </button>
+        <button class="btn btn-secondary" id="copy-all-btn">
+          <span aria-hidden="true">&#128203;</span> Copier tous les HEX
+        </button>
+      </div>
+
+      <div id="palette-status" style="margin-top:10px"></div>
+    </section>
+
+  </div><!-- /panel-palette -->
 
 </main>
 
 <script>
 /* ================================================================
-   DONNÉES : ~30 noms de couleurs FR avec valeurs RVB
+   DONNÉES COULEURS FR (~50 noms)
    ================================================================ */
 const COLORS_FR = [
-  { name: 'Noir',          hex: '#000000', r:   0, g:   0, b:   0 },
-  { name: 'Blanc',         hex: '#FFFFFF', r: 255, g: 255, b: 255 },
-  { name: 'Rouge',         hex: '#E74C3C', r: 231, g:  76, b:  60 },
-  { name: 'Rouge foncé',   hex: '#C0392B', r: 192, g:  57, b:  43 },
-  { name: 'Vert',          hex: '#27AE60', r:  39, g: 174, b:  96 },
-  { name: 'Vert clair',    hex: '#2ECC71', r:  46, g: 204, b: 113 },
-  { name: 'Vert foncé',    hex: '#1E8449', r:  30, g: 132, b:  73 },
-  { name: 'Bleu',          hex: '#2980B9', r:  41, g: 128, b: 185 },
-  { name: 'Bleu ciel',     hex: '#3498DB', r:  52, g: 152, b: 219 },
-  { name: 'Bleu marine',   hex: '#1A5276', r:  26, g:  82, b: 118 },
-  { name: 'Bleu nuit',     hex: '#0F4C81', r:  15, g:  76, b: 129 },
-  { name: 'Jaune',         hex: '#F4D03F', r: 244, g: 208, b:  63 },
-  { name: 'Jaune doré',    hex: '#F4B81C', r: 244, g: 184, b:  28 },
-  { name: 'Orange',        hex: '#E67E22', r: 230, g: 126, b:  34 },
-  { name: 'Orange vif',    hex: '#F39C12', r: 243, g: 156, b:  18 },
-  { name: 'Violet',        hex: '#8E44AD', r: 142, g:  68, b: 173 },
-  { name: 'Violet clair',  hex: '#9B59B6', r: 155, g:  89, b: 182 },
-  { name: 'Rose',          hex: '#E91E8C', r: 233, g:  30, b: 140 },
-  { name: 'Rose pâle',     hex: '#F8BBD9', r: 248, g: 187, b: 217 },
-  { name: 'Cyan',          hex: '#16A085', r:  22, g: 160, b: 133 },
-  { name: 'Turquoise',     hex: '#1ABC9C', r:  26, g: 188, b: 156 },
-  { name: 'Brun',          hex: '#7F4E1E', r: 127, g:  78, b:  30 },
-  { name: 'Marron',        hex: '#6D4C41', r: 109, g:  76, b:  65 },
-  { name: 'Gris clair',    hex: '#BDC3C7', r: 189, g: 195, b: 199 },
-  { name: 'Gris',          hex: '#95A5A6', r: 149, g: 165, b: 166 },
-  { name: 'Gris foncé',    hex: '#566573', r:  86, g: 101, b: 115 },
-  { name: 'Ardoise',       hex: '#2C3E50', r:  44, g:  62, b:  80 },
-  { name: 'Beige',         hex: '#FAD7A0', r: 250, g: 215, b: 160 },
-  { name: 'Crème',         hex: '#FDFEFE', r: 253, g: 254, b: 254 },
-  { name: 'Doré',          hex: '#D4AC0D', r: 212, g: 172, b:  13 },
-  { name: 'Magenta',       hex: '#C0392B', r: 192, g:  57, b:  43 },
-  { name: 'Indigo',        hex: '#283593', r:  40, g:  53, b: 147 },
-  { name: 'Bordeaux',      hex: '#7B241C', r: 123, g:  36, b:  28 },
-  { name: 'Kaki',          hex: '#7D6608', r: 125, g: 102, b:   8 },
-  { name: 'Lavande',       hex: '#7B68EE', r: 123, g: 104, b: 238 }
+  {name:'Noir',hex:'#000000',r:0,g:0,b:0},
+  {name:'Blanc',hex:'#FFFFFF',r:255,g:255,b:255},
+  {name:'Rouge',hex:'#E74C3C',r:231,g:76,b:60},
+  {name:'Rouge foncé',hex:'#C0392B',r:192,g:57,b:43},
+  {name:'Rouge vif',hex:'#FF0000',r:255,g:0,b:0},
+  {name:'Vert',hex:'#27AE60',r:39,g:174,b:96},
+  {name:'Vert clair',hex:'#2ECC71',r:46,g:204,b:113},
+  {name:'Vert foncé',hex:'#1E8449',r:30,g:132,b:73},
+  {name:'Vert pomme',hex:'#7CB342',r:124,g:179,b:66},
+  {name:'Bleu',hex:'#2980B9',r:41,g:128,b:185},
+  {name:'Bleu ciel',hex:'#3498DB',r:52,g:152,b:219},
+  {name:'Bleu marine',hex:'#1A5276',r:26,g:82,b:118},
+  {name:'Bleu nuit',hex:'#0F4C81',r:15,g:76,b:129},
+  {name:'Bleu roi',hex:'#0072B2',r:0,g:114,b:178},
+  {name:'Bleu ciel clair',hex:'#56B4E9',r:86,g:180,b:233},
+  {name:'Bleu électrique',hex:'#0040FF',r:0,g:64,b:255},
+  {name:'Jaune',hex:'#F4D03F',r:244,g:208,b:63},
+  {name:'Jaune doré',hex:'#F4B81C',r:244,g:184,b:28},
+  {name:'Jaune citron',hex:'#F0E442',r:240,g:228,b:66},
+  {name:'Orange',hex:'#E67E22',r:230,g:126,b:34},
+  {name:'Orange vif',hex:'#F39C12',r:243,g:156,b:18},
+  {name:'Orange doré',hex:'#E69F00',r:230,g:159,b:0},
+  {name:'Vermillon',hex:'#D55E00',r:213,g:94,b:0},
+  {name:'Violet',hex:'#8E44AD',r:142,g:68,b:173},
+  {name:'Violet clair',hex:'#9B59B6',r:155,g:89,b:182},
+  {name:'Indigo',hex:'#283593',r:40,g:53,b:147},
+  {name:'Lavande',hex:'#7B68EE',r:123,g:104,b:238},
+  {name:'Rose',hex:'#E91E8C',r:233,g:30,b:140},
+  {name:'Rose pâle',hex:'#F8BBD9',r:248,g:187,b:217},
+  {name:'Rose magenta',hex:'#CC79A7',r:204,g:121,b:167},
+  {name:'Magenta',hex:'#FF00FF',r:255,g:0,b:255},
+  {name:'Cyan',hex:'#16A085',r:22,g:160,b:133},
+  {name:'Cyan vif',hex:'#00FFFF',r:0,g:255,b:255},
+  {name:'Turquoise',hex:'#1ABC9C',r:26,g:188,b:156},
+  {name:'Vert-cyan',hex:'#009E73',r:0,g:158,b:115},
+  {name:'Brun',hex:'#7F4E1E',r:127,g:78,b:30},
+  {name:'Marron',hex:'#6D4C41',r:109,g:76,b:65},
+  {name:'Beige',hex:'#FAD7A0',r:250,g:215,b:160},
+  {name:'Crème',hex:'#FFFDD0',r:255,g:253,b:208},
+  {name:'Sable',hex:'#C2B280',r:194,g:178,b:128},
+  {name:'Kaki',hex:'#7D6608',r:125,g:102,b:8},
+  {name:'Bordeaux',hex:'#7B241C',r:123,g:36,b:28},
+  {name:'Doré',hex:'#D4AC0D',r:212,g:172,b:13},
+  {name:'Gris clair',hex:'#BDC3C7',r:189,g:195,b:199},
+  {name:'Gris',hex:'#95A5A6',r:149,g:165,b:166},
+  {name:'Gris foncé',hex:'#566573',r:86,g:101,b:115},
+  {name:'Ardoise',hex:'#2C3E50',r:44,g:62,b:80},
+  {name:'Charbon',hex:'#333333',r:51,g:51,b:51},
+  {name:'Argent',hex:'#C0C0C0',r:192,g:192,b:192},
+  {name:'Or',hex:'#FFD700',r:255,g:215,b:0}
+];
+
+const SAFE_PALETTE_DEFAULT = [
+  {name:'Bleu roi',hex:'#0072B2',why:'Distinguable par les 3 types de daltonisme',symbol:'&#9650;'},
+  {name:'Orange doré',hex:'#E69F00',why:'Contraste fort avec bleu et noir',symbol:'&#9679;'},
+  {name:'Vert-cyan',hex:'#009E73',why:'Séparation nette en vision protanope',symbol:'&#9632;'},
+  {name:'Rose magenta',hex:'#CC79A7',why:'Perçu distinctement en deutéranopie',symbol:'&#9670;'},
+  {name:'Bleu ciel clair',hex:'#56B4E9',why:'Clair, distinguable du bleu foncé',symbol:'&#9733;'},
+  {name:'Jaune citron',hex:'#F0E442',why:'Contraste lumineux, visible en tritanopie',symbol:'&#9830;'},
+  {name:'Vermillon',hex:'#D55E00',why:'Orange-rouge perçu par les protanopes',symbol:'&#10005;'},
+  {name:'Noir',hex:'#000000',why:'Référence universelle, contraste maximal',symbol:'&#9644;'},
 ];
 
 /* ================================================================
-   PALETTE SÛRE pour daltoniens
+   UTILITAIRES
    ================================================================ */
-const SAFE_PALETTE = [
-  { name: 'Bleu',          hex: '#0072B2', why: 'Distinguable par les 3 types de daltonisme' },
-  { name: 'Orange doré',   hex: '#E69F00', why: 'Contraste fort avec bleu et noir' },
-  { name: 'Vert-cyan',     hex: '#009E73', why: 'Séparation nette en vision protanope' },
-  { name: 'Rose magenta',  hex: '#CC79A7', why: 'Perçu distinctement en deutéranopie' },
-  { name: 'Bleu ciel',     hex: '#56B4E9', why: 'Clair, distinguable du bleu foncé' },
-  { name: 'Jaune citron',  hex: '#F0E442', why: 'Contraste lumineux, visible en tritanopie' },
-  { name: 'Vermillon',     hex: '#D55E00', why: 'Orange-rouge perçu par les protanopes' },
-  { name: 'Noir',          hex: '#000000', why: 'Référence universelle, contraste maximal' },
-];
+function hexToRgb(hex){
+  const h=hex.replace('#','');
+  if(h.length===3) return {r:parseInt(h[0]+h[0],16),g:parseInt(h[1]+h[1],16),b:parseInt(h[2]+h[2],16)};
+  return {r:parseInt(h.slice(0,2),16),g:parseInt(h.slice(2,4),16),b:parseInt(h.slice(4,6),16)};
+}
+function rgbToHex(r,g,b){
+  return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+function colorDistance(r1,g1,b1,r2,g2,b2){
+  return Math.sqrt((r1-r2)**2+(g1-g2)**2+(b1-b2)**2);
+}
+function findClosestColor(hex){
+  const {r,g,b}=hexToRgb(hex);
+  let best=null,bestDist=Infinity;
+  for(const c of COLORS_FR){
+    const d=colorDistance(r,g,b,c.r,c.g,c.b);
+    if(d<bestDist){bestDist=d;best=c;}
+  }
+  return {color:best,dist:Math.round(bestDist)};
+}
+function luminance(r,g,b){
+  const srgb=[r,g,b].map(v=>{v/=255;return v<=0.03928?v/12.92:((v+0.055)/1.055)**2.4});
+  return 0.2126*srgb[0]+0.7152*srgb[1]+0.0722*srgb[2];
+}
+function contrastRatio(r1,g1,b1,r2,g2,b2){
+  const l1=luminance(r1,g1,b1),l2=luminance(r2,g2,b2);
+  const lighter=Math.max(l1,l2),darker=Math.min(l1,l2);
+  return (lighter+0.05)/(darker+0.05);
+}
+function textColorForBg(r,g,b){
+  return (0.299*r+0.587*g+0.114*b)/255>0.5?'#16202E':'#FFFFFF';
+}
+function announce(msg){
+  const el=document.getElementById('aria-live');
+  el.textContent='';
+  requestAnimationFrame(()=>{el.textContent=msg;});
+}
+function lsGet(k,def){try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):def;}catch{return def;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
 
 /* ================================================================
-   FILTRES SVG : mapping mode → filtre
+   TABS
    ================================================================ */
-const FILTER_MAP = {
-  none:  { correct: '',               simulate: ''              },
-  proto: { correct: 'f-proto-correct', simulate: 'f-proto-sim' },
-  deut:  { correct: 'f-deut-correct',  simulate: 'f-deut-sim'  },
-  trit:  { correct: 'f-trit-correct',  simulate: 'f-trit-sim'  }
-};
+const tabBtns=document.querySelectorAll('.tab-btn');
+const tabPanels=document.querySelectorAll('.tab-panel');
+tabBtns.forEach((btn,i)=>{
+  btn.addEventListener('click',()=>activateTab(i));
+  btn.addEventListener('keydown',(e)=>{
+    let next=-1;
+    if(e.key==='ArrowRight'||e.key==='ArrowDown') next=(i+1)%tabBtns.length;
+    else if(e.key==='ArrowLeft'||e.key==='ArrowUp') next=(i-1+tabBtns.length)%tabBtns.length;
+    else if(e.key==='Home') next=0;
+    else if(e.key==='End') next=tabBtns.length-1;
+    if(next>=0){e.preventDefault();tabBtns[next].focus();activateTab(next);}
+  });
+});
+function activateTab(idx){
+  tabBtns.forEach((b,i)=>{
+    b.setAttribute('aria-selected',i===idx?'true':'false');
+    b.tabIndex=i===idx?0:-1;
+  });
+  tabPanels.forEach((p,i)=>{
+    p.classList.toggle('active',i===idx);
+  });
+  lsSet('ca_tab',idx);
+}
+// Restore last tab
+const savedTab=lsGet('ca_tab',0);
+if(savedTab>0&&savedTab<tabBtns.length) activateTab(savedTab);
 
-const MODE_DESC = {
-  none: {
-    correct: "Vision normale — aucun filtre appliqué. La scène est affichée telle qu'une personne avec une vision normale des couleurs la verrait.",
-    simulate: "Simulation de vision normale (identique à l'affichage standard)."
+/* ================================================================
+   FILTRE MATRICES — FULL et SEVERITY
+   ================================================================ */
+// Matrices identité
+const MAT_IDENT=[1,0,0,0,0, 0,1,0,0,0, 0,0,1,0,0, 0,0,0,1,0];
+const MATRICES={
+  proto:{
+    correct:[0.566,0.434,0,0,0, 0.055,0.945,0,0,0, 0,0.018,0.982,0,0, 0,0,0,1,0],
+    simulate:[0.1126,0.8874,0,0,0, 0.1126,0.8874,0,0,0, 0.0042,-0.0042,1,0,0, 0,0,0,1,0]
   },
-  proto: {
-    correct: "Correction protanopie : filtre appliqué pour aider les personnes manquant de cônes rouges (protanopes) à distinguer rouge/vert. Les rouges sont amplifiés vers des teintes plus perceptibles.",
-    simulate: "Simulation protanopie : approximation de ce qu'une personne protanope voit SANS aide. Les rouges sont très atténués et peuvent sembler bruns ou verts."
+  deut:{
+    correct:[0.625,0.375,0,0,0, 0.7,0.3,0,0,0, 0,0.3,0.7,0,0, 0,0,0,1,0],
+    simulate:[0.2126,0.7874,0,0,0, 0.2126,0.7874,0,0,0, -0.0196,0.0196,1,0,0, 0,0,0,1,0]
   },
-  deut: {
-    correct: "Correction deutéranopie : filtre aidant les personnes manquant de cônes verts (deutéranopes, forme la plus fréquente) à mieux différencier rouge et vert.",
-    simulate: "Simulation deutéranopie : approximation de la vision sans aide. Les verts et rouges se confondent, notamment dans les graphiques."
-  },
-  trit: {
-    correct: "Correction tritanopie : filtre pour les personnes manquant de cônes bleus (tritanopes, rare). Améliore la distinction bleu/jaune.",
-    simulate: "Simulation tritanopie : approximation de la vision sans aide. Les bleus apparaissent verdâtres, les jaunes et roses peuvent se confondre."
+  trit:{
+    correct:[0.95,0.05,0,0,0, 0,0.433,0.567,0,0, 0,0.475,0.525,0,0, 0,0,0,1,0],
+    simulate:[0.2126,0.7874,0,0,0, 0,0.2126,0.7874,0,0, 0,0.2126,0.7874,0,0, 0,0,0,1,0]
   }
 };
 
-/* ================================================================
-   ÉTAT
-   ================================================================ */
-let currentMode = 'none';
-let currentSimulate = false;
-let lastColorHex = '#3498db';
-let lastColorName = 'Bleu acier';
-let speechAvailable = ('speechSynthesis' in window);
-
-/* ================================================================
-   UTILS : DISTANCE COULEUR
-   ================================================================ */
-function hexToRgb(hex) {
-  const h = hex.replace('#', '');
-  if (h.length === 3) {
-    return { r: parseInt(h[0]+h[0],16), g: parseInt(h[1]+h[1],16), b: parseInt(h[2]+h[2],16) };
-  }
-  return { r: parseInt(h.substring(0,2),16), g: parseInt(h.substring(2,4),16), b: parseInt(h.substring(4,6),16) };
+function interpolateMat(mat,sev){
+  // sev in [0..1]: 0=identity, 1=full filter
+  return mat.map((v,i)=>MAT_IDENT[i]+(v-MAT_IDENT[i])*sev);
 }
+function matToStr(m){return m.join(' ');}
 
-function colorDistance(r1,g1,b1, r2,g2,b2) {
-  return Math.sqrt((r1-r2)**2 + (g1-g2)**2 + (b1-b2)**2);
-}
+const MODE_DESC={
+  none:{correct:'Vision normale — aucun filtre appliqué.',simulate:'Simulation de vision normale (affichage standard).'},
+  proto:{correct:'Correction protanopie : aide les personnes manquant de cônes rouges à distinguer rouge et vert.',simulate:'Simulation protanopie : comment un protanope voit sans aide. Les rouges sont très atténués.'},
+  deut:{correct:'Correction deutéranopie : aide les deutéranopes (forme la plus fréquente) à différencier rouge et vert.',simulate:'Simulation deutéranopie : les verts et rouges se confondent.'},
+  trit:{correct:'Correction tritanopie : aide les tritanopes à distinguer bleu et jaune.',simulate:'Simulation tritanopie : les bleus apparaissent verdâtres, jaunes et roses se confondent.'}
+};
 
-function findClosestColor(hex) {
-  const { r, g, b } = hexToRgb(hex);
-  let best = null, bestDist = Infinity;
-  for (const c of COLORS_FR) {
-    const d = colorDistance(r, g, b, c.r, c.g, c.b);
-    if (d < bestDist) { bestDist = d; best = c; }
-  }
-  return { color: best, dist: Math.round(bestDist) };
-}
+let currentMode=lsGet('ca_mode','none');
+let currentSimulate=lsGet('ca_simulate',false);
+let currentSeverity=lsGet('ca_severity',100);
 
-/* ================================================================
-   APPLIQUER LE FILTRE SVG
-   ================================================================ */
-function applyFilter() {
-  const sceneSvg = document.getElementById('scene-svg');
-  const filters = FILTER_MAP[currentMode];
-  const filterId = currentSimulate ? filters.simulate : filters.correct;
+// Apply state to controls
+document.querySelectorAll('.filter-btn').forEach(btn=>{
+  btn.setAttribute('aria-pressed',btn.dataset.mode===currentMode?'true':'false');
+  if(btn.dataset.mode===currentMode) btn.style.background=btn.dataset.mode!=='none'?'var(--marine)':'';
+});
+document.getElementById('toggle-simulate').checked=currentSimulate;
+document.getElementById('toggle-simulate').setAttribute('aria-checked',currentSimulate?'true':'false');
+document.getElementById('severity-slider').value=currentSeverity;
+document.getElementById('severity-val').textContent=currentSeverity+'%';
 
-  if (filterId) {
-    sceneSvg.style.filter = `url(#${filterId})`;
+function applyFilter(){
+  const sev=currentSeverity/100;
+  // For SVG scene: we build a dynamic feColorMatrix
+  const sceneSvg=document.getElementById('scene-svg');
+
+  if(currentMode==='none'){
+    sceneSvg.style.filter='none';
   } else {
-    sceneSvg.style.filter = 'none';
+    const type=currentSimulate?'simulate':'correct';
+    const baseMat=MATRICES[currentMode][type];
+    const mat=interpolateMat(baseMat,sev);
+    // Update or create dynamic filter
+    let dynFilter=document.getElementById('f-dyn');
+    if(!dynFilter){
+      dynFilter=document.createElementNS('http://www.w3.org/2000/svg','filter');
+      dynFilter.setAttribute('id','f-dyn');
+      dynFilter.setAttribute('color-interpolation-filters','linearRGB');
+      const fm=document.createElementNS('http://www.w3.org/2000/svg','feColorMatrix');
+      fm.setAttribute('id','f-dyn-mat');
+      fm.setAttribute('type','matrix');
+      dynFilter.appendChild(fm);
+      document.querySelector('svg defs').appendChild(dynFilter);
+    }
+    document.getElementById('f-dyn-mat').setAttribute('values',matToStr(mat));
+    sceneSvg.style.filter='url(#f-dyn)';
   }
 
-  // Mise à jour description
-  const descEl = document.getElementById('mode-description');
-  const type = currentSimulate ? 'simulate' : 'correct';
-  descEl.innerHTML = '<strong>Mode actuel :</strong> ' + MODE_DESC[currentMode][type];
-
-  // Annonce accessible
+  const type=currentSimulate?'simulate':'correct';
+  document.getElementById('mode-description').innerHTML='<strong>Mode actuel :</strong> '+MODE_DESC[currentMode][type];
   announce(MODE_DESC[currentMode][type]);
+  lsSet('ca_mode',currentMode);
+  lsSet('ca_simulate',currentSimulate);
+  lsSet('ca_severity',currentSeverity);
 }
 
-/* ================================================================
-   FILTRES — BOUTONS
-   ================================================================ */
-document.querySelectorAll('.filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    currentMode = btn.dataset.mode;
-    document.querySelectorAll('.filter-btn').forEach(b => {
-      b.classList.remove('active');
-      b.setAttribute('aria-pressed', 'false');
+document.querySelectorAll('.filter-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    currentMode=btn.dataset.mode;
+    document.querySelectorAll('.filter-btn').forEach(b=>{
+      b.setAttribute('aria-pressed','false');
+      b.style.background='';
+      b.style.color='';
+      b.style.borderColor='';
     });
-    btn.classList.add('active');
-    btn.setAttribute('aria-pressed', 'true');
+    btn.setAttribute('aria-pressed','true');
+    btn.style.background='var(--marine)';
+    btn.style.color='#fff';
+    btn.style.borderColor='var(--marine)';
     applyFilter();
   });
 });
 
-/* ================================================================
-   BASCULE SIMULATION
-   ================================================================ */
-const toggleSim = document.getElementById('toggle-simulate');
-toggleSim.addEventListener('change', () => {
-  currentSimulate = toggleSim.checked;
-  toggleSim.setAttribute('aria-checked', currentSimulate ? 'true' : 'false');
+const toggleSim=document.getElementById('toggle-simulate');
+toggleSim.addEventListener('change',()=>{
+  currentSimulate=toggleSim.checked;
+  toggleSim.setAttribute('aria-checked',currentSimulate?'true':'false');
   applyFilter();
 });
 
+const severitySlider=document.getElementById('severity-slider');
+severitySlider.addEventListener('input',()=>{
+  currentSeverity=parseInt(severitySlider.value);
+  document.getElementById('severity-val').textContent=currentSeverity+'%';
+  severitySlider.setAttribute('aria-valuenow',currentSeverity);
+  applyFilter();
+});
+
+// Apply saved filter on load
+(function initFilterBtn(){
+  document.querySelectorAll('.filter-btn').forEach(btn=>{
+    const active=btn.dataset.mode===currentMode;
+    btn.setAttribute('aria-pressed',active?'true':'false');
+    if(active){btn.style.background='var(--marine)';btn.style.color='#fff';btn.style.borderColor='var(--marine)';}
+  });
+})();
+applyFilter();
+
 /* ================================================================
-   IDENTIFICATION COULEUR — PASTILLES RAPIDES
+   SCENE / CAMERA TABS
    ================================================================ */
-const quickSwatches = [
-  { hex: '#e74c3c', symbol: '✕', label: 'Rouge' },
-  { hex: '#27ae60', symbol: '●', label: 'Vert' },
-  { hex: '#2980b9', symbol: '▲', label: 'Bleu' },
-  { hex: '#F4B81C', symbol: '■', label: 'Jaune' },
-  { hex: '#8e44ad', symbol: '◆', label: 'Violet' },
-  { hex: '#e67e22', symbol: '★', label: 'Orange' },
-  { hex: '#16a085', symbol: '♦', label: 'Cyan' },
-  { hex: '#e91e8c', symbol: '⬟', label: 'Rose' },
-  { hex: '#7F4E1E', symbol: '⊕', label: 'Brun' },
-  { hex: '#BDC3C7', symbol: '○', label: 'Gris clair' },
-  { hex: '#2C3E50', symbol: '⬡', label: 'Ardoise' },
-  { hex: '#000000', symbol: '□', label: 'Noir' },
+const sceneBtns=document.querySelectorAll('.scene-tab-btn');
+const sceneWrapper=document.getElementById('scene-wrapper');
+const cameraWrapper=document.getElementById('camera-wrapper');
+
+document.getElementById('src-scene-btn').addEventListener('click',()=>{
+  sceneWrapper.classList.add('active');
+  cameraWrapper.classList.remove('active');
+  document.getElementById('src-scene-btn').setAttribute('aria-selected','true');
+  document.getElementById('src-camera-btn').setAttribute('aria-selected','false');
+  stopCamera();
+});
+
+document.getElementById('src-camera-btn').addEventListener('click',()=>{
+  sceneWrapper.classList.remove('active');
+  cameraWrapper.classList.add('active');
+  document.getElementById('src-scene-btn').setAttribute('aria-selected','false');
+  document.getElementById('src-camera-btn').setAttribute('aria-selected','true');
+});
+
+/* ================================================================
+   CAMÉRA TEMPS RÉEL
+   ================================================================ */
+let cameraStream=null;
+let cameraRAF=null;
+let cameraRunning=false;
+let cameraEyedropMode=false;
+const camVideo=document.getElementById('camera-video');
+const camCanvas=document.getElementById('camera-canvas');
+const camCtx=camCanvas.getContext('2d');
+const camOverlay=document.getElementById('camera-overlay');
+const camStatus=document.getElementById('camera-status');
+const stopCamBtn=document.getElementById('stop-camera-btn');
+const eyedropCamBtn=document.getElementById('eyedrop-camera-btn');
+
+function buildCameraMatrix(){
+  if(currentMode==='none') return null;
+  const type=currentSimulate?'simulate':'correct';
+  return interpolateMat(MATRICES[currentMode][type],currentSeverity/100);
+}
+
+function applyCameraFilter(imageData){
+  const mat=buildCameraMatrix();
+  if(!mat) return imageData; // no filter
+  const d=imageData.data;
+  for(let i=0;i<d.length;i+=4){
+    const r=d[i],g=d[i+1],b=d[i+2];
+    d[i]  =Math.min(255,Math.max(0,mat[0]*r+mat[1]*g+mat[2]*b+(mat[4]*255)));
+    d[i+1]=Math.min(255,Math.max(0,mat[5]*r+mat[6]*g+mat[7]*b+(mat[9]*255)));
+    d[i+2]=Math.min(255,Math.max(0,mat[10]*r+mat[11]*g+mat[12]*b+(mat[14]*255)));
+  }
+  return imageData;
+}
+
+function cameraTick(){
+  if(!cameraRunning) return;
+  if(camVideo.readyState>=2){
+    camCanvas.width=camVideo.videoWidth||640;
+    camCanvas.height=camVideo.videoHeight||480;
+    camCtx.drawImage(camVideo,0,0);
+    const frame=camCtx.getImageData(0,0,camCanvas.width,camCanvas.height);
+    const filtered=applyCameraFilter(frame);
+    camCtx.putImageData(filtered,0,0);
+  }
+  cameraRAF=requestAnimationFrame(cameraTick);
+}
+
+async function startCameraHandler(){
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    cameraStream=stream;
+    camVideo.srcObject=stream;
+    await camVideo.play();
+    cameraRunning=true;
+    camOverlay.style.display='none';
+    camStatus.style.display='block';
+    camStatus.textContent='Caméra active — filtre : '+(currentMode==='none'?'aucun':currentMode);
+    stopCamBtn.style.display='flex';
+    eyedropCamBtn.style.display='flex';
+    cameraTick();
+    announce('Caméra activée. Filtre appliqué en temps réel.');
+  } catch(err){
+    let msg='Caméra inaccessible.';
+    if(err.name==='NotAllowedError') msg='Accès à la caméra refusé. Autorisez la caméra dans les paramètres du navigateur.';
+    else if(err.name==='NotFoundError') msg='Aucune caméra détectée sur cet appareil.';
+    camStatus.style.display='block';
+    camStatus.textContent=msg;
+    showCameraFallback(msg);
+    announce(msg);
+  }
+}
+document.getElementById('start-camera-btn').addEventListener('click', startCameraHandler);
+
+function showCameraFallback(msg){
+  camOverlay.innerHTML=`<p aria-live="assertive"><strong>&#9888;&#65039; ${msg}</strong></p>
+    <p>Toutes les autres fonctions (scène d'exemple, identificateur, vérificateur, palettes) fonctionnent sans caméra.</p>`;
+  camOverlay.style.display='flex';
+}
+
+function stopCamera(){
+  cameraRunning=false;
+  if(cameraRAF) cancelAnimationFrame(cameraRAF);
+  if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null;}
+  camVideo.srcObject=null;
+  stopCamBtn.style.display='none';
+  eyedropCamBtn.style.display='none';
+  camStatus.style.display='none';
+  camOverlay.style.display='flex';
+  // Reset overlay to default
+  camOverlay.innerHTML=`<p>La caméra vous permet d'appliquer les filtres de daltonisation en temps réel sur votre environnement.</p>
+    <button class="btn btn-primary" id="start-camera-btn"><span aria-hidden="true">&#127910;</span> Activer la caméra</button>
+    <p style="font-size:.8rem;opacity:.75">L'image reste sur votre appareil. Aucune donnée envoyée.</p>`;
+  // Re-bind start button (will be handled by the existing src-camera-btn click → user then presses the new start btn)
+  const newBtn=document.getElementById('start-camera-btn');
+  newBtn.addEventListener('click', startCameraHandler);
+}
+
+stopCamBtn.addEventListener('click',()=>{stopCamera();announce('Caméra arrêtée.');});
+
+// Eyedropper sur canvas caméra
+eyedropCamBtn.addEventListener('click',()=>{
+  cameraEyedropMode=!cameraEyedropMode;
+  camCanvas.style.cursor=cameraEyedropMode?'crosshair':'default';
+  eyedropCamBtn.textContent=cameraEyedropMode?'&#128449; Désactiver pipette':'&#128449; Pipette (cliquer sur l\'image)';
+  announce(cameraEyedropMode?'Mode pipette actif. Cliquez sur l\'image.':'Mode pipette désactivé.');
+});
+
+camCanvas.addEventListener('click',(e)=>{
+  if(!cameraEyedropMode) return;
+  const rect=camCanvas.getBoundingClientRect();
+  const scaleX=camCanvas.width/rect.width;
+  const scaleY=camCanvas.height/rect.height;
+  const px=Math.floor((e.clientX-rect.left)*scaleX);
+  const py=Math.floor((e.clientY-rect.top)*scaleY);
+  const pixel=camCtx.getImageData(px,py,1,1).data;
+  const hex=rgbToHex(pixel[0],pixel[1],pixel[2]);
+  // Sync to color identifier tab
+  identifyColor(hex);
+  announce('Couleur prélevée : '+hex);
+  // Flash visual
+  const x=e.clientX-rect.left, y=e.clientY-rect.top;
+  // We can't easily add a DOM element over canvas, so just announce
+});
+
+/* ================================================================
+   IDENTIFICATION DE COULEUR
+   ================================================================ */
+const quickSwatches=[
+  {hex:'#e74c3c',symbol:'&#10005;',label:'Rouge'},
+  {hex:'#27ae60',symbol:'&#9679;',label:'Vert'},
+  {hex:'#2980b9',symbol:'&#9650;',label:'Bleu'},
+  {hex:'#F4B81C',symbol:'&#9632;',label:'Jaune'},
+  {hex:'#8e44ad',symbol:'&#9670;',label:'Violet'},
+  {hex:'#e67e22',symbol:'&#9733;',label:'Orange'},
+  {hex:'#16a085',symbol:'&#9830;',label:'Cyan'},
+  {hex:'#e91e8c',symbol:'&#11039;',label:'Rose'},
+  {hex:'#7F4E1E',symbol:'&#8853;',label:'Brun'},
+  {hex:'#BDC3C7',symbol:'&#9675;',label:'Gris clair'},
+  {hex:'#2C3E50',symbol:'&#11042;',label:'Ardoise'},
+  {hex:'#000000',symbol:'&#9633;',label:'Noir'},
 ];
 
-const swatchGrid = document.querySelector('.swatch-grid');
-quickSwatches.forEach(sw => {
-  const btn = document.createElement('button');
-  btn.className = 'swatch-btn';
-  btn.style.background = sw.hex;
-  btn.setAttribute('aria-label', `Identifier la couleur ${sw.label} (${sw.hex})`);
-  btn.setAttribute('role', 'listitem');
-  btn.setAttribute('data-symbol', sw.symbol);
-  btn.addEventListener('click', () => {
+const swatchGrid=document.getElementById('swatch-grid');
+quickSwatches.forEach(sw=>{
+  const btn=document.createElement('button');
+  btn.className='swatch-btn';
+  btn.style.background=sw.hex;
+  btn.setAttribute('aria-label','Identifier la couleur '+sw.label+' ('+sw.hex+')');
+  btn.setAttribute('aria-pressed','false');
+  btn.innerHTML='<span aria-hidden="true" style="color:'+textColorForBg(...Object.values(hexToRgb(sw.hex)))+';text-shadow:0 1px 2px rgba(0,0,0,.4)">'+sw.symbol+'</span>';
+  btn.addEventListener('click',()=>{
     identifyColor(sw.hex);
-    document.querySelectorAll('.swatch-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
+    document.querySelectorAll('.swatch-btn').forEach(b=>b.setAttribute('aria-pressed','false'));
+    btn.setAttribute('aria-pressed','true');
+    document.getElementById('color-picker').value=sw.hex;
   });
   swatchGrid.appendChild(btn);
 });
 
-/* ================================================================
-   COLOR PICKER
-   ================================================================ */
-const colorPicker = document.getElementById('color-picker');
-colorPicker.addEventListener('input', () => {
+const colorPicker=document.getElementById('color-picker');
+colorPicker.addEventListener('input',()=>{
   identifyColor(colorPicker.value);
-  document.querySelectorAll('.swatch-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.swatch-btn').forEach(b=>b.setAttribute('aria-pressed','false'));
 });
 
-/* ================================================================
-   IDENTIFICATION
-   ================================================================ */
-function identifyColor(hex) {
-  lastColorHex = hex;
-  const { color, dist } = findClosestColor(hex);
-  lastColorName = color ? color.name : '—';
+let lastColorHex='#3498db';
+let lastColorName='Bleu acier';
+const speechAvailable='speechSynthesis' in window;
 
-  document.getElementById('result-swatch').style.background = hex;
-  document.getElementById('result-name').textContent = lastColorName;
-  document.getElementById('result-hex').textContent = hex.toUpperCase();
-  document.getElementById('result-dist').textContent =
-    color ? `Distance : ${dist} (plus proche parmi ${COLORS_FR.length} noms)` : '';
-
-  // Annonce accessible (texte, pas vocale auto pour éviter spam)
-  announce(`Couleur identifiée : ${lastColorName}, ${hex.toUpperCase()}`);
+function identifyColor(hex){
+  lastColorHex=hex;
+  const {r,g,b}=hexToRgb(hex);
+  const {color,dist}=findClosestColor(hex);
+  lastColorName=color?color.name:'—';
+  document.getElementById('result-swatch').style.background=hex;
+  document.getElementById('result-swatch').setAttribute('aria-label','Aperçu : '+lastColorName);
+  document.getElementById('result-name').textContent=lastColorName;
+  document.getElementById('result-hex').textContent=hex.toUpperCase();
+  document.getElementById('result-rgb').textContent='RVB : '+r+', '+g+', '+b;
+  document.getElementById('result-dist').textContent=
+    color?'Distance : '+dist+' (parmi '+COLORS_FR.length+' noms)':'';
+  announce('Couleur identifiée : '+lastColorName+', '+hex.toUpperCase());
 }
+identifyColor(lsGet('ca_lastcolor','#3498db'));
 
-// Initialisation
-identifyColor('#3498db');
+const speakBtn=document.getElementById('speak-btn');
+if(!speechAvailable){speakBtn.disabled=true;speakBtn.setAttribute('aria-disabled','true');speakBtn.title='Synthèse vocale non disponible';}
+speakBtn.addEventListener('click',()=>speakColor(lastColorName,lastColorHex));
 
-/* ================================================================
-   LECTURE VOCALE
-   ================================================================ */
-const speakBtn = document.getElementById('speak-btn');
-if (!speechAvailable) {
-  speakBtn.disabled = true;
-  speakBtn.title = 'Synthèse vocale non disponible dans ce navigateur';
-  speakBtn.setAttribute('aria-disabled', 'true');
-}
-
-speakBtn.addEventListener('click', () => {
-  if (!speechAvailable || !lastColorName) return;
-  speakColor(lastColorName, lastColorHex);
-});
-
-function speakColor(name, hex) {
-  if (!speechAvailable) return;
+function speakColor(name,hex){
+  if(!speechAvailable) return;
   window.speechSynthesis.cancel();
+  const utt=new SpeechSynthesisUtterance('La couleur est '+name+'. Code hexadécimal : '+hex.toUpperCase().split('').join(' '));
+  utt.lang='fr-FR';utt.rate=0.9;utt.pitch=1.0;
+  const voices=window.speechSynthesis.getVoices();
+  const fr=voices.find(v=>v.lang&&v.lang.startsWith('fr'));
+  if(fr) utt.voice=fr;
+  utt.onerror=()=>{};
+  window.speechSynthesis.speak(utt);
+}
+if(speechAvailable) window.speechSynthesis.onvoiceschanged=()=>{};
 
-  const utterance = new SpeechSynthesisUtterance(`La couleur est ${name}. Code hexadécimal : ${hex.toUpperCase()}`);
-  utterance.lang = 'fr-FR';
-  utterance.rate = 0.95;
-  utterance.pitch = 1.0;
+document.getElementById('copy-hex-btn').addEventListener('click',async()=>{
+  try{
+    await navigator.clipboard.writeText(lastColorHex.toUpperCase());
+    announce('Code HEX copié : '+lastColorHex.toUpperCase());
+    showInlineMsg(document.getElementById('copy-hex-btn'),'Copié !');
+  }catch{
+    announce('Impossible de copier automatiquement. Code : '+lastColorHex.toUpperCase());
+  }
+});
 
-  // Chercher voix FR
-  const voices = window.speechSynthesis.getVoices();
-  const frVoice = voices.find(v => v.lang && v.lang.startsWith('fr'));
-  if (frVoice) utterance.voice = frVoice;
-
-  utterance.onerror = () => {};
-  window.speechSynthesis.speak(utterance);
+function showInlineMsg(btn,msg){
+  const orig=btn.innerHTML;
+  btn.textContent=msg;
+  btn.disabled=true;
+  setTimeout(()=>{btn.innerHTML=orig;btn.disabled=false;},1800);
 }
 
-// Charger les voix de manière asynchrone (certains navigateurs chargent tardivement)
-if (speechAvailable) {
-  window.speechSynthesis.onvoiceschanged = () => {};
+// Eyedropper on uploaded image
+const eyedropFile=document.getElementById('eyedrop-file');
+const eyedropCanvas=document.getElementById('eyedropper-canvas');
+const eyedropWrap=document.getElementById('eyedropper-canvas-wrap');
+const eyedropCtx=eyedropCanvas.getContext('2d');
+let eyedropImg=null;
+
+eyedropFile.addEventListener('change',()=>{
+  const file=eyedropFile.files[0];
+  if(!file) return;
+  const url=URL.createObjectURL(file);
+  const img=new Image();
+  img.onload=()=>{
+    eyedropImg=img;
+    eyedropCanvas.width=img.width;
+    eyedropCanvas.height=img.height;
+    eyedropCtx.drawImage(img,0,0);
+    eyedropWrap.style.display='block';
+    URL.revokeObjectURL(url);
+    announce('Image chargée. Cliquez sur un pixel pour identifier sa couleur.');
+  };
+  img.src=url;
+});
+
+// Drag & drop
+const eyedropZone=document.getElementById('eyedrop-upload-zone');
+eyedropZone.addEventListener('dragover',(e)=>{e.preventDefault();eyedropZone.classList.add('drag-over');});
+eyedropZone.addEventListener('dragleave',()=>eyedropZone.classList.remove('drag-over'));
+eyedropZone.addEventListener('drop',(e)=>{
+  e.preventDefault();eyedropZone.classList.remove('drag-over');
+  const file=e.dataTransfer.files[0];
+  if(file&&file.type.startsWith('image/')){
+    eyedropFile.files=e.dataTransfer.files; // won't work in all browsers
+    const url=URL.createObjectURL(file);
+    const img=new Image();
+    img.onload=()=>{
+      eyedropImg=img;
+      eyedropCanvas.width=img.width;
+      eyedropCanvas.height=img.height;
+      eyedropCtx.drawImage(img,0,0);
+      eyedropWrap.style.display='block';
+      URL.revokeObjectURL(url);
+      announce('Image chargée par glisser-déposer. Cliquez pour identifier une couleur.');
+    };
+    img.src=url;
+  }
+});
+
+eyedropCanvas.addEventListener('click',(e)=>{
+  if(!eyedropImg) return;
+  const rect=eyedropCanvas.getBoundingClientRect();
+  const scaleX=eyedropCanvas.width/rect.width;
+  const scaleY=eyedropCanvas.height/rect.height;
+  const px=Math.floor((e.clientX-rect.left)*scaleX);
+  const py=Math.floor((e.clientY-rect.top)*scaleY);
+  const pixel=eyedropCtx.getImageData(px,py,1,1).data;
+  const hex=rgbToHex(pixel[0],pixel[1],pixel[2]);
+  identifyColor(hex);
+  colorPicker.value=hex;
+  document.querySelectorAll('.swatch-btn').forEach(b=>b.setAttribute('aria-pressed','false'));
+  // Draw crosshair
+  eyedropCtx.save();
+  eyedropCtx.drawImage(eyedropImg,0,0);
+  eyedropCtx.strokeStyle='#fff';eyedropCtx.lineWidth=3;
+  eyedropCtx.beginPath();eyedropCtx.moveTo(px-12,py);eyedropCtx.lineTo(px+12,py);eyedropCtx.stroke();
+  eyedropCtx.beginPath();eyedropCtx.moveTo(px,py-12);eyedropCtx.lineTo(px,py+12);eyedropCtx.stroke();
+  eyedropCtx.strokeStyle='#000';eyedropCtx.lineWidth=1;
+  eyedropCtx.beginPath();eyedropCtx.moveTo(px-12,py);eyedropCtx.lineTo(px+12,py);eyedropCtx.stroke();
+  eyedropCtx.beginPath();eyedropCtx.moveTo(px,py-12);eyedropCtx.lineTo(px,py+12);eyedropCtx.stroke();
+  eyedropCtx.restore();
+  // Activate identify tab
+  activateTab(1);
+  speakColor(lastColorName, hex);
+  lsSet('ca_lastcolor',hex);
+});
+
+/* ================================================================
+   VÉRIFICATEUR D'ACCESSIBILITÉ
+   ================================================================ */
+const checkerFile=document.getElementById('checker-file');
+const checkerCanvas=document.getElementById('checker-canvas');
+const checkerCtx=checkerCanvas.getContext('2d');
+const checkerWrap=document.getElementById('checker-canvas-wrapper');
+const checkerResults=document.getElementById('checker-results');
+const analyseBtn=document.getElementById('analyse-btn');
+const resetCheckerBtn=document.getElementById('reset-checker-btn');
+const pickStatus=document.getElementById('pick-status');
+let checkerImg=null;
+let pickedColors=[];
+let origCheckerData=null;
+
+function loadCheckerImage(file){
+  const url=URL.createObjectURL(file);
+  const img=new Image();
+  img.onload=()=>{
+    checkerImg=img;
+    checkerCanvas.width=img.width;
+    checkerCanvas.height=img.height;
+    checkerCtx.drawImage(img,0,0);
+    origCheckerData=checkerCtx.getImageData(0,0,img.width,img.height);
+    checkerWrap.style.display='block';
+    analyseBtn.style.display='flex';
+    resetCheckerBtn.style.display='flex';
+    pickedColors=[];
+    pickStatus.textContent='Cliquez sur une zone pour mesurer sa couleur (2 clics = calcul de contraste).';
+    checkerResults.innerHTML='';
+    URL.revokeObjectURL(url);
+    announce('Image chargée. Analysez les couleurs dominantes ou cliquez sur deux zones.');
+  };
+  img.onerror=()=>{announce('Impossible de charger l\'image.');};
+  img.src=url;
 }
+
+checkerFile.addEventListener('change',()=>{if(checkerFile.files[0]) loadCheckerImage(checkerFile.files[0]);});
+
+const checkerZone=document.getElementById('checker-upload-zone');
+checkerZone.addEventListener('dragover',(e)=>{e.preventDefault();checkerZone.classList.add('drag-over');});
+checkerZone.addEventListener('dragleave',()=>checkerZone.classList.remove('drag-over'));
+checkerZone.addEventListener('drop',(e)=>{
+  e.preventDefault();checkerZone.classList.remove('drag-over');
+  const f=e.dataTransfer.files[0];
+  if(f&&f.type.startsWith('image/')) loadCheckerImage(f);
+});
+
+checkerCanvas.addEventListener('click',(e)=>{
+  if(!checkerImg) return;
+  const rect=checkerCanvas.getBoundingClientRect();
+  const sx=checkerCanvas.width/rect.width;
+  const sy=checkerCanvas.height/rect.height;
+  const px=Math.floor((e.clientX-rect.left)*sx);
+  const py=Math.floor((e.clientY-rect.top)*sy);
+  // Sample 3x3 average
+  let rs=0,gs=0,bs=0,cnt=0;
+  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+    const xi=Math.max(0,Math.min(checkerCanvas.width-1,px+dx));
+    const yi=Math.max(0,Math.min(checkerCanvas.height-1,py+dy));
+    const d=checkerCtx.getImageData(xi,yi,1,1).data;
+    rs+=d[0];gs+=d[1];bs+=d[2];cnt++;
+  }
+  const r=Math.round(rs/cnt),g=Math.round(gs/cnt),b=Math.round(bs/cnt);
+  const hex=rgbToHex(r,g,b);
+  pickedColors.push({r,g,b,hex,px,py});
+  // Draw marker
+  checkerCtx.save();
+  if(origCheckerData) checkerCtx.putImageData(origCheckerData,0,0);
+  pickedColors.forEach((c,i)=>{
+    checkerCtx.beginPath();
+    checkerCtx.arc(c.px,c.py,10,0,Math.PI*2);
+    checkerCtx.strokeStyle='#fff';checkerCtx.lineWidth=3;checkerCtx.stroke();
+    checkerCtx.strokeStyle=i===0?'#0F4C81':'#F4B81C';checkerCtx.lineWidth=2;checkerCtx.stroke();
+    checkerCtx.fillStyle=i===0?'#0F4C81':'#F4B81C';
+    checkerCtx.font='bold 12px system-ui';checkerCtx.textAlign='center';checkerCtx.textBaseline='middle';
+    checkerCtx.fillStyle='#fff';
+    checkerCtx.fillText(i+1,c.px,c.py);
+  });
+  checkerCtx.restore();
+  if(pickedColors.length===1){
+    pickStatus.textContent='Point 1 sélectionné ('+hex+'). Cliquez sur une 2e zone.';
+    announce('Couleur 1 sélectionnée : '+hex);
+  } else if(pickedColors.length===2){
+    analyzePickedPair();
+    pickedColors=[];
+  } else if(pickedColors.length>2){
+    pickedColors=[{r,g,b,hex,px,py}];
+    pickStatus.textContent='Point 1 sélectionné ('+hex+'). Cliquez sur une 2e zone.';
+    checkerResults.innerHTML='';
+  }
+});
+
+function analyzePickedPair(){
+  const c1=pickedColors[0],c2=pickedColors[1];
+  const ratio=contrastRatio(c1.r,c1.g,c1.b,c2.r,c2.g,c2.b);
+  const passAA=ratio>=4.5;
+  const passAALarge=ratio>=3;
+  const rFixed=ratio.toFixed(2);
+  // Daltonism confusion check
+  const confusions=checkDaltonismConfusion(c1,c2);
+  const html=buildCheckerResultHTML(c1,c2,ratio,passAA,passAALarge,confusions);
+  checkerResults.insertAdjacentHTML('beforeend',html);
+  pickStatus.textContent='Analysé. Cliquez à nouveau pour une nouvelle paire.';
+  announce('Contraste entre les deux couleurs : '+rFixed+':1. '+(passAA?'Conforme WCAG AA.':'Non conforme WCAG AA.'));
+}
+
+function checkDaltonismConfusion(c1,c2){
+  const issues=[];
+  // Simulate both under each type and check if they become too similar
+  ['proto','deut','trit'].forEach(type=>{
+    const mat=MATRICES[type].simulate;
+    const s1=applyMatrixToColor(mat,c1.r,c1.g,c1.b);
+    const s2=applyMatrixToColor(mat,c2.r,c2.g,c2.b);
+    const d=colorDistance(s1.r,s1.g,s1.b,s2.r,s2.g,s2.b);
+    if(d<40){
+      const names={proto:'Protanopie',deut:'Deutéranopie',trit:'Tritanopie'};
+      issues.push({type:names[type],dist:Math.round(d),s1hex:rgbToHex(s1.r,s1.g,s1.b),s2hex:rgbToHex(s2.r,s2.g,s2.b)});
+    }
+  });
+  return issues;
+}
+
+function applyMatrixToColor(mat,r,g,b){
+  return {
+    r:Math.min(255,Math.max(0,Math.round(mat[0]*r+mat[1]*g+mat[2]*b))),
+    g:Math.min(255,Math.max(0,Math.round(mat[5]*r+mat[6]*g+mat[7]*b))),
+    b:Math.min(255,Math.max(0,Math.round(mat[10]*r+mat[11]*g+mat[12]*b)))
+  };
+}
+
+function buildCheckerResultHTML(c1,c2,ratio,passAA,passAALarge,confusions){
+  const rFixed=ratio.toFixed(2);
+  const tcForBg1=textColorForBg(c1.r,c1.g,c1.b);
+  const tcForBg2=textColorForBg(c2.r,c2.g,c2.b);
+  let html=`<div class="issue-card ${passAA?'ok':'error'}" role="article" aria-label="Résultat analyse contraste">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span class="issue-badge ${passAA?'badge-ok':'badge-error'}">${passAA?'AA ✓':'AA ✗'}</span>
+      <span class="issue-title">Rapport de contraste : ${rFixed}:1</span>
+    </div>
+    <div class="color-pair-preview">
+      <div class="pair-swatch" style="background:${c1.hex}" role="img" aria-label="Couleur 1 : ${c1.hex}"></div>
+      <span style="font-size:.8rem">+</span>
+      <div class="pair-swatch" style="background:${c2.hex}" role="img" aria-label="Couleur 2 : ${c2.hex}"></div>
+      <div class="pair-combo" style="background:${c2.hex};color:${c1.hex}" aria-label="Texte couleur 1 sur fond couleur 2">Aa</div>
+      <div class="pair-combo" style="background:${c1.hex};color:${c2.hex}" aria-label="Texte couleur 2 sur fond couleur 1">Aa</div>
+    </div>
+    <div class="issue-body">
+      ${c1.hex} vs ${c2.hex} &mdash;
+      ${passAA?'Conforme WCAG AA (≥4,5:1 texte normal, ≥3:1 grand texte).':'Non conforme WCAG AA. Minimum requis : 4,5:1 pour le texte normal.'}
+      ${!passAA&&passAALarge?' Passe pour le grand texte (≥18pt ou 14pt gras).':''}
+    </div>`;
+  if(confusions.length){
+    html+=`<div style="margin-top:8px">
+      <span class="issue-badge badge-warn" style="margin-bottom:6px;display:inline-block">Confusion daltonisme</span>
+      <div class="issue-body">Ces couleurs peuvent être confondues par :</div>`;
+    confusions.forEach(conf=>{
+      html+=`<div class="issue-body" style="margin-top:4px">&bull; <strong>${conf.type}</strong> : couleurs simulées
+        <span style="display:inline-block;width:14px;height:14px;background:${conf.s1hex};border:1px solid #ccc;border-radius:2px;vertical-align:middle"></span>
+        <span style="display:inline-block;width:14px;height:14px;background:${conf.s2hex};border:1px solid #ccc;border-radius:2px;vertical-align:middle"></span>
+        (distance ${conf.dist}/255)</div>`;
+    });
+    html+='</div>';
+  } else if(c1.hex!==c2.hex){
+    html+=`<div class="issue-body" style="margin-top:6px"><span class="issue-badge badge-ok">Daltonisme ✓</span> Ces couleurs sont distinguables dans les 3 types de daltonisme courants.</div>`;
+  }
+  // Suggestions alternatives
+  if(!passAA||confusions.length){
+    html+=buildAlternativeSuggestions(c1,c2,passAA,confusions);
+  }
+  html+='</div>';
+  return html;
+}
+
+function buildAlternativeSuggestions(c1,c2,passAA,confusions){
+  let html=`<div style="margin-top:10px;padding:10px;background:rgba(15,76,129,.06);border-radius:6px">
+    <div style="font-size:.85rem;font-weight:700;color:var(--marine);margin-bottom:6px">&#128161; Alternatives suggérées :</div>`;
+  if(!passAA){
+    // Suggest a darker / lighter variation
+    const {r,g,b}=c1;
+    const darkerHex=rgbToHex(Math.max(0,r-40),Math.max(0,g-40),Math.max(0,b-40));
+    const lighterHex=rgbToHex(Math.min(255,r+60),Math.min(255,g+60),Math.min(255,b+60));
+    const ratioD=contrastRatio(...Object.values(hexToRgb(darkerHex)),...Object.values(hexToRgb(c2.hex)));
+    const ratioL=contrastRatio(...Object.values(hexToRgb(lighterHex)),...Object.values(hexToRgb(c2.hex)));
+    html+=`<div class="issue-body">&bull; Assombrir la couleur 1 : <code>${darkerHex}</code> &rarr; contraste ${ratioD.toFixed(2)}:1
+      <span style="display:inline-block;width:14px;height:14px;background:${darkerHex};border:1px solid #ccc;border-radius:2px;vertical-align:middle"></span></div>`;
+    html+=`<div class="issue-body">&bull; Éclaircir la couleur 1 : <code>${lighterHex}</code> &rarr; contraste ${ratioL.toFixed(2)}:1
+      <span style="display:inline-block;width:14px;height:14px;background:${lighterHex};border:1px solid #ccc;border-radius:2px;vertical-align:middle"></span></div>`;
+  }
+  if(confusions.length){
+    html+=`<div class="issue-body">&bull; Utilisez les couleurs de la <strong>palette sûre</strong> (onglet Palettes sûres) pour garantir la distinction en toutes conditions.</div>`;
+  }
+  html+='</div>';
+  return html;
+}
+
+analyseBtn.addEventListener('click',()=>{
+  if(!checkerImg) return;
+  analyseBtn.disabled=true;
+  analyseBtn.textContent='Analyse en cours…';
+  setTimeout(()=>{
+    analyzeDominantColors();
+    analyseBtn.disabled=false;
+    analyseBtn.innerHTML='<span aria-hidden="true">&#128269;</span> Analyser à nouveau';
+  },50);
+});
+
+function analyzeDominantColors(){
+  // Sample a grid of pixels to find dominant colors
+  const w=checkerCanvas.width, h=checkerCanvas.height;
+  const step=Math.max(1,Math.floor(Math.min(w,h)/20));
+  const colorMap=new Map();
+  for(let y=0;y<h;y+=step)for(let x=0;x<w;x+=step){
+    const d=checkerCtx.getImageData(x,y,1,1).data;
+    // Quantize to reduce palette
+    const qr=Math.round(d[0]/32)*32,qg=Math.round(d[1]/32)*32,qb=Math.round(d[2]/32)*32;
+    const key=qr+','+qg+','+qb;
+    colorMap.set(key,(colorMap.get(key)||0)+1);
+  }
+  // Sort by frequency, take top 8
+  const sorted=[...colorMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const dominant=sorted.map(([key])=>{
+    const [r,g,b]=key.split(',').map(Number);
+    return {r,g,b,hex:rgbToHex(r,g,b)};
+  });
+
+  let html=`<div class="issue-card ok" role="article">
+    <div class="issue-title">Couleurs dominantes détectées</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">`;
+  dominant.forEach(c=>{
+    const name=findClosestColor(c.hex).color?.name||'';
+    html+=`<div style="text-align:center">
+      <div style="width:40px;height:40px;background:${c.hex};border-radius:6px;border:1px solid rgba(0,0,0,.15);margin:0 auto"></div>
+      <div style="font-size:.72rem;margin-top:3px">${c.hex}</div>
+      <div style="font-size:.7rem;color:#666">${name}</div></div>`;
+  });
+  html+='</div></div>';
+
+  // Check all pairs
+  const issues=[];
+  for(let i=0;i<dominant.length;i++)for(let j=i+1;j<dominant.length;j++){
+    const c1=dominant[i],c2=dominant[j];
+    const ratio=contrastRatio(c1.r,c1.g,c1.b,c2.r,c2.g,c2.b);
+    const confusions=checkDaltonismConfusion(c1,c2);
+    if(ratio<3||confusions.length){
+      issues.push({c1,c2,ratio,confusions});
+    }
+  }
+
+  if(issues.length===0){
+    html+=`<div class="issue-card ok" role="article">
+      <span class="issue-badge badge-ok">&#10003; Aucun problème majeur</span>
+      <div class="issue-body" style="margin-top:6px">Les couleurs dominantes ne présentent pas de confusion détectée entre daltoniens et leurs contrastes sont acceptables.</div>
+    </div>`;
+  } else {
+    issues.forEach(iss=>{
+      html+=buildCheckerResultHTML(iss.c1,iss.c2,iss.ratio,iss.ratio>=4.5,iss.ratio>=3,iss.confusions);
+    });
+  }
+  checkerResults.innerHTML=html;
+  announce('Analyse terminée. '+issues.length+' problème(s) détecté(s).');
+}
+
+resetCheckerBtn.addEventListener('click',()=>{
+  checkerImg=null;checkerWrap.style.display='none';
+  analyseBtn.style.display='none';resetCheckerBtn.style.display='none';
+  checkerResults.innerHTML='';pickedColors=[];pickStatus.textContent='';
+  checkerFile.value='';origCheckerData=null;
+  announce('Vérificateur réinitialisé.');
+});
 
 /* ================================================================
    PALETTE SÛRE
    ================================================================ */
-const paletteGrid = document.querySelector('.palette-grid');
-SAFE_PALETTE.forEach(p => {
-  const { r, g, b } = hexToRgb(p.hex);
-  const luminance = (0.299*r + 0.587*g + 0.114*b) / 255;
-  const textColor = luminance > 0.5 ? '#16202E' : '#FFFFFF';
+let currentPalette=lsGet('ca_palette',null)||SAFE_PALETTE_DEFAULT.map(p=>({...p}));
 
-  const item = document.createElement('div');
-  item.className = 'palette-item';
-  item.setAttribute('role', 'listitem');
-  item.innerHTML = `
-    <div class="palette-color" style="background:${p.hex};color:${textColor};" aria-hidden="true">
-      ${luminance > 0.5 ? '◉' : '○'}
-    </div>
-    <div class="palette-info">
-      <div class="palette-name">${p.name}</div>
-      <div class="palette-hex">${p.hex}</div>
-      <div class="palette-why">${p.why}</div>
-    </div>`;
-  paletteGrid.appendChild(item);
-});
-
-/* ================================================================
-   ARIA LIVE ANNOUNCE
-   ================================================================ */
-function announce(msg) {
-  const el = document.getElementById('aria-live');
-  el.textContent = '';
-  requestAnimationFrame(() => { el.textContent = msg; });
+function renderPalette(){
+  const grid=document.getElementById('palette-grid');
+  grid.innerHTML='';
+  currentPalette.forEach((p,idx)=>{
+    const {r,g,b}=hexToRgb(p.hex);
+    const tc=textColorForBg(r,g,b);
+    const item=document.createElement('div');
+    item.className='palette-item';
+    item.setAttribute('role','listitem');
+    item.innerHTML=`
+      <div class="palette-color" style="background:${p.hex};color:${tc}" aria-hidden="true">
+        <span>${p.symbol||'&#9679;'}</span>
+        <button class="palette-copy-btn" aria-label="Copier ${p.hex}" data-hex="${p.hex}" tabindex="0">Copier</button>
+      </div>
+      <div class="palette-info">
+        <div class="palette-name">${p.name}</div>
+        <div class="palette-hex">${p.hex}</div>
+        <div class="palette-why">${p.why}</div>
+        <button class="btn btn-secondary" style="margin-top:6px;font-size:.78rem;padding:4px 10px;min-height:36px;color:#C0392B;border-color:#C0392B" aria-label="Supprimer ${p.name} de la palette" data-remove="${idx}">Supprimer</button>
+      </div>`;
+    item.querySelector('.palette-copy-btn').addEventListener('click',async(e)=>{
+      e.stopPropagation();
+      try{await navigator.clipboard.writeText(p.hex);showPaletteStatus('Copié : '+p.hex,'success');}
+      catch{showPaletteStatus('Code : '+p.hex,'warn');}
+    });
+    item.querySelector('[data-remove]').addEventListener('click',()=>{
+      currentPalette.splice(idx,1);
+      lsSet('ca_palette',currentPalette);
+      renderPalette();
+      announce(p.name+' supprimé de la palette.');
+    });
+    grid.appendChild(item);
+  });
 }
 
+function showPaletteStatus(msg,type){
+  const el=document.getElementById('palette-status');
+  const icons={success:'&#10003;',error:'&#10007;',warn:'&#9888;&#65039;'};
+  el.innerHTML=`<div class="status-msg ${type}" role="status"><span class="status-icon" aria-hidden="true">${icons[type]||''}</span>${msg}</div>`;
+  announce(msg);
+  setTimeout(()=>{el.innerHTML='';},3000);
+}
+
+// Add custom color
+document.getElementById('add-custom-color-btn').addEventListener('click',()=>{
+  document.getElementById('custom-color-panel').style.display='block';
+  document.getElementById('custom-color-pick').focus();
+});
+document.getElementById('cancel-custom-color').addEventListener('click',()=>{
+  document.getElementById('custom-color-panel').style.display='none';
+});
+document.getElementById('confirm-custom-color').addEventListener('click',()=>{
+  const hex=document.getElementById('custom-color-pick').value;
+  const why=document.getElementById('custom-color-why').value||'Couleur personnalisée';
+  const name=findClosestColor(hex).color?.name||hex;
+  currentPalette.push({name,hex,why,symbol:'&#9679;'});
+  lsSet('ca_palette',currentPalette);
+  renderPalette();
+  document.getElementById('custom-color-panel').style.display='none';
+  document.getElementById('custom-color-why').value='';
+  announce(name+' ajouté à la palette.');
+});
+
+// Export HEX
+document.getElementById('export-hex-btn').addEventListener('click',()=>{
+  const name=document.getElementById('palette-name-input').value||'palette';
+  let txt='# '+name+'\n# Palette sûre ColorAide — LibreA11y\n\n';
+  currentPalette.forEach(p=>{txt+=p.hex+'\t'+p.name+'\t'+p.why+'\n';});
+  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=(name.replace(/\s+/g,'_')||'palette')+'.txt';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  announce('Palette exportée en fichier texte.');
+});
+
+// Copy all HEX
+document.getElementById('copy-all-btn').addEventListener('click',async()=>{
+  const txt=currentPalette.map(p=>p.hex).join('\n');
+  try{
+    await navigator.clipboard.writeText(txt);
+    showPaletteStatus('Tous les codes HEX copiés !','success');
+  }catch{
+    showPaletteStatus('Codes : '+txt.replace(/\n/g,' '),'warn');
+  }
+});
+
+renderPalette();
+
 /* ================================================================
-   INITIALISATION FILTRE
+   PWA — SERVICE WORKER + INSTALL
    ================================================================ */
-applyFilter();
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg=>{console.info('[ColorAide] SW enregistré',reg.scope);})
+      .catch(err=>{console.warn('[ColorAide] SW non enregistré :',err);});
+  });
+}
+
+let deferredInstall=null;
+window.addEventListener('beforeinstallprompt',(e)=>{
+  e.preventDefault();
+  deferredInstall=e;
+  document.getElementById('install-btn').classList.add('visible');
+});
+document.getElementById('install-btn').addEventListener('click',async()=>{
+  if(!deferredInstall) return;
+  deferredInstall.prompt();
+  const {outcome}=await deferredInstall.userChoice;
+  deferredInstall=null;
+  document.getElementById('install-btn').classList.remove('visible');
+  announce(outcome==='accepted'?'ColorAide installé avec succès !':'Installation annulée.');
+});
+window.addEventListener('appinstalled',()=>{
+  document.getElementById('install-btn').classList.remove('visible');
+  announce('ColorAide est maintenant installé sur votre appareil.');
+});
 </script>
 </body>
 </html>

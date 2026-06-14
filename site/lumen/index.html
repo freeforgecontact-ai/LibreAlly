@@ -3,568 +3,519 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lumen — Loupe d'écran | LibreA11y</title>
-<meta name="description" content="Loupe d'écran, contrastes et thèmes pour basse vision. Démo hors-ligne, aucune donnée envoyée.">
+<title>Lumen — Loupe &amp; Accessibilité Visuelle | LibreA11y</title>
+<meta name="description" content="Application de loupe d'écran, loupe caméra, thèmes forts contrastes et lecture vocale pour personnes à basse vision. 100% hors-ligne, aucune donnée envoyée.">
+<meta name="theme-color" content="#0F4C81">
+<link rel="manifest" href="manifest.webmanifest">
 <style>
-/* ===== VARIABLES & RESET ===== */
+/* ============================================================
+   VARIABLES & RESET
+   ============================================================ */
 :root {
   --marine:    #0F4C81;
   --marine-dk: #0A3A63;
+  --marine-lt: #1A6DB5;
   --or:        #F4B81C;
   --or-lt:     #FFD45E;
+  --or-dk:     #C89010;
   --encre:     #16202E;
   --fond:      #F7F9FC;
   --surface:   #FFFFFF;
-  --border:    #D0D9E8;
-  --focus-ring: #F4B81C;
-  --radius:    12px;
+  --surface2:  #EEF3FA;
+  --border:    #C2CEE0;
+  --focus-ring:#F4B81C;
+  --danger:    #C0392B;
+  --radius:    14px;
   --radius-sm: 8px;
+  --radius-xs: 4px;
   --shadow:    0 2px 8px rgba(15,76,129,0.12);
-  --shadow-hv: 0 4px 16px rgba(15,76,129,0.22);
-  --tr:        0.15s ease;
-
-  /* Content filter vars */
-  --content-brightness: 1;
-  --content-contrast: 1;
+  --shadow-hv: 0 6px 20px rgba(15,76,129,0.22);
+  --tr:        0.18s ease;
 }
+
+/* ====== GLOBAL THEMES ====== */
+body.theme-hc {
+  --fond:    #000000; --surface: #111111; --surface2:#1a1a1a;
+  --encre:   #FFFFFF; --border:  #FFFFFF;
+  --marine:  #6BB5FF; --or: #FFFF00; --or-lt: #FFFF00;
+}
+body.theme-dark {
+  --fond:    #12181F; --surface: #1C2530; --surface2:#232F3E;
+  --encre:   #E8EEF7; --border:  #2D4060;
+  --marine:  #4A9FE0; --or: #F4B81C; --or-lt: #FFD45E;
+}
+body.theme-sepia {
+  --fond:    #F5EDD8; --surface: #FDF5E4; --surface2:#F0E4C8;
+  --encre:   #3B2A1A; --border:  #C4A87A;
+  --marine:  #6B4226; --or: #C88A3A;
+}
+body.theme-yb {
+  --fond:    #000000; --surface: #000000; --surface2:#111100;
+  --encre:   #FFFF00; --border:  #FFFF00;
+  --marine:  #FFFF00; --or: #FFFF00; --or-lt: #FFFFFF;
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body {
-  height: 100%;
+
+html { scroll-behavior: smooth; }
+body {
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   background: var(--fond);
   color: var(--encre);
-  font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.6;
   overflow-x: hidden;
+  min-height: 100vh;
 }
 
-/* ===== SKIP LINK ===== */
+/* ============================================================
+   SKIP LINK
+   ============================================================ */
 #skip-link {
-  position: fixed;
-  top: -100px;
-  left: 8px;
-  z-index: 9999;
-  background: var(--or);
-  color: var(--encre);
-  font-weight: 700;
-  padding: 10px 18px;
+  position: fixed; top: -120px; left: 8px;
+  z-index: 99999;
+  background: var(--or); color: var(--encre);
+  font-weight: 700; padding: 12px 20px;
   border-radius: var(--radius-sm);
-  text-decoration: none;
-  font-size: 1rem;
-  transition: top 0.1s;
+  text-decoration: none; font-size: 1.1rem;
+  transition: top 0.12s;
+  border: 2px solid var(--encre);
 }
 #skip-link:focus { top: 8px; }
 
-/* ===== FOCUS ===== */
+/* ============================================================
+   FOCUS
+   ============================================================ */
 :focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
+  border-radius: 3px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* ============================================================
+   UTILS
+   ============================================================ */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;
+}
+#aria-live {
+  position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;
 }
 
-/* ===== HEADER ===== */
+/* ============================================================
+   HEADER
+   ============================================================ */
 #app-header {
-  background: var(--marine);
-  color: #fff;
-  padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  box-shadow: 0 2px 8px rgba(10,58,99,0.3);
-  position: sticky;
-  top: 0;
-  z-index: 200;
-  flex-wrap: wrap;
+  background: var(--marine); color: #fff;
+  padding: 10px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+  box-shadow: 0 2px 10px rgba(10,58,99,0.35);
+  position: sticky; top: 0; z-index: 400;
 }
-#header-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+#header-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 #back-link {
-  color: var(--or-lt);
-  text-decoration: none;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 12px;
+  color: var(--or-lt); text-decoration: none;
+  font-size: 1rem; font-weight: 700;
+  display: flex; align-items: center; gap: 5px;
+  padding: 10px 14px; min-height: 56px;
   border-radius: var(--radius-sm);
   white-space: nowrap;
-  min-height: 56px;
+  border: 2px solid transparent;
   transition: background var(--tr);
-  font-weight: 600;
 }
-#back-link:hover, #back-link:focus-visible { background: rgba(255,255,255,0.15); color: #fff; }
+#back-link:hover { background: rgba(255,255,255,0.15); }
+#back-link:focus-visible { border-color: var(--or-lt); }
 #app-title {
-  font-size: 1.4rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  letter-spacing: -0.3px;
+  font-size: 1.3rem; font-weight: 800; color: #fff;
+  letter-spacing: -0.02em;
+  display: flex; align-items: center; gap: 8px;
 }
-#header-notice {
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.7);
-  text-align: right;
-  line-height: 1.4;
+#header-right {
+  font-size: 0.74rem; color: rgba(255,255,255,0.72);
+  text-align: right; line-height: 1.4;
+}
+#pwa-install-btn {
+  display: none;
+  background: var(--or); color: var(--encre);
+  border: none; border-radius: var(--radius-sm);
+  padding: 0 14px; min-height: 48px;
+  font-size: 0.9rem; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+}
+#pwa-install-btn:hover { background: var(--or-lt); }
+#pwa-install-btn.visible { display: inline-flex; align-items: center; gap: 5px; }
+
+/* ============================================================
+   TABS
+   ============================================================ */
+#tab-bar {
+  display: flex;
+  background: var(--surface);
+  border-bottom: 2px solid var(--border);
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  position: sticky; top: 60px; z-index: 300;
+}
+.tab-btn {
+  flex: 1; min-width: 90px; min-height: 56px;
+  background: none; border: none;
+  border-bottom: 4px solid transparent;
+  color: var(--encre);
+  font-size: 0.88rem; font-weight: 600;
+  cursor: pointer;
+  padding: 0 12px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px;
+  transition: background var(--tr), border-color var(--tr), color var(--tr);
+  white-space: nowrap;
+}
+.tab-btn .tab-icon { font-size: 1.3rem; line-height: 1; }
+.tab-btn:hover { background: var(--surface2); }
+.tab-btn[aria-selected="true"] {
+  border-bottom-color: var(--marine);
+  color: var(--marine); background: var(--surface2);
+  font-weight: 800;
 }
 
-/* ===== LAYOUT ===== */
-#layout {
-  display: flex;
-  min-height: calc(100vh - 64px);
-  gap: 0;
-}
+/* ============================================================
+   PANELS
+   ============================================================ */
+.tab-panel { display: none; min-height: calc(100vh - 128px); }
+.tab-panel.active { display: flex; flex-wrap: wrap; }
 
-/* ===== CONTROLS PANEL ===== */
-#controls-panel {
-  width: 340px;
-  min-width: 280px;
+.ctrl-sidebar {
+  width: 320px; min-width: 260px; max-width: 360px;
   background: var(--surface);
   border-right: 2px solid var(--border);
-  padding: 20px 16px;
+  padding: 16px 14px;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  display: flex; flex-direction: column; gap: 14px;
   flex-shrink: 0;
 }
-@media (max-width: 760px) {
-  #layout { flex-direction: column; }
-  #controls-panel { width: 100%; border-right: none; border-bottom: 2px solid var(--border); }
+.content-main { flex: 1; overflow: auto; padding: 24px; position: relative; }
+
+@media (max-width: 800px) {
+  .tab-panel.active { flex-direction: column; }
+  .ctrl-sidebar { width: 100%; max-width: none; border-right: none; border-bottom: 2px solid var(--border); }
 }
 
+/* ============================================================
+   CONTROL SECTIONS
+   ============================================================ */
 .ctrl-section {
   background: var(--fond);
   border: 1.5px solid var(--border);
   border-radius: var(--radius);
   padding: 14px 14px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: flex; flex-direction: column; gap: 11px;
 }
 .ctrl-section-title {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 0.95rem; font-weight: 800;
   color: var(--marine);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 2px;
+  display: flex; align-items: center; gap: 7px;
   letter-spacing: 0.01em;
 }
+.ctrl-section-title .icon { font-size: 1.1rem; }
 
-/* Slider rows */
-.slider-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.slider-label-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.slider-label {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--encre);
-}
+/* ---- Sliders ---- */
+.slider-row { display: flex; flex-direction: column; gap: 6px; }
+.slider-label-row { display: flex; justify-content: space-between; align-items: center; }
+label.slider-label { font-size: 0.9rem; font-weight: 600; color: var(--encre); }
 .slider-value {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--marine);
-  min-width: 44px;
-  text-align: right;
+  font-size: 0.9rem; font-weight: 700; color: var(--marine);
+  min-width: 52px; text-align: right;
+  padding: 2px 6px; background: var(--surface);
+  border-radius: var(--radius-xs);
 }
 input[type="range"] {
-  -webkit-appearance: none;
-  width: 100%;
-  height: 8px;
-  border-radius: 4px;
-  background: var(--border);
-  outline: none;
-  cursor: pointer;
+  -webkit-appearance: none; width: 100%;
+  height: 10px; border-radius: 5px;
+  background: var(--border); cursor: pointer; outline: none;
 }
 input[type="range"]:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 3px;
+  outline: 3px solid var(--focus-ring); outline-offset: 4px;
 }
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--marine);
-  border: 3px solid var(--or);
-  cursor: pointer;
-  transition: background var(--tr);
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--marine); border: 3px solid var(--or);
+  cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.25);
 }
-input[type="range"]::-webkit-slider-thumb:hover { background: var(--marine-dk); }
 input[type="range"]::-moz-range-thumb {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--marine);
-  border: 3px solid var(--or);
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--marine); border: 3px solid var(--or);
   cursor: pointer;
 }
 
-/* Buttons */
-.btn-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
+/* ---- Buttons ---- */
+.btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
 .ctrl-btn {
-  background: var(--surface);
-  color: var(--marine);
-  border: 2px solid var(--marine);
+  background: var(--surface); color: var(--marine);
+  border: 2.5px solid var(--marine);
   border-radius: var(--radius-sm);
-  padding: 0 12px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  min-height: 56px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  transition: background var(--tr), color var(--tr), border-color var(--tr);
-  white-space: nowrap;
+  padding: 0 14px;
+  font-size: 0.9rem; font-weight: 700;
+  min-height: 56px; cursor: pointer;
+  display: inline-flex; align-items: center;
+  gap: 6px; justify-content: center;
+  transition: background var(--tr), color var(--tr), border-color var(--tr), box-shadow var(--tr);
+  white-space: nowrap; line-height: 1.2; text-align: center;
 }
-.ctrl-btn:hover { background: var(--fond); }
-.ctrl-btn.active {
-  background: var(--marine);
-  color: #fff;
-  border-color: var(--marine);
-}
+.ctrl-btn:hover { background: var(--surface2); box-shadow: var(--shadow); }
+.ctrl-btn.active { background: var(--marine); color: #fff; border-color: var(--marine-dk); }
 .ctrl-btn.active:hover { background: var(--marine-dk); }
-.ctrl-btn.btn-full { width: 100%; justify-content: center; }
-.ctrl-btn.btn-warn {
-  border-color: var(--or);
-  color: var(--encre);
-}
-.ctrl-btn.btn-warn.active, .ctrl-btn.btn-warn:hover { background: var(--or); color: var(--encre); }
+.ctrl-btn.btn-full { width: 100%; }
+.ctrl-btn.btn-danger { border-color: var(--danger); color: var(--danger); }
+.ctrl-btn.btn-danger:hover, .ctrl-btn.btn-danger.active { background: var(--danger); color: #fff; }
+.ctrl-btn.btn-warn { border-color: var(--or-dk); color: var(--encre); }
+.ctrl-btn.btn-warn:hover, .ctrl-btn.btn-warn.active { background: var(--or); color: var(--encre); border-color: var(--or-dk); }
+.ctrl-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
 
-/* Toggle switches */
-.toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-.toggle-label {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--encre);
-  flex: 1;
-}
+/* ---- Toggles ---- */
+.toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.toggle-label { font-size: 0.9rem; font-weight: 600; color: var(--encre); flex: 1; }
 .toggle-btn {
-  position: relative;
-  width: 56px;
-  height: 30px;
-  background: var(--border);
-  border: 2px solid transparent;
-  border-radius: 16px;
-  cursor: pointer;
-  transition: background var(--tr);
-  flex-shrink: 0;
-  appearance: none;
-  -webkit-appearance: none;
+  position: relative; width: 64px; height: 36px;
+  background: var(--border); border: 2px solid transparent;
+  border-radius: 18px; cursor: pointer;
+  transition: background var(--tr); flex-shrink: 0;
+  -webkit-appearance: none; appearance: none;
 }
 .toggle-btn::after {
-  content: '';
-  position: absolute;
-  left: 2px;
-  top: 2px;
-  width: 22px;
-  height: 22px;
-  background: #fff;
-  border-radius: 50%;
+  content: ''; position: absolute;
+  left: 3px; top: 3px; width: 26px; height: 26px;
+  background: #fff; border-radius: 50%;
   transition: left var(--tr);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 5px rgba(0,0,0,0.28);
 }
-.toggle-btn[aria-checked="true"] {
-  background: var(--marine);
-}
-.toggle-btn[aria-checked="true"]::after { left: 28px; }
+.toggle-btn[aria-checked="true"] { background: var(--marine); }
+.toggle-btn[aria-checked="true"]::after { left: 31px; }
 .toggle-btn:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 
-/* Info box */
+/* ---- Info boxes ---- */
 .info-box {
-  background: rgba(15,76,129,0.07);
-  border-left: 3px solid var(--marine);
-  border-radius: 4px;
-  padding: 8px 10px;
-  font-size: 0.8rem;
-  color: var(--encre);
-  line-height: 1.4;
+  background: rgba(15,76,129,0.08); border-left: 3px solid var(--marine);
+  border-radius: 4px; padding: 9px 11px;
+  font-size: 0.82rem; color: var(--encre); line-height: 1.5;
 }
-.info-box.warn {
-  background: #fff8e1;
-  border-left-color: var(--or);
-}
+.info-box.warn  { background: #fff8e1; border-left-color: var(--or); }
+.info-box.success { background: #e8f5e9; border-left-color: #388e3c; color: #1b5e20; }
+.info-box.error { background: #ffebee; border-left-color: var(--danger); color: #b71c1c; }
 
-/* ===== CONTENT AREA ===== */
-#content-area {
-  flex: 1;
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding: 24px;
-  position: relative;
+/* ============================================================
+   THEME BUTTONS
+   ============================================================ */
+.theme-btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.theme-btn {
+  min-height: 56px; border-radius: var(--radius-sm);
+  border: 2.5px solid var(--border);
+  font-size: 0.85rem; font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  gap: 5px; padding: 0 10px;
+  transition: border-color var(--tr), box-shadow var(--tr);
 }
+.theme-btn[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--or); }
+.theme-btn.th-normal { background:#fff; color:#16202E; border-color:#C2CEE0; }
+.theme-btn.th-hc     { background:#000; color:#fff; border-color:#fff; }
+.theme-btn.th-dark   { background:#1C2530; color:#E8EEF7; border-color:#4A9FE0; }
+.theme-btn.th-sepia  { background:#FDF5E4; color:#3B2A1A; border-color:#C4A87A; }
+.theme-btn.th-yb     { background:#000; color:#ffff00; border-color:#ffff00; }
 
-/* The zoomable wrapper */
-#zoom-viewport {
-  width: 100%;
-  overflow-x: hidden;
-}
+/* ============================================================
+   SAMPLE CONTENT
+   ============================================================ */
+#zoom-viewport { width: 100%; overflow-x: hidden; }
 #sample-content {
-  font-size: 1rem;
-  line-height: 1.7;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
+  font-size: 1rem; line-height: 1.75;
+  background: var(--surface); border: 2px solid var(--border);
   border-radius: var(--radius);
-  padding: 28px 32px;
-  max-width: 720px;
-  margin: 0 auto;
-  transition: filter 0.2s ease;
-}
-
-/* Zoom: scale transform approach with reflow text */
-/* We use font-size scaling for true reflow */
-
-/* ===== THEMES ON #sample-content ===== */
-#sample-content.theme-normal {
-  background: var(--surface);
+  padding: 30px 36px; max-width: 740px; margin: 0 auto;
   color: var(--encre);
-  filter: brightness(var(--content-brightness)) contrast(var(--content-contrast));
 }
-#sample-content.theme-high-contrast {
-  background: #000000;
-  color: #ffffff;
-  border-color: #ffffff;
-  filter: brightness(var(--content-brightness)) contrast(var(--content-contrast));
-}
-#sample-content.theme-high-contrast h2,
-#sample-content.theme-high-contrast h3 { color: #ffff00; }
-#sample-content.theme-high-contrast a { color: #00ffff; }
-#sample-content.theme-high-contrast .stamp { background: #ffff00; color: #000; }
-
-#sample-content.theme-inverted {
-  filter: invert(1) brightness(var(--content-brightness)) contrast(var(--content-contrast));
-}
-#sample-content.theme-sepia {
-  background: #f8f0dc;
-  color: #3b2a1a;
-  filter: sepia(0.6) brightness(var(--content-brightness)) contrast(var(--content-contrast));
-}
-#sample-content.theme-sepia h2 { color: #5c3b1a; }
-#sample-content.theme-sepia .stamp { background: #c88a3a; color: #fff; }
-
-#sample-content.theme-yellow-black {
-  background: #000000;
-  color: #ffff00;
-  border-color: #ffff00;
-  filter: brightness(var(--content-brightness)) contrast(var(--content-contrast));
-}
-#sample-content.theme-yellow-black h2,
-#sample-content.theme-yellow-black h3 { color: #ffff00; border-color: #ffff00; }
-#sample-content.theme-yellow-black .stamp { background: #ffff00; color: #000; }
-#sample-content.theme-yellow-black a { color: #ffcc00; }
-#sample-content.theme-yellow-black hr { border-color: #ffff00; }
-#sample-content.theme-yellow-black .notice-box { border-color: #ffff00; background: #111; }
-#sample-content.theme-yellow-black .field-grid dt { color: #aaa; }
-
-/* Sample content styles */
 #sample-content h2 {
-  font-size: 1.5em;
-  font-weight: 800;
-  color: var(--marine);
-  margin-bottom: 0.3em;
-  border-bottom: 2px solid var(--or);
-  padding-bottom: 6px;
-  line-height: 1.2;
+  font-size: 1.45em; font-weight: 800; color: var(--marine);
+  margin-bottom: 0.3em; border-bottom: 2.5px solid var(--or);
+  padding-bottom: 6px; line-height: 1.2;
 }
 #sample-content h3 {
-  font-size: 1.15em;
-  font-weight: 700;
-  color: var(--marine-dk);
-  margin: 1em 0 0.3em;
+  font-size: 1.12em; font-weight: 700; color: var(--marine);
+  margin: 1.1em 0 0.3em;
 }
-#sample-content p {
-  margin-bottom: 0.8em;
-}
+#sample-content p { margin-bottom: 0.85em; }
 #sample-content .stamp {
-  display: inline-block;
-  background: var(--or);
-  color: var(--encre);
-  font-weight: 800;
-  font-size: 0.75em;
-  padding: 3px 10px;
-  border-radius: 20px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  margin-bottom: 12px;
+  display: inline-block; background: var(--or); color: var(--encre);
+  font-weight: 800; font-size: 0.75em; padding: 4px 12px;
+  border-radius: 20px; letter-spacing: 0.05em;
+  text-transform: uppercase; margin-bottom: 14px;
 }
 #sample-content .notice-box {
-  border: 2px solid var(--marine);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  margin: 14px 0;
-  font-size: 0.9em;
+  border: 2px solid var(--marine); border-radius: var(--radius-sm);
+  padding: 12px 16px; margin: 14px 0; font-size: 0.92em;
 }
 #sample-content .notice-box strong { color: var(--marine); }
-
 #sample-content .field-grid {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 4px 16px;
-  font-size: 0.9em;
-  margin: 10px 0;
+  display: grid; grid-template-columns: auto 1fr;
+  gap: 5px 18px; font-size: 0.9em; margin: 10px 0;
 }
-#sample-content .field-grid dt { font-weight: 600; color: #555; white-space: nowrap; }
+#sample-content .field-grid dt { font-weight: 600; white-space: nowrap; }
 #sample-content .field-grid dd { margin: 0; }
-#sample-content hr {
-  border: none;
-  border-top: 1px solid var(--border);
-  margin: 16px 0;
-}
-#sample-content ul {
-  padding-left: 1.3em;
-  margin-bottom: 0.8em;
-}
-#sample-content li { margin-bottom: 0.3em; }
+#sample-content hr { border: none; border-top: 1.5px solid var(--border); margin: 18px 0; }
+#sample-content ul { padding-left: 1.4em; margin-bottom: 0.9em; }
+#sample-content li { margin-bottom: 0.4em; }
+#sample-content address { font-style: normal; margin: 10px 0; line-height: 1.8; }
 #sample-content .small-print {
-  font-size: 0.78em;
-  color: #666;
-  border-top: 1px solid var(--border);
-  padding-top: 12px;
-  margin-top: 16px;
+  font-size: 0.8em; opacity: 0.7;
+  border-top: 1px solid var(--border); padding-top: 14px; margin-top: 18px;
 }
 
-/* ===== MAGNIFYING LENS ===== */
+/* ============================================================
+   MAGNIFYING LENS
+   ============================================================ */
 #lens {
-  position: fixed;
-  width: 200px;
-  height: 200px;
+  position: fixed; width: 220px; height: 220px;
   border-radius: 50%;
-  border: 4px solid var(--marine);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.5), inset 0 0 0 2px var(--or);
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 1000;
-  display: none;
-  background: white;
-  transition: none;
+  border: 5px solid var(--marine);
+  box-shadow: 0 6px 30px rgba(0,0,0,0.55), inset 0 0 0 2px var(--or);
+  overflow: hidden; pointer-events: none;
+  z-index: 2000; display: none; background: white;
 }
 #lens-inner {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%;
-  height: 100%;
-  transform-origin: 0 0;
-  pointer-events: none;
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%; overflow: hidden;
 }
 #lens-crosshair {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  z-index: 2;
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  pointer-events: none; z-index: 3;
 }
 #lens-crosshair::before, #lens-crosshair::after {
-  content: '';
-  position: absolute;
-  background: rgba(244,184,28,0.7);
+  content: ''; position: absolute;
+  background: rgba(244,184,28,0.85);
 }
-#lens-crosshair::before {
-  width: 1px; height: 30px;
-  left: 0; top: -15px;
-}
-#lens-crosshair::after {
-  width: 30px; height: 1px;
-  top: 0; left: -15px;
-}
+#lens-crosshair::before { width: 2px; height: 36px; left: -1px; top: -18px; }
+#lens-crosshair::after  { width: 36px; height: 2px; top: -1px; left: -18px; }
 
-/* ===== BIG CURSOR ===== */
+/* ============================================================
+   LINE READER
+   ============================================================ */
+#line-reader {
+  position: fixed; left: 0; right: 0; height: 40px;
+  background: rgba(244,184,28,0.18);
+  border-top: 2px solid rgba(244,184,28,0.65);
+  border-bottom: 2px solid rgba(244,184,28,0.65);
+  pointer-events: none; z-index: 800;
+  display: none; top: 200px;
+}
+#line-reader.active { display: block; }
+
+/* ============================================================
+   BIG CURSOR
+   ============================================================ */
 body.big-cursor, body.big-cursor * {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpolygon points='6,2 6,38 16,28 22,44 28,41 22,25 36,25' fill='%230F4C81' stroke='white' stroke-width='2'/%3E%3C/svg%3E") 6 2, auto !important;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='52' viewBox='0 0 52 52'%3E%3Cpolygon points='7,2 7,42 18,30 24,48 31,45 25,27 40,27' fill='%230F4C81' stroke='white' stroke-width='2.5'/%3E%3C/svg%3E") 7 2, auto !important;
 }
 
-/* ===== RETICLE ===== */
+/* ============================================================
+   RETICLE
+   ============================================================ */
 #reticle-h, #reticle-v {
-  position: fixed;
-  background: rgba(15,76,129,0.35);
-  pointer-events: none;
-  z-index: 500;
-  display: none;
-  transition: none;
+  position: fixed; background: rgba(15,76,129,0.4);
+  pointer-events: none; z-index: 600; display: none;
 }
-#reticle-h {
-  left: 0; right: 0;
-  height: 2px;
-  top: 0;
-}
-#reticle-v {
-  top: 0; bottom: 0;
-  width: 2px;
-  left: 0;
-}
+#reticle-h { left:0; right:0; height:3px; top:0; }
+#reticle-v  { top:0; bottom:0; width:3px; left:0; }
 body.show-reticle #reticle-h,
 body.show-reticle #reticle-v { display: block; }
 
-/* ===== CAMERA OVERLAY ===== */
-#camera-section {
-  display: none;
-  flex-direction: column;
-  gap: 8px;
-}
-#camera-section.visible { display: flex; }
-#camera-video {
-  width: 100%;
-  max-width: 320px;
-  border-radius: var(--radius-sm);
-  border: 2px solid var(--marine);
-  display: block;
-}
-#camera-msg {
-  font-size: 0.85rem;
-  padding: 8px;
-  border-radius: var(--radius-sm);
-  background: #fff3cd;
-  color: #7d5000;
+/* ============================================================
+   CAMERA PANEL
+   ============================================================ */
+#camera-video-container {
+  position: relative; width: 100%; max-width: 680px;
+  background: #000; border-radius: var(--radius);
+  overflow: hidden; border: 2px solid var(--marine);
   display: none;
 }
-#camera-msg.visible { display: block; }
-
-/* ===== LIVE REGION ===== */
-#aria-live {
-  position: absolute;
-  width: 1px; height: 1px;
-  overflow: hidden;
-  clip: rect(0,0,0,0);
-  white-space: nowrap;
+#camera-video-container.active { display: block; }
+#camera-video { width: 100%; height: auto; display: block; }
+#camera-canvas { position: absolute; top:0; left:0; width:100%; height:100%; display:none; }
+#camera-canvas.frozen { display: block; }
+#freeze-badge {
+  position: absolute; top: 10px; right: 10px;
+  background: rgba(244,184,28,0.92); color: #000;
+  font-weight: 800; font-size: 0.78rem;
+  padding: 4px 10px; border-radius: 20px;
+  display: none; letter-spacing: 0.05em;
 }
+#freeze-badge.visible { display: block; }
 
-/* ===== LENS KEYBOARD HINT ===== */
-#lens-kbd-hint {
-  font-size: 0.78rem;
-  color: #555;
-  margin-top: 4px;
-  line-height: 1.3;
+/* ============================================================
+   TEXT PANEL
+   ============================================================ */
+#text-panel-content { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 860px; margin: 0 auto; }
+#text-input {
+  width: 100%; min-height: 120px;
+  border: 2px solid var(--border); border-radius: var(--radius-sm);
+  padding: 12px; font-size: 1rem; font-family: inherit;
+  color: var(--encre); background: var(--surface);
+  resize: vertical; line-height: 1.6;
 }
+#text-input:focus-visible {
+  outline: 3px solid var(--focus-ring); outline-offset: 2px;
+  border-color: var(--marine);
+}
+#text-display {
+  font-size: 2rem; line-height: 1.6; color: var(--encre);
+  background: var(--surface); border: 2px solid var(--border);
+  border-radius: var(--radius); padding: 28px 32px;
+  min-height: 160px; word-break: break-word; white-space: pre-wrap;
+}
+#text-display.empty { color: var(--border); font-style: italic; font-size: 1.3rem; }
 
-/* ===== FOOTER ===== */
+/* ============================================================
+   FULLSCREEN OVERLAY
+   ============================================================ */
+#fullscreen-overlay {
+  display: none; position: fixed; inset: 0;
+  background: var(--fond); z-index: 3000;
+  overflow: auto; padding: 24px;
+}
+#fullscreen-overlay.active { display: block; }
+#fullscreen-content {
+  font-size: 1.5rem; line-height: 1.75;
+  max-width: 900px; margin: 0 auto;
+  color: var(--encre); background: var(--surface);
+  padding: 36px 44px; border-radius: var(--radius);
+}
+#fullscreen-exit {
+  position: fixed; top: 14px; right: 14px; z-index: 3001;
+  background: var(--marine); color: #fff;
+  border: none; border-radius: var(--radius-sm);
+  min-width: 56px; min-height: 56px;
+  font-size: 1rem; font-weight: 700;
+  cursor: pointer; padding: 0 16px;
+}
+#fullscreen-exit:hover { background: var(--marine-dk); }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
 #app-footer {
-  background: var(--marine-dk);
-  color: rgba(255,255,255,0.7);
-  text-align: center;
-  padding: 12px 20px;
-  font-size: 0.78rem;
+  background: var(--marine-dk); color: rgba(255,255,255,0.7);
+  text-align: center; padding: 12px 20px; font-size: 0.78rem;
 }
+#app-footer a { color: var(--or-lt); font-weight: 700; }
 
-/* ===== REDUCED MOTION ===== */
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
+  html { scroll-behavior: auto !important; }
 }
 </style>
 </head>
@@ -573,219 +524,203 @@ body.show-reticle #reticle-v { display: block; }
 <!-- Skip link -->
 <a href="#main-content" id="skip-link">Aller au contenu principal</a>
 
-<!-- Reticle overlays -->
+<!-- Persistent overlays -->
 <div id="reticle-h" aria-hidden="true"></div>
 <div id="reticle-v" aria-hidden="true"></div>
-
-<!-- Magnifying lens -->
-<div id="lens" role="img" aria-hidden="true" aria-label="Loupe de grossissement">
-  <div id="lens-inner"></div>
+<div id="lens" role="img" aria-label="Loupe de grossissement" aria-hidden="true">
+  <div id="lens-inner" aria-hidden="true"></div>
   <div id="lens-crosshair" aria-hidden="true"></div>
+</div>
+<div id="line-reader" aria-hidden="true"></div>
+
+<!-- Fullscreen overlay -->
+<div id="fullscreen-overlay" role="dialog" aria-modal="true" aria-label="Document en plein écran" aria-hidden="true">
+  <button id="fullscreen-exit" type="button" aria-label="Quitter le plein écran (touche Échap)">✕ Fermer</button>
+  <div id="fullscreen-content"></div>
 </div>
 
 <!-- Live region -->
 <div id="aria-live" aria-live="polite" aria-atomic="true"></div>
 
-<!-- Header -->
+<!-- ================================================================
+     HEADER
+     ================================================================ -->
 <header id="app-header" role="banner">
   <div id="header-left">
-    <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y">← LibreA11y</a>
-    <div id="app-title" aria-hidden="true">🔍 Lumen — démo</div>
+    <a href="../index.html" id="back-link" aria-label="Retour à la page d'accueil LibreA11y">← LibreA11y</a>
+    <div id="app-title" aria-hidden="true">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+        <circle cx="14" cy="14" r="13" fill="#F4B81C" opacity="0.22"/>
+        <circle cx="14" cy="14" r="7.5" fill="none" stroke="#F4B81C" stroke-width="2.5"/>
+        <line x1="19.5" y1="19.5" x2="26" y2="26" stroke="#F4B81C" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      Lumen
+    </div>
   </div>
-  <div id="header-notice" aria-label="Application en ligne de démonstration, aucune donnée envoyée">
-    démo · 100% hors-ligne<br>aucune donnée envoyée
+  <div id="header-right" aria-label="Application 100 pourcent hors-ligne, aucune donnée envoyée">
+    100% hors-ligne · aucune donnée envoyée
   </div>
+  <button id="pwa-install-btn" type="button" aria-label="Installer Lumen comme application sur cet appareil">
+    ⬇ Installer
+  </button>
 </header>
 
-<!-- Main -->
+<!-- ================================================================
+     TABS
+     ================================================================ -->
+<nav id="tab-bar" role="tablist" aria-label="Sections de Lumen">
+  <button class="tab-btn" role="tab" id="tab-doc" aria-selected="true" aria-controls="panel-doc" tabindex="0">
+    <span class="tab-icon" aria-hidden="true">🔍</span>
+    <span>Document</span>
+  </button>
+  <button class="tab-btn" role="tab" id="tab-camera" aria-selected="false" aria-controls="panel-camera" tabindex="-1">
+    <span class="tab-icon" aria-hidden="true">📷</span>
+    <span>Caméra</span>
+  </button>
+  <button class="tab-btn" role="tab" id="tab-text" aria-selected="false" aria-controls="panel-text" tabindex="-1">
+    <span class="tab-icon" aria-hidden="true">📝</span>
+    <span>Mon texte</span>
+  </button>
+  <button class="tab-btn" role="tab" id="tab-settings" aria-selected="false" aria-controls="panel-settings" tabindex="-1">
+    <span class="tab-icon" aria-hidden="true">⚙</span>
+    <span>Réglages</span>
+  </button>
+</nav>
+
+<!-- ================================================================
+     MAIN
+     ================================================================ -->
 <main id="main-content" tabindex="-1">
   <h1 class="sr-only">Lumen — Loupe d'écran et aide à la vision</h1>
 
-  <div id="layout">
+  <!-- =====================================================
+       PANEL 1 : DOCUMENT LOUPE
+       ===================================================== -->
+  <section id="panel-doc" class="tab-panel active" role="tabpanel" aria-labelledby="tab-doc">
 
-    <!-- Controls Panel -->
-    <aside id="controls-panel" aria-label="Panneau de contrôles Lumen" role="complementary">
+    <aside class="ctrl-sidebar" aria-label="Contrôles de la loupe document">
 
-      <!-- ZOOM SECTION -->
-      <section class="ctrl-section" aria-labelledby="zoom-title">
-        <div class="ctrl-section-title" id="zoom-title">
-          <span aria-hidden="true">🔎</span> Agrandissement du texte
+      <!-- ZOOM -->
+      <div class="ctrl-section" aria-labelledby="sec-zoom-lbl">
+        <div class="ctrl-section-title" id="sec-zoom-lbl">
+          <span class="icon" aria-hidden="true">🔎</span> Agrandissement texte
         </div>
         <div class="slider-row">
           <div class="slider-label-row">
-            <label class="slider-label" for="zoom-slider">Taille du texte</label>
+            <label class="slider-label" for="zoom-slider">Taille</label>
             <span class="slider-value" id="zoom-value" aria-live="polite">100%</span>
           </div>
-          <input type="range" id="zoom-slider" min="100" max="400" step="10" value="100"
-            aria-label="Agrandissement du texte de 100% à 400%" aria-valuemin="100" aria-valuemax="400" aria-valuenow="100">
+          <input type="range" id="zoom-slider" min="100" max="800" step="25" value="100"
+            aria-label="Agrandissement du texte, de 100 à 800 pourcent"
+            aria-valuemin="100" aria-valuemax="800" aria-valuenow="100">
         </div>
-        <div class="info-box">Le texte se réagence automatiquement — pas de défilement horizontal.</div>
         <div class="btn-group">
-          <button class="ctrl-btn" id="zoom-reset" type="button" aria-label="Remettre le zoom à 100%">Réinitialiser</button>
+          <button class="ctrl-btn" id="zoom-dec" type="button" aria-label="Réduire le zoom" style="min-width:56px;font-size:1.4rem;">−</button>
+          <button class="ctrl-btn" id="zoom-inc" type="button" aria-label="Augmenter le zoom" style="min-width:56px;font-size:1.4rem;">+</button>
+          <button class="ctrl-btn" id="zoom-reset" type="button" aria-label="Réinitialiser le zoom à 100 pourcent">Réinit.</button>
         </div>
-      </section>
+        <button class="ctrl-btn btn-full" id="fullscreen-btn" type="button" aria-label="Afficher le document en plein écran">
+          ⛶ Plein écran
+        </button>
+      </div>
 
-      <!-- LENS SECTION -->
-      <section class="ctrl-section" aria-labelledby="lens-title">
-        <div class="ctrl-section-title" id="lens-title">
-          <span aria-hidden="true">🔬</span> Loupe-lentille
+      <!-- LOUPE-LENTILLE -->
+      <div class="ctrl-section" aria-labelledby="sec-lens-lbl">
+        <div class="ctrl-section-title" id="sec-lens-lbl">
+          <span class="icon" aria-hidden="true">🔬</span> Loupe-lentille
         </div>
         <div class="toggle-row">
-          <span class="toggle-label" id="lens-toggle-label">Activer la loupe</span>
+          <span class="toggle-label" id="lens-toggle-lbl">Activer la loupe</span>
           <button class="toggle-btn" role="switch" aria-checked="false" id="lens-toggle"
-            aria-labelledby="lens-toggle-label" type="button"></button>
+            aria-labelledby="lens-toggle-lbl" type="button"></button>
         </div>
         <div class="slider-row">
           <div class="slider-label-row">
-            <label class="slider-label" for="lens-zoom-slider">Grossissement de la loupe</label>
+            <label class="slider-label" for="lens-zoom-slider">Grossissement</label>
             <span class="slider-value" id="lens-zoom-value" aria-live="polite">×2</span>
           </div>
-          <input type="range" id="lens-zoom-slider" min="1.5" max="6" step="0.5" value="2"
-            aria-label="Facteur de grossissement de la loupe de ×1.5 à ×6">
+          <input type="range" id="lens-zoom-slider" min="1.5" max="8" step="0.5" value="2"
+            aria-label="Grossissement de la loupe, de 1,5 à 8 fois">
         </div>
         <div class="slider-row">
           <div class="slider-label-row">
             <label class="slider-label" for="lens-size-slider">Taille de la loupe</label>
-            <span class="slider-value" id="lens-size-value" aria-live="polite">200px</span>
+            <span class="slider-value" id="lens-size-value" aria-live="polite">220px</span>
           </div>
-          <input type="range" id="lens-size-slider" min="100" max="350" step="10" value="200"
-            aria-label="Taille de la loupe en pixels de 100 à 350">
+          <input type="range" id="lens-size-slider" min="120" max="420" step="10" value="220"
+            aria-label="Taille de la loupe en pixels, de 120 à 420">
         </div>
-        <div id="lens-kbd-hint" aria-live="off">
-          Clavier : <kbd>I</kbd><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd> ou flèches pour déplacer la loupe.
+        <div class="info-box" style="font-size:0.8rem;">
+          Clavier : <strong>flèches</strong> ou touches <strong>I J K L</strong> pour déplacer la loupe.
         </div>
-      </section>
+      </div>
 
-      <!-- THEMES SECTION -->
-      <section class="ctrl-section" aria-labelledby="theme-title">
-        <div class="ctrl-section-title" id="theme-title">
-          <span aria-hidden="true">🎨</span> Filtres et thèmes
+      <!-- LOUPE-LIGNE -->
+      <div class="ctrl-section" aria-labelledby="sec-line-lbl">
+        <div class="ctrl-section-title" id="sec-line-lbl">
+          <span class="icon" aria-hidden="true">📏</span> Loupe-ligne / Règle
         </div>
-        <div class="btn-group" role="group" aria-label="Choisir un thème visuel">
-          <button class="ctrl-btn active" id="theme-normal" type="button" data-theme="normal" aria-pressed="true">Normal</button>
-          <button class="ctrl-btn" id="theme-hc" type="button" data-theme="high-contrast" aria-pressed="false">Fort contraste</button>
-          <button class="ctrl-btn" id="theme-inv" type="button" data-theme="inverted" aria-pressed="false">Inversé</button>
-          <button class="ctrl-btn" id="theme-sepia" type="button" data-theme="sepia" aria-pressed="false">Sépia</button>
-          <button class="ctrl-btn" id="theme-yb" type="button" data-theme="yellow-black" aria-pressed="false">Jaune / noir</button>
-        </div>
-
-        <div class="slider-row">
-          <div class="slider-label-row">
-            <label class="slider-label" for="brightness-slider">Luminosité</label>
-            <span class="slider-value" id="brightness-value" aria-live="polite">100%</span>
-          </div>
-          <input type="range" id="brightness-slider" min="40" max="180" step="5" value="100"
-            aria-label="Luminosité du contenu de 40% à 180%">
+        <div class="toggle-row">
+          <span class="toggle-label" id="line-toggle-lbl">Règle de lecture</span>
+          <button class="toggle-btn" role="switch" aria-checked="false" id="line-reader-toggle"
+            aria-labelledby="line-toggle-lbl" type="button"></button>
         </div>
         <div class="slider-row">
           <div class="slider-label-row">
-            <label class="slider-label" for="contrast-slider">Contraste</label>
-            <span class="slider-value" id="contrast-value" aria-live="polite">100%</span>
+            <label class="slider-label" for="line-height-slider">Hauteur</label>
+            <span class="slider-value" id="line-height-value" aria-live="polite">40px</span>
           </div>
-          <input type="range" id="contrast-slider" min="50" max="300" step="5" value="100"
-            aria-label="Contraste du contenu de 50% à 300%">
+          <input type="range" id="line-height-slider" min="24" max="140" step="4" value="40"
+            aria-label="Hauteur de la règle de lecture en pixels">
         </div>
-        <button class="ctrl-btn btn-full" id="filter-reset" type="button">Réinitialiser luminosité et contraste</button>
-      </section>
+        <div class="info-box" style="font-size:0.8rem;">
+          La règle suit le pointeur. Utilisez les flèches haut et bas pour la déplacer au clavier.
+        </div>
+      </div>
 
-      <!-- CURSOR SECTION -->
-      <section class="ctrl-section" aria-labelledby="cursor-title">
-        <div class="ctrl-section-title" id="cursor-title">
-          <span aria-hidden="true">🖱</span> Pointeur et réticule
+      <!-- TTS DOCUMENT -->
+      <div class="ctrl-section" aria-labelledby="sec-tts-lbl">
+        <div class="ctrl-section-title" id="sec-tts-lbl">
+          <span class="icon" aria-hidden="true">🔊</span> Lecture vocale
         </div>
-        <div class="toggle-row">
-          <span class="toggle-label" id="bigcursor-label">Gros curseur</span>
-          <button class="toggle-btn" role="switch" aria-checked="false" id="bigcursor-toggle"
-            aria-labelledby="bigcursor-label" type="button"></button>
-        </div>
-        <div class="toggle-row">
-          <span class="toggle-label" id="reticle-label">Réticule de localisation</span>
-          <button class="toggle-btn" role="switch" aria-checked="false" id="reticle-toggle"
-            aria-labelledby="reticle-label" type="button"></button>
-        </div>
-        <div class="info-box">Le réticule suit votre pointeur pour vous aider à localiser votre position à l'écran.</div>
-      </section>
-
-      <!-- TTS SECTION -->
-      <section class="ctrl-section" aria-labelledby="tts-title">
-        <div class="ctrl-section-title" id="tts-title">
-          <span aria-hidden="true">🔊</span> Lecture vocale
-        </div>
-        <button class="ctrl-btn btn-full" id="tts-play" type="button" aria-label="Lire le contenu du document à voix haute">
+        <button class="ctrl-btn btn-full" id="tts-play" type="button" aria-label="Lire le document d'exemple à voix haute">
           ▶ Lire le document
         </button>
-        <button class="ctrl-btn btn-full" id="tts-stop" type="button" aria-label="Arrêter la lecture vocale" disabled>
+        <button class="ctrl-btn btn-full btn-warn" id="tts-stop" type="button" aria-label="Arrêter la lecture" disabled>
           ■ Arrêter
         </button>
-        <div id="tts-msg" class="info-box" aria-live="polite" style="display:none;"></div>
-      </section>
-
-      <!-- CAMERA SECTION -->
-      <section class="ctrl-section" aria-labelledby="camera-title">
-        <div class="ctrl-section-title" id="camera-title">
-          <span aria-hidden="true">📷</span> Loupe caméra
-        </div>
-        <button class="ctrl-btn btn-full" id="camera-toggle" type="button"
-          aria-label="Activer la caméra comme loupe physique (demande permission)">
-          Utiliser la caméra comme loupe
-        </button>
-        <div id="camera-msg" class="info-box warn" aria-live="polite"></div>
-        <div id="camera-section">
-          <div class="slider-row">
-            <div class="slider-label-row">
-              <label class="slider-label" for="camera-zoom-slider">Zoom caméra</label>
-              <span class="slider-value" id="camera-zoom-value" aria-live="polite">×2</span>
-            </div>
-            <input type="range" id="camera-zoom-slider" min="1" max="6" step="0.5" value="2"
-              aria-label="Zoom de la caméra de ×1 à ×6">
-          </div>
-          <video id="camera-video" autoplay playsinline muted aria-label="Flux vidéo de la caméra en tant que loupe"></video>
-          <button class="ctrl-btn btn-full" id="camera-stop" type="button">Arrêter la caméra</button>
-        </div>
-      </section>
+        <div id="tts-status" class="info-box" aria-live="polite" style="display:none;"></div>
+      </div>
 
     </aside>
 
-    <!-- Content Area -->
-    <div id="content-area">
+    <!-- Document content -->
+    <div class="content-main" id="doc-content-main">
       <div id="zoom-viewport">
-        <article id="sample-content" class="theme-normal" aria-label="Document exemple : Avis d'attribution de prestation">
-
+        <article id="sample-content" aria-label="Document exemple : Avis d'attribution de prestation d'accessibilité">
           <div class="stamp">Document officiel — exemple</div>
-
           <h2>Avis d'attribution de prestation d'accessibilité</h2>
-
           <p>Madame, Monsieur,</p>
           <p>
             Nous avons bien reçu votre demande de prestation d'aide à l'autonomie numérique,
             déposée le <strong>3 juin 2026</strong>. Après examen de votre dossier par nos services,
             nous avons le plaisir de vous informer que votre demande a été <strong>acceptée</strong>.
           </p>
-
           <div class="notice-box" role="note" aria-label="Informations importantes">
             <strong>Informations importantes</strong><br>
-            Cette décision prend effet à compter du <strong>1er juillet 2026</strong>.
-            Veuillez conserver ce document. Il vous sera demandé lors de vos démarches.
+            Cette décision prend effet à compter du <strong>1<sup>er</sup> juillet 2026</strong>.
+            Veuillez conserver ce document. Il vous sera demandé lors de vos démarches administratives.
           </div>
-
           <h3>Détails de votre dossier</h3>
           <dl class="field-grid">
-            <dt>Numéro de dossier :</dt>
-            <dd>ACC-2026-00847-B</dd>
-            <dt>Bénéficiaire :</dt>
-            <dd>M. Jean-Claude Bernard</dd>
-            <dt>Date de naissance :</dt>
-            <dd>14 mars 1952</dd>
-            <dt>Type de prestation :</dt>
-            <dd>Aide technique — Vision</dd>
-            <dt>Montant accordé :</dt>
-            <dd><strong>420,00 € par trimestre</strong></dd>
-            <dt>Durée :</dt>
-            <dd>12 mois renouvelables</dd>
+            <dt>N° de dossier :</dt><dd>ACC-2026-00847-B</dd>
+            <dt>Bénéficiaire :</dt><dd>M. Jean-Claude Bernard</dd>
+            <dt>Date de naissance :</dt><dd>14 mars 1952</dd>
+            <dt>Type de prestation :</dt><dd>Aide technique — Vision</dd>
+            <dt>Montant accordé :</dt><dd><strong>420,00 € par trimestre</strong></dd>
+            <dt>Durée :</dt><dd>12 mois renouvelables</dd>
           </dl>
-
           <hr>
-
           <h3>Pièces à fournir avant le 30 juin 2026</h3>
           <ul>
             <li>Photocopie de votre carte d'identité en cours de validité.</li>
@@ -793,645 +728,1068 @@ body.show-reticle #reticle-v { display: block; }
             <li>Relevé d'identité bancaire (IBAN).</li>
             <li>Formulaire de demande de virement signé (ci-joint).</li>
           </ul>
-
           <p>
-            Ces documents sont à envoyer à l'adresse suivante ou à déposer à l'accueil de
-            notre centre de service (ouvert du lundi au vendredi, 9h–12h et 14h–17h) :
+            Ces documents sont à envoyer à l'adresse suivante ou à déposer à l'accueil
+            de notre centre de service (ouvert du lundi au vendredi, 9h–12h et 14h–17h) :
           </p>
           <address>
             Centre LibreA11y — Service Accessibilité<br>
             12, avenue de l'Égalité Numérique<br>
             75013 Paris
           </address>
-
           <h3>Voies de recours</h3>
           <p>
             Si vous estimez que cette décision ne correspond pas à votre situation,
             vous pouvez formuler un recours gracieux dans un délai de <strong>deux mois</strong>
-            à compter de la date de notification du présent courrier.
-            Pour toute question, notre ligne d'aide est disponible au <strong>01 23 45 67 89</strong>
-            (appel gratuit, du lundi au vendredi, 9h–17h).
+            à compter de la date de notification. Notre ligne d'aide est disponible au
+            <strong>01 23 45 67 89</strong> (appel gratuit, du lundi au vendredi, 9h–17h).
           </p>
-
           <p class="small-print">
             Ce document est un exemple fictif créé pour la démonstration de Lumen — LibreA11y.
             Toute ressemblance avec des données réelles est purement fortuite.
-            Lumen est une application 100% hors-ligne : aucune donnée n'est transmise ni stockée.
+            Lumen est 100% hors-ligne : aucune donnée n'est transmise ni stockée sur un serveur.
           </p>
-
         </article>
       </div>
     </div>
 
-  </div>
+  </section>
+
+  <!-- =====================================================
+       PANEL 2 : CAMERA
+       ===================================================== -->
+  <section id="panel-camera" class="tab-panel" role="tabpanel" aria-labelledby="tab-camera" hidden>
+
+    <aside class="ctrl-sidebar" aria-label="Contrôles de la loupe caméra">
+
+      <div class="ctrl-section" aria-labelledby="sec-cam-lbl">
+        <div class="ctrl-section-title" id="sec-cam-lbl">
+          <span class="icon" aria-hidden="true">📷</span> Loupe caméra
+        </div>
+        <button class="ctrl-btn btn-full" id="camera-toggle" type="button"
+          aria-label="Activer la caméra comme loupe physique pour lire des documents imprimés">
+          Activer la caméra
+        </button>
+        <button class="ctrl-btn btn-full btn-danger" id="camera-stop" type="button"
+          aria-label="Arrêter la caméra" style="display:none;">
+          ■ Arrêter la caméra
+        </button>
+        <div id="camera-msg" class="info-box warn" aria-live="polite" style="display:none;"></div>
+      </div>
+
+      <div class="ctrl-section" aria-labelledby="sec-cam-zoom-lbl">
+        <div class="ctrl-section-title" id="sec-cam-zoom-lbl">
+          <span class="icon" aria-hidden="true">🔎</span> Zoom
+        </div>
+        <div class="slider-row">
+          <div class="slider-label-row">
+            <label class="slider-label" for="camera-zoom-slider">Zoom</label>
+            <span class="slider-value" id="camera-zoom-value" aria-live="polite">×1</span>
+          </div>
+          <input type="range" id="camera-zoom-slider" min="1" max="8" step="0.25" value="1"
+            aria-label="Zoom caméra de 1 à 8 fois">
+        </div>
+        <div class="btn-group">
+          <button class="ctrl-btn" id="cam-zoom-dec" type="button" aria-label="Réduire le zoom caméra" style="min-width:56px;font-size:1.4rem;">−</button>
+          <button class="ctrl-btn" id="cam-zoom-inc" type="button" aria-label="Augmenter le zoom caméra" style="min-width:56px;font-size:1.4rem;">+</button>
+        </div>
+        <button class="ctrl-btn btn-full btn-warn" id="freeze-btn" type="button"
+          aria-label="Figer l'image de la caméra pour examiner un texte" aria-pressed="false">
+          ❄ Figer l'image
+        </button>
+      </div>
+
+      <div class="ctrl-section" aria-labelledby="sec-cam-filter-lbl">
+        <div class="ctrl-section-title" id="sec-cam-filter-lbl">
+          <span class="icon" aria-hidden="true">🎨</span> Filtres de contraste
+        </div>
+        <div class="btn-group" role="group" aria-label="Filtre d'image caméra">
+          <button class="ctrl-btn active" data-cam-filter="none" type="button" aria-pressed="true">Normal</button>
+          <button class="ctrl-btn" data-cam-filter="grayscale" type="button" aria-pressed="false">N&amp;B</button>
+          <button class="ctrl-btn" data-cam-filter="invert" type="button" aria-pressed="false">Inversion</button>
+          <button class="ctrl-btn" data-cam-filter="yellow-black" type="button" aria-pressed="false">Jaune/Noir</button>
+          <button class="ctrl-btn" data-cam-filter="high-contrast" type="button" aria-pressed="false">Fort contraste</button>
+        </div>
+        <div class="slider-row">
+          <div class="slider-label-row">
+            <label class="slider-label" for="cam-brightness-slider">Luminosité</label>
+            <span class="slider-value" id="cam-brightness-value" aria-live="polite">100%</span>
+          </div>
+          <input type="range" id="cam-brightness-slider" min="40" max="250" step="5" value="100"
+            aria-label="Luminosité de la caméra">
+        </div>
+        <div class="slider-row">
+          <div class="slider-label-row">
+            <label class="slider-label" for="cam-contrast-slider">Contraste</label>
+            <span class="slider-value" id="cam-contrast-value" aria-live="polite">100%</span>
+          </div>
+          <input type="range" id="cam-contrast-slider" min="50" max="400" step="10" value="100"
+            aria-label="Contraste de la caméra">
+        </div>
+      </div>
+
+    </aside>
+
+    <div class="content-main">
+      <div id="camera-no-feed" class="info-box" style="font-size:1rem;padding:20px;max-width:520px;line-height:1.6;">
+        <strong>Caméra non démarrée.</strong><br><br>
+        Appuyez sur <strong>Activer la caméra</strong> pour utiliser votre appareil photo comme loupe physique.
+        Pointez la caméra vers un texte imprimé (ordonnance, courrier, étiquette) pour le voir agrandi à l'écran.<br><br>
+        La caméra arrière est préférée automatiquement. <strong>Aucune image n'est enregistrée ni transmise.</strong>
+      </div>
+      <div id="camera-video-container" aria-label="Flux vidéo de la caméra loupe">
+        <video id="camera-video" autoplay playsinline muted
+          aria-label="Flux vidéo de la caméra utilisée comme loupe"></video>
+        <canvas id="camera-canvas" aria-label="Image figée de la caméra"></canvas>
+        <div id="freeze-badge" aria-hidden="true">FIGÉ</div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- =====================================================
+       PANEL 3 : MON TEXTE
+       ===================================================== -->
+  <section id="panel-text" class="tab-panel" role="tabpanel" aria-labelledby="tab-text" hidden>
+
+    <aside class="ctrl-sidebar" aria-label="Contrôles lecture de texte personnalisé">
+
+      <div class="ctrl-section" aria-labelledby="sec-txt-size-lbl">
+        <div class="ctrl-section-title" id="sec-txt-size-lbl">
+          <span class="icon" aria-hidden="true">📐</span> Taille d'affichage
+        </div>
+        <div class="slider-row">
+          <div class="slider-label-row">
+            <label class="slider-label" for="text-size-slider">Taille</label>
+            <span class="slider-value" id="text-size-value" aria-live="polite">2rem</span>
+          </div>
+          <input type="range" id="text-size-slider" min="1" max="6" step="0.25" value="2"
+            aria-label="Taille du texte affiché de 1 à 6 rem">
+        </div>
+        <div class="btn-group">
+          <button class="ctrl-btn" id="txt-size-dec" type="button" aria-label="Réduire la taille du texte" style="min-width:56px;font-size:1.4rem;">−</button>
+          <button class="ctrl-btn" id="txt-size-inc" type="button" aria-label="Augmenter la taille du texte" style="min-width:56px;font-size:1.4rem;">+</button>
+        </div>
+      </div>
+
+      <div class="ctrl-section" aria-labelledby="sec-txt-tts-lbl">
+        <div class="ctrl-section-title" id="sec-txt-tts-lbl">
+          <span class="icon" aria-hidden="true">🔊</span> Lecture vocale
+        </div>
+        <button class="ctrl-btn btn-full" id="txt-tts-play" type="button" aria-label="Lire le texte à voix haute">
+          ▶ Lire à voix haute
+        </button>
+        <button class="ctrl-btn btn-full btn-warn" id="txt-tts-stop" type="button" aria-label="Arrêter la lecture" disabled>
+          ■ Arrêter
+        </button>
+        <div class="slider-row">
+          <div class="slider-label-row">
+            <label class="slider-label" for="tts-rate-slider">Vitesse</label>
+            <span class="slider-value" id="tts-rate-value" aria-live="polite">0.9×</span>
+          </div>
+          <input type="range" id="tts-rate-slider" min="0.3" max="2" step="0.1" value="0.9"
+            aria-label="Vitesse de lecture, de 0,3 à 2 fois la vitesse normale">
+        </div>
+        <div id="txt-tts-status" class="info-box" aria-live="polite" style="display:none;"></div>
+      </div>
+
+      <div class="ctrl-section">
+        <button class="ctrl-btn btn-full" id="txt-clear-btn" type="button" aria-label="Effacer le texte saisi">
+          🗑 Effacer le texte
+        </button>
+      </div>
+
+    </aside>
+
+    <div class="content-main">
+      <div id="text-panel-content">
+        <div>
+          <label for="text-input" style="font-size:1.05rem;font-weight:700;color:var(--marine);display:block;margin-bottom:8px;">
+            Collez ou saisissez votre texte :
+          </label>
+          <textarea id="text-input"
+            placeholder="Collez ici un texte (ordonnance, facture, courrier…) pour l'afficher en très grand et le lire à voix haute."
+            aria-label="Zone de saisie de texte à agrandir et lire à voix haute"
+            autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+        </div>
+        <div id="text-display" class="empty" aria-live="polite" role="region"
+          aria-label="Zone d'affichage du texte agrandi">
+          Votre texte apparaîtra ici en très grand…
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- =====================================================
+       PANEL 4 : RÉGLAGES
+       ===================================================== -->
+  <section id="panel-settings" class="tab-panel" role="tabpanel" aria-labelledby="tab-settings" hidden>
+    <div class="content-main" style="padding:28px 24px;">
+
+      <!-- THEMES -->
+      <div class="ctrl-section" aria-labelledby="sec-theme-lbl" style="max-width:540px;margin-bottom:18px;">
+        <div class="ctrl-section-title" id="sec-theme-lbl">
+          <span class="icon" aria-hidden="true">🎨</span> Thème de l'interface
+        </div>
+        <div class="theme-btn-grid" role="group" aria-label="Choisir le thème visuel de l'interface">
+          <button class="theme-btn th-normal" data-theme="normal" type="button" aria-pressed="true">☀ Normal</button>
+          <button class="theme-btn th-hc" data-theme="hc" type="button" aria-pressed="false">◎ Fort contraste</button>
+          <button class="theme-btn th-dark" data-theme="dark" type="button" aria-pressed="false">🌙 Sombre</button>
+          <button class="theme-btn th-sepia" data-theme="sepia" type="button" aria-pressed="false">📜 Sépia</button>
+          <button class="theme-btn th-yb" data-theme="yb" type="button" aria-pressed="false">⚡ Jaune / Noir</button>
+        </div>
+      </div>
+
+      <!-- DOC FILTERS -->
+      <div class="ctrl-section" aria-labelledby="sec-filter-lbl" style="max-width:540px;margin-bottom:18px;">
+        <div class="ctrl-section-title" id="sec-filter-lbl">
+          <span class="icon" aria-hidden="true">🎛</span> Filtres du document exemple
+        </div>
+        <div class="slider-row">
+          <div class="slider-label-row">
+            <label class="slider-label" for="brightness-slider">Luminosité</label>
+            <span class="slider-value" id="brightness-value" aria-live="polite">100%</span>
+          </div>
+          <input type="range" id="brightness-slider" min="40" max="200" step="5" value="100"
+            aria-label="Luminosité du document de 40 à 200 pourcent">
+        </div>
+        <div class="slider-row">
+          <div class="slider-label-row">
+            <label class="slider-label" for="contrast-slider">Contraste</label>
+            <span class="slider-value" id="contrast-value" aria-live="polite">100%</span>
+          </div>
+          <input type="range" id="contrast-slider" min="50" max="400" step="10" value="100"
+            aria-label="Contraste du document de 50 à 400 pourcent">
+        </div>
+        <button class="ctrl-btn" id="filter-reset" type="button">Réinitialiser les filtres</button>
+      </div>
+
+      <!-- CURSOR / RETICLE -->
+      <div class="ctrl-section" aria-labelledby="sec-cursor-lbl" style="max-width:540px;margin-bottom:18px;">
+        <div class="ctrl-section-title" id="sec-cursor-lbl">
+          <span class="icon" aria-hidden="true">🖱</span> Pointeur et réticule
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label" id="bigcursor-lbl">Gros curseur</span>
+          <button class="toggle-btn" role="switch" aria-checked="false" id="bigcursor-toggle"
+            aria-labelledby="bigcursor-lbl" type="button"></button>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label" id="reticle-lbl">Réticule de localisation</span>
+          <button class="toggle-btn" role="switch" aria-checked="false" id="reticle-toggle"
+            aria-labelledby="reticle-lbl" type="button"></button>
+        </div>
+        <div class="info-box" style="margin-top:4px;">
+          Le réticule affiche une croix qui suit votre pointeur pour vous aider à localiser votre position à l'écran.
+        </div>
+      </div>
+
+      <!-- RESET -->
+      <div class="ctrl-section" aria-labelledby="sec-reset-lbl" style="max-width:540px;">
+        <div class="ctrl-section-title" id="sec-reset-lbl">
+          <span class="icon" aria-hidden="true">🔄</span> Réinitialisation
+        </div>
+        <div class="info-box" style="margin-bottom:4px;">
+          Tous les réglages sont sauvegardés automatiquement dans votre navigateur et restaurés à chaque ouverture de Lumen.
+        </div>
+        <button class="ctrl-btn btn-full btn-danger" id="reset-all-btn" type="button"
+          aria-label="Réinitialiser tous les réglages de Lumen et recharger la page">
+          Tout réinitialiser
+        </button>
+      </div>
+
+    </div>
+  </section>
+
 </main>
 
 <footer id="app-footer" role="contentinfo">
-  Lumen fait partie de <a href="../index.html" style="color:var(--or-lt)">LibreA11y</a> —
+  Lumen fait partie de
+  <a href="../index.html">LibreA11y</a> —
   logiciel libre, 100% hors-ligne, aucune donnée collectée.
 </footer>
 
-<style>
-.sr-only {
-  position: absolute;
-  width: 1px; height: 1px;
-  overflow: hidden;
-  clip: rect(0,0,0,0);
-  white-space: nowrap;
-}
-</style>
-
 <script>
-(function() {
+/* ================================================================
+   LUMEN v2 — Application principale
+   PWA · 100% hors-ligne · Accessibilité WCAG AA
+   ================================================================ */
+(function () {
   'use strict';
 
-  /* ======================================================
-     UTILS
-  ====================================================== */
-  function announce(msg) {
-    var el = document.getElementById('aria-live');
-    el.textContent = '';
-    setTimeout(function() { el.textContent = msg; }, 50);
+  /* ----------------------------------------------------------------
+     HELPERS
+  ---------------------------------------------------------------- */
+  function $(id) { return document.getElementById(id); }
+
+  var ariaLive = $('aria-live');
+  function ariaAnnounce(msg) {
+    ariaLive.textContent = '';
+    setTimeout(function () { ariaLive.textContent = msg; }, 55);
   }
 
-  /* ======================================================
-     1. ZOOM / AGRANDISSEMENT (reflow via font-size)
-  ====================================================== */
-  var zoomSlider = document.getElementById('zoom-slider');
-  var zoomValue  = document.getElementById('zoom-value');
-  var sampleContent = document.getElementById('sample-content');
-  var baseSize = 16; // px
+  /* ----------------------------------------------------------------
+     SPEECH SYNTHESIS
+  ---------------------------------------------------------------- */
+  var synth = window.speechSynthesis || null;
+  var frVoice = null;
 
-  function applyZoom(pct) {
-    var size = (baseSize * pct / 100).toFixed(2);
-    sampleContent.style.fontSize = size + 'px';
+  function loadVoices() {
+    if (!synth) return;
+    var vv = synth.getVoices();
+    frVoice = vv.find(function (v) { return v.lang && v.lang.startsWith('fr'); }) || null;
+  }
+  if (synth) {
+    loadVoices();
+    if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
+  }
+
+  /* Short TTS announce for UI actions */
+  function ttsAnnounce(msg) {
+    if (!synth) return;
+    try {
+      synth.cancel();
+      var u = new SpeechSynthesisUtterance(msg);
+      u.lang = 'fr-FR'; u.rate = 1.05; u.volume = 0.9;
+      if (frVoice) u.voice = frVoice;
+      synth.speak(u);
+    } catch (e) {}
+  }
+
+  function announce(msg) {
+    ariaAnnounce(msg);
+    ttsAnnounce(msg);
+  }
+
+  /* ----------------------------------------------------------------
+     PERSISTENCE — localStorage
+  ---------------------------------------------------------------- */
+  var STORE_KEY = 'lumen-v2';
+  var prefs = {};
+
+  function loadPrefs() {
+    try { var r = localStorage.getItem(STORE_KEY); if (r) prefs = JSON.parse(r); }
+    catch (e) { prefs = {}; }
+  }
+  function savePrefs() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(prefs)); } catch (e) {}
+  }
+  function gp(k, def) { return k in prefs ? prefs[k] : def; }
+  function sp(k, v)    { prefs[k] = v; savePrefs(); }
+
+  loadPrefs();
+
+  /* ----------------------------------------------------------------
+     PWA — SERVICE WORKER
+  ---------------------------------------------------------------- */
+  if ('serviceWorker' in navigator) {
+    try {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    } catch (e) {}
+  }
+
+  var deferredInstall = null;
+  var installBtn = $('pwa-install-btn');
+
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredInstall = e;
+    installBtn.classList.add('visible');
+  });
+  installBtn.addEventListener('click', function () {
+    if (!deferredInstall) return;
+    deferredInstall.prompt();
+    deferredInstall.userChoice.then(function (r) {
+      if (r.outcome === 'accepted') { installBtn.classList.remove('visible'); announce('Lumen installé !'); }
+      deferredInstall = null;
+    }).catch(function () {});
+  });
+  window.addEventListener('appinstalled', function () {
+    installBtn.classList.remove('visible'); deferredInstall = null;
+  });
+
+  /* ----------------------------------------------------------------
+     TABS
+  ---------------------------------------------------------------- */
+  var tabBtns = document.querySelectorAll('.tab-btn[role="tab"]');
+  var panels  = document.querySelectorAll('.tab-panel');
+
+  function activateTab(tabId) {
+    tabBtns.forEach(function (btn) {
+      var sel = btn.id === tabId;
+      btn.setAttribute('aria-selected', sel ? 'true' : 'false');
+      btn.setAttribute('tabindex', sel ? '0' : '-1');
+    });
+    panels.forEach(function (panel) {
+      var match = panel.getAttribute('aria-labelledby') === tabId;
+      panel.classList.toggle('active', match);
+      if (match) panel.removeAttribute('hidden');
+      else panel.setAttribute('hidden', '');
+    });
+    if (tabId !== 'tab-camera' && cameraStream) stopCamera(true);
+    sp('activeTab', tabId);
+  }
+
+  tabBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      activateTab(this.id);
+      var label = this.querySelector('span:not(.tab-icon)');
+      if (label) announce(label.textContent.trim());
+    });
+    btn.addEventListener('keydown', function (e) {
+      var idx = Array.prototype.indexOf.call(tabBtns, this);
+      var next = -1;
+      if (e.key === 'ArrowRight') next = (idx + 1) % tabBtns.length;
+      else if (e.key === 'ArrowLeft') next = (idx - 1 + tabBtns.length) % tabBtns.length;
+      if (next >= 0) { e.preventDefault(); tabBtns[next].focus(); tabBtns[next].click(); }
+    });
+  });
+
+  /* ----------------------------------------------------------------
+     PANEL 1 — DOCUMENT ZOOM
+  ---------------------------------------------------------------- */
+  var zoomSlider  = $('zoom-slider');
+  var zoomValue   = $('zoom-value');
+  var sample      = $('sample-content');
+  var BASE_FONT   = 16;
+
+  function applyDocZoom(pct) {
+    sample.style.fontSize = (BASE_FONT * pct / 100).toFixed(2) + 'px';
     zoomValue.textContent = pct + '%';
     zoomSlider.setAttribute('aria-valuenow', pct);
+    sp('docZoom', pct);
+    if (lensActive && lensClone) lensClone.style.fontSize = sample.style.fontSize;
   }
 
-  zoomSlider.addEventListener('input', function() {
-    applyZoom(parseInt(this.value, 10));
+  zoomSlider.addEventListener('input', function () { applyDocZoom(parseInt(this.value, 10)); });
+  zoomSlider.addEventListener('change', function () { announce('Zoom ' + this.value + ' pourcent'); });
+  $('zoom-reset').addEventListener('click', function () { zoomSlider.value = 100; applyDocZoom(100); announce('Zoom réinitialisé'); });
+  $('zoom-dec').addEventListener('click', function () {
+    var v = Math.max(100, parseInt(zoomSlider.value, 10) - 25);
+    zoomSlider.value = v; applyDocZoom(v); announce('Zoom ' + v + ' pourcent');
   });
-  zoomSlider.addEventListener('change', function() {
-    announce('Zoom ' + this.value + '%');
+  $('zoom-inc').addEventListener('click', function () {
+    var v = Math.min(800, parseInt(zoomSlider.value, 10) + 25);
+    zoomSlider.value = v; applyDocZoom(v); announce('Zoom ' + v + ' pourcent');
   });
 
-  document.getElementById('zoom-reset').addEventListener('click', function() {
-    zoomSlider.value = 100;
-    applyZoom(100);
-    announce('Zoom réinitialisé à 100%');
-  });
+  /* ---- Plein écran ---- */
+  var fsOverlay = $('fullscreen-overlay');
+  var fsContent = $('fullscreen-content');
 
-  /* ======================================================
-     2. MAGNIFYING LENS
-  ====================================================== */
-  var lensEl        = document.getElementById('lens');
-  var lensInner     = document.getElementById('lens-inner');
-  var lensToggle    = document.getElementById('lens-toggle');
-  var lensZoomSlider= document.getElementById('lens-zoom-slider');
-  var lensZoomVal   = document.getElementById('lens-zoom-value');
-  var lensSizeSlider= document.getElementById('lens-size-slider');
-  var lensSizeVal   = document.getElementById('lens-size-value');
+  $('fullscreen-btn').addEventListener('click', function () {
+    fsContent.innerHTML = sample.innerHTML;
+    fsContent.style.fontSize = sample.style.fontSize || BASE_FONT + 'px';
+    fsOverlay.classList.add('active');
+    fsOverlay.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    $('fullscreen-exit').focus();
+    announce('Document en plein écran. Appuyez sur Échap pour fermer.');
+  });
+  $('fullscreen-exit').addEventListener('click', closeFullscreen);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && fsOverlay.classList.contains('active')) closeFullscreen();
+  });
+  function closeFullscreen() {
+    fsOverlay.classList.remove('active');
+    fsOverlay.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    $('fullscreen-btn').focus();
+    announce('Plein écran fermé');
+  }
+
+  /* ----------------------------------------------------------------
+     MAGNIFYING LENS
+  ---------------------------------------------------------------- */
+  var lensEl         = $('lens');
+  var lensInner      = $('lens-inner');
+  var lensToggle     = $('lens-toggle');
+  var lensZoomSlider = $('lens-zoom-slider');
+  var lensZoomVal    = $('lens-zoom-value');
+  var lensSizeSlider = $('lens-size-slider');
+  var lensSizeVal    = $('lens-size-value');
 
   var lensActive = false;
-  var lensX = 400;
-  var lensY = 300;
-  var lensZoom = 2;
-  var lensSize = 200;
-  var lensStep = 20; // keyboard step in px
-
-  function updateLensSize() {
-    lensSize = parseInt(lensSizeSlider.value, 10);
-    lensEl.style.width  = lensSize + 'px';
-    lensEl.style.height = lensSize + 'px';
-    lensSizeVal.textContent = lensSize + 'px';
-    placeLens(lensX, lensY);
-  }
-
-  function placeLens(x, y) {
-    lensX = x;
-    lensY = y;
-    var half = lensSize / 2;
-    lensEl.style.left = (x - half) + 'px';
-    lensEl.style.top  = (y - half) + 'px';
-    updateLensContent(x, y);
-  }
-
-  function updateLensContent(mx, my) {
-    // Clone the page by using a CSS scale transform on a body copy inside the lens.
-    // We use the background approach: show a zoomed screenshot-like view of the page
-    // by scaling a clone of the document body inside the lens iframe.
-    // Since we are in a single HTML file, we use a simpler CSS trick:
-    // scale a hidden copy of the document using CSS.
-    // --- Practical approach: use a <canvas> + drawWindow (Firefox only) or the
-    //     transform magnification of a cloned element (cross-browser feasible).
-    // We use the transform approach on a cloned element inside the lens.
-    renderLens(mx, my);
-  }
-
-  // Build lens content: scale the viewport to show the area under cursor
-  function renderLens(mx, my) {
-    if (!lensActive) return;
-    var half = lensSize / 2;
-    // We use a CSS transform on the lens-inner that contains a scaled viewport copy
-    // offset so that the area around (mx, my) is centred.
-    var scale = lensZoom;
-    // The inner should be scrolled so that (mx, my) maps to centre of lens
-    var tx = -(mx * scale - half);
-    var ty = -(my * scale - half);
-    lensInner.style.transform = 'scale(' + scale + ')';
-    lensInner.style.transformOrigin = '0 0';
-    lensInner.style.left = tx + 'px';
-    lensInner.style.top  = ty + 'px';
-  }
-
-  // We need actual content inside lensInner — use a canvas approach
-  // Build an iframe inside the lens that shows the same page scaled
-  var lensCanvas = null;
-
-  function buildLens() {
-    // Instead of cloning DOM (which is complex), we use the CSS background-image trick:
-    // The lens shows a magnified snapshot of the area under it.
-    // Best cross-browser approach without canvas API access limitations:
-    // Use a second hidden clone of the content div, scaled and translated.
-    var clone = document.getElementById('lens-page-clone');
-    if (!clone) {
-      clone = document.createElement('div');
-      clone.id = 'lens-page-clone';
-      clone.setAttribute('aria-hidden', 'true');
-      clone.style.cssText = [
-        'position:fixed',
-        'top:0', 'left:0',
-        'width:' + document.documentElement.scrollWidth + 'px',
-        'height:' + document.documentElement.scrollHeight + 'px',
-        'pointer-events:none',
-        'z-index:-1',
-        'overflow:hidden'
-      ].join(';');
-      // clone page HTML
-      clone.innerHTML = document.documentElement.outerHTML;
-      // We won't actually do this (too heavy); instead we use body as transform source
-    }
-
-    // PRACTICAL APPROACH: use CSS perspective + scale on lensInner
-    // and position it so the page area is shown magnified.
-    // We insert the real body's screenshot via html2canvas — but that's external.
-    // Fallback: use the native CSS zoom on a copy of the content.
-    //
-    // BEST OFFLINE APPROACH: Create a second copy of #sample-content inside the lens,
-    // sync its state, and position it so the right section is visible.
-    setupLensClone();
-  }
-
+  var lensX = 0, lensY = 0;
+  var lensZoom = 2, lensSize = 220;
   var lensClone = null;
 
-  function setupLensClone() {
-    if (lensClone) { lensInner.innerHTML = ''; }
-    lensClone = sampleContent.cloneNode(true);
+  function buildLensClone() {
+    lensInner.innerHTML = '';
+    lensClone = sample.cloneNode(true);
     lensClone.id = '';
     lensClone.removeAttribute('aria-label');
     lensClone.setAttribute('aria-hidden', 'true');
     lensClone.style.cssText = [
-      'position:absolute',
-      'top:0', 'left:0',
-      'width:' + (sampleContent.offsetWidth || 600) + 'px',
-      'max-width:none',
-      'margin:0',
-      'border:none',
-      'box-shadow:none',
+      'position:absolute', 'top:0', 'left:0',
+      'margin:0', 'border:none', 'box-shadow:none',
+      'pointer-events:none', 'max-width:none',
+      'width:' + (sample.scrollWidth || 660) + 'px',
       'transform-origin:0 0',
-      'pointer-events:none',
-      'font-size:' + (sampleContent.style.fontSize || '16px')
+      'font-size:' + (sample.style.fontSize || BASE_FONT + 'px')
     ].join(';');
-    lensInner.innerHTML = '';
+    lensInner.style.cssText = 'position:absolute;top:0;left:0;overflow:hidden;width:100%;height:100%;';
     lensInner.appendChild(lensClone);
-    lensInner.style.position = 'absolute';
-    lensInner.style.overflow = 'hidden';
   }
 
   function renderLensAt(mx, my) {
     if (!lensActive || !lensClone) return;
-
-    // Get the content area scroll offset and position
-    var contentArea = document.getElementById('content-area');
-    var rect = contentArea.getBoundingClientRect();
-    var scrollX = contentArea.scrollLeft;
-    var scrollY = contentArea.scrollTop;
-
-    // Position within contentArea
-    var relX = mx - rect.left + scrollX;
-    var relY = my - rect.top  + scrollY;
-
-    var scale = lensZoom;
-    var half  = lensSize / 2;
-
-    // Translate so (relX, relY) of clone maps to centre of lens
-    var tx = half - relX * scale;
-    var ty = half - relY * scale;
-
-    // Sync clone font-size and classes with real content
-    lensClone.className = sampleContent.className;
-    lensClone.style.fontSize = sampleContent.style.fontSize || '16px';
-    lensClone.style.filter = sampleContent.style.filter || '';
-    lensClone.style.background = getComputedStyle(sampleContent).background;
-    lensClone.style.color = getComputedStyle(sampleContent).color;
-    lensClone.style.transform = 'scale(' + scale + ') translate(' + (tx/scale) + 'px, ' + (ty/scale) + 'px)';
-    lensInner.style.width  = lensSize + 'px';
-    lensInner.style.height = lensSize + 'px';
-    lensInner.style.overflow = 'hidden';
-    lensInner.style.position = 'absolute';
-    lensInner.style.top = '0';
-    lensInner.style.left = '0';
+    var ca = $('doc-content-main');
+    var rect = ca.getBoundingClientRect();
+    var relX = mx - rect.left + ca.scrollLeft;
+    var relY = my - rect.top  + ca.scrollTop;
+    var half = lensSize / 2;
+    var tx = half - relX * lensZoom;
+    var ty = half - relY * lensZoom;
+    var cs = getComputedStyle(sample);
+    lensClone.className = sample.className;
+    lensClone.style.fontSize = sample.style.fontSize || BASE_FONT + 'px';
+    lensClone.style.background = cs.background;
+    lensClone.style.color = cs.color;
+    lensClone.style.filter = cs.filter !== 'none' ? cs.filter : '';
+    lensClone.style.transform = 'scale(' + lensZoom + ') translate(' + (tx / lensZoom) + 'px,' + (ty / lensZoom) + 'px)';
   }
-
-  function showLens() {
-    lensActive = true;
-    lensEl.style.display = 'block';
-    buildLens();
-    renderLensAt(lensX, lensY);
-    lensToggle.setAttribute('aria-checked', 'true');
-    announce('Loupe activée. Utilisez I J K L ou les flèches pour la déplacer.');
-  }
-
-  function hideLens() {
-    lensActive = false;
-    lensEl.style.display = 'none';
-    lensToggle.setAttribute('aria-checked', 'false');
-    announce('Loupe désactivée');
-  }
-
-  lensToggle.addEventListener('click', function() {
-    if (lensActive) { hideLens(); } else { showLens(); }
-  });
-
-  // Mouse tracking
-  document.addEventListener('mousemove', function(e) {
-    if (!lensActive) return;
-    placeLensAt(e.clientX, e.clientY);
-  });
 
   function placeLensAt(cx, cy) {
-    lensX = cx;
-    lensY = cy;
+    lensX = cx; lensY = cy;
     var half = lensSize / 2;
     lensEl.style.left = (cx - half) + 'px';
     lensEl.style.top  = (cy - half) + 'px';
     renderLensAt(cx, cy);
   }
 
-  // Keyboard movement for lens: Arrow keys or I/J/K/L
-  document.addEventListener('keydown', function(e) {
-    if (!lensActive) return;
-    var dx = 0, dy = 0;
-    switch(e.key) {
-      case 'ArrowLeft':  case 'j': case 'J': dx = -lensStep; break;
-      case 'ArrowRight': case 'l': case 'L': dx =  lensStep; break;
-      case 'ArrowUp':    case 'i': case 'I': dy = -lensStep; break;
-      case 'ArrowDown':  case 'k': case 'K': dy =  lensStep; break;
-      default: return;
-    }
-    // Only intercept if not in an input
-    if (document.activeElement && (document.activeElement.tagName === 'INPUT' ||
-        document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT')) return;
-    e.preventDefault();
-    placeLensAt(lensX + dx, lensY + dy);
-  });
+  function showLens() {
+    lensActive = true;
+    lensEl.style.display = 'block';
+    buildLensClone();
+    placeLensAt(lensX || Math.floor(window.innerWidth / 2), lensY || Math.floor(window.innerHeight / 2));
+    lensToggle.setAttribute('aria-checked', 'true');
+    sp('lensActive', true);
+    announce('Loupe activée. Déplacez avec les flèches ou les touches I J K L.');
+  }
 
-  lensZoomSlider.addEventListener('input', function() {
+  function hideLens() {
+    lensActive = false;
+    lensEl.style.display = 'none';
+    lensToggle.setAttribute('aria-checked', 'false');
+    sp('lensActive', false);
+    announce('Loupe désactivée');
+  }
+
+  lensToggle.addEventListener('click', function () { if (lensActive) hideLens(); else showLens(); });
+
+  lensZoomSlider.addEventListener('input', function () {
     lensZoom = parseFloat(this.value);
     lensZoomVal.textContent = '×' + lensZoom;
     if (lensActive) renderLensAt(lensX, lensY);
+    sp('lensZoom', lensZoom);
   });
-  lensZoomSlider.addEventListener('change', function() {
-    announce('Grossissement loupe ×' + this.value);
-  });
+  lensZoomSlider.addEventListener('change', function () { announce('Grossissement loupe fois ' + this.value); });
 
-  lensSizeSlider.addEventListener('input', function() {
+  lensSizeSlider.addEventListener('input', function () {
     lensSize = parseInt(this.value, 10);
     lensSizeVal.textContent = lensSize + 'px';
-    lensEl.style.width  = lensSize + 'px';
-    lensEl.style.height = lensSize + 'px';
-    lensEl.style.borderRadius = (lensSize/2) + 'px';
-    if (lensActive) {
-      placeLensAt(lensX, lensY);
-      setupLensClone();
+    lensEl.style.width = lensEl.style.height = lensSize + 'px';
+    lensEl.style.borderRadius = (lensSize / 2) + 'px';
+    if (lensActive) { buildLensClone(); placeLensAt(lensX, lensY); }
+    sp('lensSize', lensSize);
+  });
+  lensSizeSlider.addEventListener('change', function () { announce('Taille loupe ' + this.value + ' pixels'); });
+
+  /* ----------------------------------------------------------------
+     LINE READER
+  ---------------------------------------------------------------- */
+  var lineReaderToggle = $('line-reader-toggle');
+  var lineHeightSlider = $('line-height-slider');
+  var lineHeightValue  = $('line-height-value');
+  var lineReaderEl     = $('line-reader');
+  var lineReaderActive = false;
+
+  lineReaderToggle.addEventListener('click', function () {
+    lineReaderActive = !lineReaderActive;
+    this.setAttribute('aria-checked', lineReaderActive ? 'true' : 'false');
+    lineReaderEl.classList.toggle('active', lineReaderActive);
+    if (lineReaderActive) {
+      lineReaderEl.style.top = Math.floor(window.innerHeight / 2) + 'px';
+      announce('Règle de lecture activée. Flèches haut et bas pour déplacer.');
+    } else {
+      announce('Règle de lecture désactivée');
     }
-  });
-  lensSizeSlider.addEventListener('change', function() {
-    announce('Taille loupe ' + this.value + ' pixels');
+    sp('lineReader', lineReaderActive);
   });
 
-  /* ======================================================
-     3. THEMES
-  ====================================================== */
-  var currentTheme = 'normal';
-  var themeButtons = document.querySelectorAll('[data-theme]');
-  var THEMES = ['normal','high-contrast','inverted','sepia','yellow-black'];
-  var THEME_LABELS = {
-    'normal': 'Thème normal',
-    'high-contrast': 'Fort contraste',
-    'inverted': 'Inversé',
-    'sepia': 'Sépia',
-    'yellow-black': 'Jaune sur noir'
-  };
-
-  function applyTheme(theme) {
-    THEMES.forEach(function(t) {
-      sampleContent.classList.remove('theme-' + t);
-    });
-    sampleContent.classList.add('theme-' + theme);
-    currentTheme = theme;
-
-    themeButtons.forEach(function(btn) {
-      var isActive = btn.dataset.theme === theme;
-      btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-      if (isActive) { btn.classList.add('active'); }
-      else { btn.classList.remove('active'); }
-    });
-
-    announce(THEME_LABELS[theme] + ' activé');
-    // Re-sync lens clone
-    if (lensActive && lensClone) {
-      lensClone.className = sampleContent.className;
-      lensClone.style.background = getComputedStyle(sampleContent).background;
-      lensClone.style.color = getComputedStyle(sampleContent).color;
-    }
-  }
-
-  themeButtons.forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      applyTheme(this.dataset.theme);
-    });
+  lineHeightSlider.addEventListener('input', function () {
+    var h = parseInt(this.value, 10);
+    lineHeightValue.textContent = h + 'px';
+    lineReaderEl.style.height = h + 'px';
+    sp('lineHeight', h);
   });
+  lineHeightSlider.addEventListener('change', function () { announce('Hauteur règle ' + this.value + ' pixels'); });
 
-  /* ======================================================
-     4. BRIGHTNESS / CONTRAST FILTERS
-  ====================================================== */
-  var brightnessSlider = document.getElementById('brightness-slider');
-  var brightnessValue  = document.getElementById('brightness-value');
-  var contrastSlider   = document.getElementById('contrast-slider');
-  var contrastValue    = document.getElementById('contrast-value');
-
-  function applyFilters() {
-    var b = brightnessSlider.value / 100;
-    var c = contrastSlider.value   / 100;
-    // We store as CSS vars and apply via inline style
-    sampleContent.style.setProperty('--content-brightness', b);
-    sampleContent.style.setProperty('--content-contrast', c);
-    // Force recompute for non-var-aware: rebuild filter
-    updateFilterStyle();
-  }
-
-  function updateFilterStyle() {
-    var b   = brightnessSlider.value;
-    var con = contrastSlider.value;
-    brightnessValue.textContent = b + '%';
-    contrastValue.textContent   = con + '%';
-
-    // Build filter string based on active theme
-    var baseFilter = '';
-    if (currentTheme === 'inverted') {
-      baseFilter = 'invert(1) ';
-    } else if (currentTheme === 'sepia') {
-      baseFilter = 'sepia(0.6) ';
-    }
-    // Remove the theme's own filter override and apply combined
-    sampleContent.style.filter = baseFilter + 'brightness(' + b/100 + ') contrast(' + con/100 + ')';
-  }
-
-  brightnessSlider.addEventListener('input', updateFilterStyle);
-  brightnessSlider.addEventListener('change', function() {
-    announce('Luminosité ' + this.value + '%');
-  });
-  contrastSlider.addEventListener('input', updateFilterStyle);
-  contrastSlider.addEventListener('change', function() {
-    announce('Contraste ' + this.value + '%');
-  });
-
-  document.getElementById('filter-reset').addEventListener('click', function() {
-    brightnessSlider.value = 100;
-    contrastSlider.value   = 100;
-    updateFilterStyle();
-    announce('Luminosité et contraste réinitialisés');
-  });
-
-  /* ======================================================
-     5. BIG CURSOR
-  ====================================================== */
-  var bigCursorToggle = document.getElementById('bigcursor-toggle');
-  var bigCursorActive = false;
-
-  bigCursorToggle.addEventListener('click', function() {
-    bigCursorActive = !bigCursorActive;
-    this.setAttribute('aria-checked', bigCursorActive ? 'true' : 'false');
-    document.body.classList.toggle('big-cursor', bigCursorActive);
-    announce(bigCursorActive ? 'Grand curseur activé' : 'Grand curseur désactivé');
-  });
-
-  /* ======================================================
-     6. RETICLE
-  ====================================================== */
-  var reticleToggle = document.getElementById('reticle-toggle');
+  /* ----------------------------------------------------------------
+     MOUSE TRACKING (lens + reticle + line reader)
+  ---------------------------------------------------------------- */
   var reticleActive = false;
-  var reticleH = document.getElementById('reticle-h');
-  var reticleV = document.getElementById('reticle-v');
 
-  reticleToggle.addEventListener('click', function() {
+  document.addEventListener('mousemove', function (e) {
+    if (lensActive) placeLensAt(e.clientX, e.clientY);
+    if (reticleActive) {
+      $('reticle-h').style.top  = e.clientY + 'px';
+      $('reticle-v').style.left = e.clientX + 'px';
+    }
+    if (lineReaderActive) {
+      var lrh = parseInt(lineHeightSlider.value, 10);
+      lineReaderEl.style.top = (e.clientY - lrh / 2) + 'px';
+    }
+  });
+
+  /* ---- Keyboard navigation for lens + line reader ---- */
+  document.addEventListener('keydown', function (e) {
+    var tag = document.activeElement ? document.activeElement.tagName : '';
+    var inInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+    var step = 20;
+    var dx = 0, dy = 0;
+
+    if (!inInput) {
+      switch (e.key) {
+        case 'ArrowLeft':  dx = -step; break;
+        case 'ArrowRight': dx =  step; break;
+        case 'ArrowUp':    dy = -step; break;
+        case 'ArrowDown':  dy =  step; break;
+        case 'j': case 'J': dx = -step; break;
+        case 'l': case 'L': dx =  step; break;
+        case 'i': case 'I': dy = -step; break;
+        case 'k': case 'K': dy =  step; break;
+      }
+    }
+
+    if (dx || dy) {
+      if (lensActive) { e.preventDefault(); placeLensAt(lensX + dx, lensY + dy); }
+      if (lineReaderActive && dy) {
+        e.preventDefault();
+        var cur = parseInt(lineReaderEl.style.top || '200', 10);
+        lineReaderEl.style.top = (cur + dy) + 'px';
+      }
+    }
+  });
+
+  /* ----------------------------------------------------------------
+     BRIGHTNESS / CONTRAST (document)
+  ---------------------------------------------------------------- */
+  var brightnessSlider = $('brightness-slider');
+  var brightnessValue  = $('brightness-value');
+  var contrastSlider   = $('contrast-slider');
+  var contrastValue    = $('contrast-value');
+
+  function updateDocFilter() {
+    var b = brightnessSlider.value, c = contrastSlider.value;
+    brightnessValue.textContent = b + '%';
+    contrastValue.textContent   = c + '%';
+    sample.style.filter = 'brightness(' + b / 100 + ') contrast(' + c / 100 + ')';
+    sp('docBrightness', parseInt(b, 10));
+    sp('docContrast',   parseInt(c, 10));
+  }
+
+  brightnessSlider.addEventListener('input', updateDocFilter);
+  brightnessSlider.addEventListener('change', function () { announce('Luminosité document ' + this.value + ' pourcent'); });
+  contrastSlider.addEventListener('input', updateDocFilter);
+  contrastSlider.addEventListener('change', function () { announce('Contraste document ' + this.value + ' pourcent'); });
+  $('filter-reset').addEventListener('click', function () {
+    brightnessSlider.value = 100; contrastSlider.value = 100; updateDocFilter();
+    announce('Filtres document réinitialisés');
+  });
+
+  /* ----------------------------------------------------------------
+     THEMES
+  ---------------------------------------------------------------- */
+  var THEME_NAMES = { normal:'Thème normal', hc:'Fort contraste', dark:'Sombre', sepia:'Sépia', yb:'Jaune sur noir' };
+  var themeBtns = document.querySelectorAll('[data-theme]');
+
+  function applyTheme(t) {
+    ['theme-hc','theme-dark','theme-sepia','theme-yb'].forEach(function (c) { document.body.classList.remove(c); });
+    if (t !== 'normal') document.body.classList.add('theme-' + t);
+    themeBtns.forEach(function (btn) { btn.setAttribute('aria-pressed', btn.dataset.theme === t ? 'true' : 'false'); });
+    sp('theme', t);
+    if (lensActive) buildLensClone();
+  }
+
+  themeBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      applyTheme(this.dataset.theme);
+      announce((THEME_NAMES[this.dataset.theme] || this.dataset.theme) + ' activé');
+    });
+  });
+
+  /* ----------------------------------------------------------------
+     BIG CURSOR
+  ---------------------------------------------------------------- */
+  $('bigcursor-toggle').addEventListener('click', function () {
+    var on = this.getAttribute('aria-checked') !== 'true';
+    this.setAttribute('aria-checked', on ? 'true' : 'false');
+    document.body.classList.toggle('big-cursor', on);
+    sp('bigCursor', on);
+    announce(on ? 'Grand curseur activé' : 'Grand curseur désactivé');
+  });
+
+  /* ----------------------------------------------------------------
+     RETICLE
+  ---------------------------------------------------------------- */
+  $('reticle-toggle').addEventListener('click', function () {
     reticleActive = !reticleActive;
     this.setAttribute('aria-checked', reticleActive ? 'true' : 'false');
     document.body.classList.toggle('show-reticle', reticleActive);
+    sp('reticle', reticleActive);
     announce(reticleActive ? 'Réticule activé' : 'Réticule désactivé');
   });
 
-  document.addEventListener('mousemove', function(e) {
-    if (!reticleActive) return;
-    reticleH.style.top  = e.clientY + 'px';
-    reticleV.style.left = e.clientX + 'px';
-  });
+  /* ----------------------------------------------------------------
+     TTS — DOCUMENT
+  ---------------------------------------------------------------- */
+  var ttsPlay   = $('tts-play');
+  var ttsStop   = $('tts-stop');
+  var ttsStatus = $('tts-status');
+  var ttsSup    = !!synth;
 
-  /* ======================================================
-     7. TEXT-TO-SPEECH
-  ====================================================== */
-  var ttsPlay  = document.getElementById('tts-play');
-  var ttsStop  = document.getElementById('tts-stop');
-  var ttsMsg   = document.getElementById('tts-msg');
-  var ttsUtter = null;
-  var ttsSupported = ('speechSynthesis' in window);
-
-  function getDocumentText() {
-    // Extract text from sample content, skipping UI elements
-    var el = document.getElementById('sample-content');
-    return el ? el.innerText || el.textContent : '';
+  function startDocTTS() {
+    if (!ttsSup) { showTtsStatus(ttsStatus, 'Synthèse vocale non disponible dans ce navigateur.', 'error'); return; }
+    try { synth.cancel(); } catch (e) {}
+    var text = (sample.innerText || sample.textContent || '').trim();
+    if (!text) return;
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'fr-FR'; u.rate = 0.9;
+    if (frVoice) u.voice = frVoice;
+    u.onstart = function () { ttsPlay.disabled = true; ttsStop.disabled = false; showTtsStatus(ttsStatus, 'Lecture en cours…', ''); };
+    u.onend   = function () { ttsPlay.disabled = false; ttsStop.disabled = true; showTtsStatus(ttsStatus, 'Lecture terminée.', 'success'); setTimeout(function () { ttsStatus.style.display = 'none'; }, 3500); };
+    u.onerror = function (e) { ttsPlay.disabled = false; ttsStop.disabled = true; if (e.error !== 'interrupted') showTtsStatus(ttsStatus, 'Erreur : ' + (e.error || 'inconnue'), 'error'); };
+    try { synth.speak(u); } catch (e) { showTtsStatus(ttsStatus, 'Lecture impossible.', 'error'); }
   }
 
-  ttsPlay.addEventListener('click', function() {
-    if (!ttsSupported) {
-      ttsMsg.textContent = 'La synthèse vocale n\'est pas disponible dans votre navigateur.';
-      ttsMsg.style.display = 'block';
-      return;
-    }
-    window.speechSynthesis.cancel();
-    var text = getDocumentText();
-    ttsUtter = new SpeechSynthesisUtterance(text);
-    ttsUtter.lang = 'fr-FR';
-    ttsUtter.rate = 0.9;
-
-    // Pick French voice if available
-    var voices = window.speechSynthesis.getVoices();
-    var frVoice = voices.find(function(v) { return v.lang.startsWith('fr'); });
-    if (frVoice) { ttsUtter.voice = frVoice; }
-
-    ttsUtter.onstart = function() {
-      ttsPlay.disabled = true;
-      ttsStop.disabled = false;
-      ttsMsg.textContent = 'Lecture en cours…';
-      ttsMsg.style.display = 'block';
-    };
-    ttsUtter.onend = function() {
-      ttsPlay.disabled = false;
-      ttsStop.disabled = true;
-      ttsMsg.textContent = 'Lecture terminée.';
-      setTimeout(function() { ttsMsg.style.display = 'none'; }, 3000);
-    };
-    ttsUtter.onerror = function(e) {
-      ttsPlay.disabled = false;
-      ttsStop.disabled = true;
-      ttsMsg.textContent = 'Erreur de lecture : ' + (e.error || 'inconnue');
-    };
-
-    window.speechSynthesis.speak(ttsUtter);
+  ttsPlay.addEventListener('click', startDocTTS);
+  ttsStop.addEventListener('click', function () {
+    try { synth && synth.cancel(); } catch (e) {}
+    ttsPlay.disabled = false; ttsStop.disabled = true; ttsStatus.style.display = 'none';
+    ariaAnnounce('Lecture arrêtée');
   });
 
-  ttsStop.addEventListener('click', function() {
-    window.speechSynthesis.cancel();
-    ttsPlay.disabled = false;
-    ttsStop.disabled = true;
-    ttsMsg.textContent = 'Lecture arrêtée.';
-    setTimeout(function() { ttsMsg.style.display = 'none'; }, 2000);
-    announce('Lecture arrêtée');
-  });
-
-  // Voice list loads async
-  if (ttsSupported && window.speechSynthesis.onvoiceschanged !== undefined) {
-    window.speechSynthesis.onvoiceschanged = function() { /* voices now loaded */ };
+  function showTtsStatus(el, msg, type) {
+    el.textContent = msg;
+    el.className = 'info-box' + (type ? ' ' + type : '');
+    el.style.display = 'block';
   }
 
-  /* ======================================================
-     8. CAMERA LOUPE
-  ====================================================== */
-  var cameraToggleBtn  = document.getElementById('camera-toggle');
-  var cameraSectionEl  = document.getElementById('camera-section');
-  var cameraVideo      = document.getElementById('camera-video');
-  var cameraMsgEl      = document.getElementById('camera-msg');
-  var cameraStopBtn    = document.getElementById('camera-stop');
-  var cameraZoomSlider = document.getElementById('camera-zoom-slider');
-  var cameraZoomVal    = document.getElementById('camera-zoom-value');
+  /* ----------------------------------------------------------------
+     PANEL 2 — CAMERA
+  ---------------------------------------------------------------- */
+  var cameraToggleBtn  = $('camera-toggle');
+  var cameraStopBtn    = $('camera-stop');
+  var cameraVideoEl    = $('camera-video');
+  var cameraCanvasEl   = $('camera-canvas');
+  var cameraContainer  = $('camera-video-container');
+  var cameraMsgEl      = $('camera-msg');
+  var cameraNoFeed     = $('camera-no-feed');
+  var freezeBadge      = $('freeze-badge');
+  var freezeBtn        = $('freeze-btn');
+  var camZoomSlider    = $('camera-zoom-slider');
+  var camZoomVal       = $('camera-zoom-value');
+  var camBrightSlider  = $('cam-brightness-slider');
+  var camBrightVal     = $('cam-brightness-value');
+  var camContrSlider   = $('cam-contrast-slider');
+  var camContrVal      = $('cam-contrast-value');
   var cameraStream     = null;
+  var camFrozen        = false;
+  var camFilter        = 'none';
 
-  cameraToggleBtn.addEventListener('click', function() {
-    if (cameraStream) {
-      stopCamera();
-      return;
-    }
-    startCamera();
-  });
+  function showCameraMsg(msg, type) {
+    cameraMsgEl.textContent = msg;
+    cameraMsgEl.className = 'info-box ' + (type || 'warn');
+    cameraMsgEl.style.display = 'block';
+  }
+  function hideCameraMsg() { cameraMsgEl.style.display = 'none'; }
 
   function startCamera() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      showCameraMsg('Votre navigateur ne supporte pas l\'accès à la caméra. Toutes les autres fonctionnalités de Lumen restent disponibles.', true);
+      showCameraMsg('La caméra n\'est pas disponible dans votre navigateur. Toutes les autres fonctions restent accessibles.', 'error');
+      announce('Caméra non disponible dans ce navigateur.');
       return;
     }
-    // Request camera
-    var constraints = { video: { facingMode: 'environment' } };
-    navigator.mediaDevices.getUserMedia(constraints)
-      .then(function(stream) {
-        cameraStream = stream;
-        cameraVideo.srcObject = stream;
-        cameraSectionEl.classList.add('visible');
-        cameraToggleBtn.textContent = 'Désactiver la caméra';
-        cameraToggleBtn.setAttribute('aria-label', 'Désactiver la caméra loupe');
-        hideCameraMsg();
-        applyCameraZoom(parseFloat(cameraZoomSlider.value));
-        announce('Caméra activée comme loupe');
-      })
-      .catch(function(err) {
-        var msg = '';
-        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-          msg = 'Permission refusée. Vous pouvez activer la caméra dans les paramètres de votre navigateur. Toutes les autres fonctionnalités de Lumen restent disponibles.';
-        } else if (err.name === 'NotFoundError') {
-          msg = 'Aucune caméra trouvée sur cet appareil. Toutes les autres fonctionnalités de Lumen restent disponibles.';
-        } else if (err.name === 'NotReadableError') {
-          msg = 'La caméra est déjà utilisée par une autre application. Fermez-la et réessayez.';
-        } else {
-          msg = 'La caméra est indisponible (' + err.message + '). Toutes les autres fonctionnalités de Lumen restent disponibles.';
-        }
-        showCameraMsg(msg, true);
-      });
+    hideCameraMsg();
+    var constraints = { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } };
+    navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+      cameraStream = stream;
+      cameraVideoEl.srcObject = stream;
+      cameraContainer.classList.add('active');
+      cameraNoFeed.style.display = 'none';
+      cameraToggleBtn.style.display = 'none';
+      cameraStopBtn.style.display = '';
+      applyCameraZoom(parseFloat(camZoomSlider.value));
+      applyCamFilter();
+      announce('Caméra activée. Pointez vers un texte imprimé pour le voir agrandi.');
+    }).catch(function (err) {
+      var msg;
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        msg = 'Permission caméra refusée. Vérifiez les paramètres de votre navigateur.';
+      } else if (err.name === 'NotFoundError') {
+        msg = 'Aucune caméra trouvée sur cet appareil.';
+      } else if (err.name === 'NotReadableError') {
+        msg = 'La caméra est utilisée par une autre application. Fermez-la et réessayez.';
+      } else {
+        msg = 'Caméra indisponible (' + (err.message || err.name) + ').';
+      }
+      msg += ' Toutes les autres fonctions de Lumen restent disponibles.';
+      showCameraMsg(msg, 'error');
+      announce(msg);
+    });
   }
 
-  function stopCamera() {
+  function stopCamera(silent) {
     if (cameraStream) {
-      cameraStream.getTracks().forEach(function(t) { t.stop(); });
+      try { cameraStream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
       cameraStream = null;
     }
-    cameraVideo.srcObject = null;
-    cameraSectionEl.classList.remove('visible');
-    cameraToggleBtn.textContent = 'Utiliser la caméra comme loupe';
-    cameraToggleBtn.setAttribute('aria-label', 'Activer la caméra comme loupe physique');
-    announce('Caméra désactivée');
+    cameraVideoEl.srcObject = null;
+    cameraContainer.classList.remove('active');
+    cameraNoFeed.style.display = '';
+    cameraToggleBtn.style.display = '';
+    cameraStopBtn.style.display = 'none';
+    camFrozen = false;
+    freezeBtn.setAttribute('aria-pressed', 'false');
+    freezeBtn.classList.remove('active');
+    cameraCanvasEl.classList.remove('frozen');
+    freezeBadge.classList.remove('visible');
+    if (!silent) announce('Caméra arrêtée');
   }
 
-  function showCameraMsg(msg, isWarn) {
-    cameraMsgEl.textContent = msg;
-    cameraMsgEl.className = 'info-box' + (isWarn ? ' warn' : '');
-    cameraMsgEl.classList.add('visible');
-  }
-  function hideCameraMsg() {
-    cameraMsgEl.classList.remove('visible');
-    cameraMsgEl.style.display = '';
-  }
+  cameraToggleBtn.addEventListener('click', startCamera);
+  cameraStopBtn.addEventListener('click', function () { stopCamera(false); });
 
-  cameraStopBtn.addEventListener('click', function() { stopCamera(); });
-
-  function applyCameraZoom(z) {
-    // Attempt to use camera native zoom if supported
-    if (cameraStream) {
-      var track = cameraStream.getVideoTracks()[0];
-      if (track && track.getCapabilities) {
-        var caps = track.getCapabilities();
-        if (caps.zoom) {
-          var clampedZ = Math.min(Math.max(z, caps.zoom.min), caps.zoom.max);
-          track.applyConstraints({ advanced: [{ zoom: clampedZ }] }).catch(function(){});
-        }
-      }
+  /* Freeze */
+  freezeBtn.addEventListener('click', function () {
+    if (!cameraStream) { announce('Démarrez la caméra d\'abord.'); return; }
+    if (!camFrozen) {
+      try {
+        var ctx = cameraCanvasEl.getContext('2d');
+        cameraCanvasEl.width  = cameraVideoEl.videoWidth  || 640;
+        cameraCanvasEl.height = cameraVideoEl.videoHeight || 360;
+        ctx.filter = buildCamFilterStr();
+        ctx.drawImage(cameraVideoEl, 0, 0);
+      } catch (e) {}
+      cameraCanvasEl.classList.add('frozen');
+      freezeBadge.classList.add('visible');
+      this.setAttribute('aria-pressed', 'true');
+      this.classList.add('active');
+      camFrozen = true;
+      announce('Image figée');
+    } else {
+      cameraCanvasEl.classList.remove('frozen');
+      freezeBadge.classList.remove('visible');
+      this.setAttribute('aria-pressed', 'false');
+      this.classList.remove('active');
+      camFrozen = false;
+      announce('Flux vidéo repris');
     }
-    // CSS zoom fallback on video element
-    cameraVideo.style.transform = 'scale(' + z + ')';
-    cameraVideo.style.transformOrigin = 'center center';
-    cameraVideo.parentElement && (cameraVideo.parentElement.style.overflow = 'hidden');
+  });
+
+  /* Camera zoom */
+  function applyCameraZoom(z) {
+    camZoomVal.textContent = '×' + z;
+    if (cameraStream) {
+      try {
+        var track = cameraStream.getVideoTracks()[0];
+        if (track && track.getCapabilities) {
+          var caps = track.getCapabilities();
+          if (caps && caps.zoom) {
+            track.applyConstraints({ advanced: [{ zoom: Math.min(Math.max(z, caps.zoom.min), caps.zoom.max) }] }).catch(function () {});
+          }
+        }
+      } catch (e) {}
+    }
+    cameraVideoEl.style.transform = 'scale(' + z + ')';
+    cameraVideoEl.style.transformOrigin = 'center center';
+    cameraContainer.style.overflow = 'hidden';
   }
 
-  cameraZoomSlider.addEventListener('input', function() {
-    var z = parseFloat(this.value);
-    cameraZoomVal.textContent = '×' + z;
-    applyCameraZoom(z);
-  });
-  cameraZoomSlider.addEventListener('change', function() {
-    announce('Zoom caméra ×' + this.value);
+  camZoomSlider.addEventListener('input', function () { applyCameraZoom(parseFloat(this.value)); });
+  camZoomSlider.addEventListener('change', function () { announce('Zoom caméra fois ' + this.value); });
+  $('cam-zoom-dec').addEventListener('click', function () { var v = Math.max(1, parseFloat(camZoomSlider.value) - 0.25); camZoomSlider.value = v; applyCameraZoom(v); });
+  $('cam-zoom-inc').addEventListener('click', function () { var v = Math.min(8, parseFloat(camZoomSlider.value) + 0.25); camZoomSlider.value = v; applyCameraZoom(v); });
+
+  /* Camera filters */
+  var CAM_FILTERS = {
+    'none':          '',
+    'grayscale':     'grayscale(1)',
+    'invert':        'invert(1)',
+    'yellow-black':  'grayscale(1) invert(1) sepia(1) hue-rotate(58deg) saturate(6)',
+    'high-contrast': 'contrast(3.5) saturate(0)'
+  };
+
+  function buildCamFilterStr() {
+    var b = camBrightSlider.value, c = camContrSlider.value;
+    var base = CAM_FILTERS[camFilter] || '';
+    return (base ? base + ' ' : '') + 'brightness(' + b / 100 + ') contrast(' + c / 100 + ')';
+  }
+
+  function applyCamFilter() { cameraVideoEl.style.filter = buildCamFilterStr(); }
+
+  document.querySelectorAll('[data-cam-filter]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      camFilter = this.dataset.camFilter;
+      document.querySelectorAll('[data-cam-filter]').forEach(function (b) {
+        b.setAttribute('aria-pressed', b.dataset.camFilter === camFilter ? 'true' : 'false');
+        b.classList.toggle('active', b.dataset.camFilter === camFilter);
+      });
+      applyCamFilter();
+      var labels = { none:'Normal', grayscale:'Noir et blanc', invert:'Inversé', 'yellow-black':'Jaune et noir', 'high-contrast':'Fort contraste' };
+      announce('Filtre : ' + (labels[camFilter] || camFilter));
+    });
   });
 
-  /* ======================================================
-     9. INIT
-  ====================================================== */
-  // Set initial lens position to centre of viewport
+  camBrightSlider.addEventListener('input', function () { camBrightVal.textContent = this.value + '%'; applyCamFilter(); });
+  camBrightSlider.addEventListener('change', function () { announce('Luminosité caméra ' + this.value + ' pourcent'); });
+  camContrSlider.addEventListener('input', function () { camContrVal.textContent = this.value + '%'; applyCamFilter(); });
+  camContrSlider.addEventListener('change', function () { announce('Contraste caméra ' + this.value + ' pourcent'); });
+
+  /* ----------------------------------------------------------------
+     PANEL 3 — MON TEXTE
+  ---------------------------------------------------------------- */
+  var textInput      = $('text-input');
+  var textDisplay    = $('text-display');
+  var textSizeSlider = $('text-size-slider');
+  var textSizeValue  = $('text-size-value');
+  var ttsRateSlider  = $('tts-rate-slider');
+  var ttsRateValue   = $('tts-rate-value');
+  var txtTtsPlay     = $('txt-tts-play');
+  var txtTtsStop     = $('txt-tts-stop');
+  var txtTtsStatus   = $('txt-tts-status');
+
+  function updateTextDisplay() {
+    var v = textInput.value;
+    if (v.trim()) {
+      textDisplay.textContent = v;
+      textDisplay.classList.remove('empty');
+    } else {
+      textDisplay.textContent = 'Votre texte apparaîtra ici en très grand…';
+      textDisplay.classList.add('empty');
+    }
+    sp('userText', v);
+  }
+
+  textInput.addEventListener('input', updateTextDisplay);
+
+  function applyTextSize(rem) {
+    textDisplay.style.fontSize = rem + 'rem';
+    textSizeValue.textContent = rem + 'rem';
+    sp('textSize', rem);
+  }
+
+  textSizeSlider.addEventListener('input', function () { applyTextSize(parseFloat(this.value)); });
+  textSizeSlider.addEventListener('change', function () { announce('Taille ' + this.value + ' rem'); });
+  $('txt-size-dec').addEventListener('click', function () { var v = Math.max(1, parseFloat(textSizeSlider.value) - 0.25); textSizeSlider.value = v; applyTextSize(v); });
+  $('txt-size-inc').addEventListener('click', function () { var v = Math.min(6, parseFloat(textSizeSlider.value) + 0.25); textSizeSlider.value = v; applyTextSize(v); });
+  $('txt-clear-btn').addEventListener('click', function () { textInput.value = ''; updateTextDisplay(); announce('Texte effacé'); textInput.focus(); });
+
+  ttsRateSlider.addEventListener('input', function () { ttsRateValue.textContent = this.value + '×'; sp('ttsRate', parseFloat(this.value)); });
+
+  txtTtsPlay.addEventListener('click', function () {
+    if (!ttsSup) { showTtsStatus(txtTtsStatus, 'Synthèse vocale non disponible.', 'error'); return; }
+    var text = textInput.value.trim();
+    if (!text) { showTtsStatus(txtTtsStatus, 'Saisissez d\'abord un texte à lire.', 'warn'); return; }
+    try { synth.cancel(); } catch (e) {}
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'fr-FR'; u.rate = parseFloat(ttsRateSlider.value);
+    if (frVoice) u.voice = frVoice;
+    u.onstart = function () { txtTtsPlay.disabled = true; txtTtsStop.disabled = false; showTtsStatus(txtTtsStatus, 'Lecture en cours…', ''); };
+    u.onend   = function () { txtTtsPlay.disabled = false; txtTtsStop.disabled = true; showTtsStatus(txtTtsStatus, 'Lecture terminée.', 'success'); setTimeout(function () { txtTtsStatus.style.display = 'none'; }, 3500); };
+    u.onerror = function (e) { txtTtsPlay.disabled = false; txtTtsStop.disabled = true; if (e.error !== 'interrupted') showTtsStatus(txtTtsStatus, 'Erreur : ' + (e.error || 'inconnue'), 'error'); };
+    try { synth.speak(u); } catch (e) { showTtsStatus(txtTtsStatus, 'Lecture impossible.', 'error'); }
+  });
+
+  txtTtsStop.addEventListener('click', function () {
+    try { synth && synth.cancel(); } catch (e) {}
+    txtTtsPlay.disabled = false; txtTtsStop.disabled = true; txtTtsStatus.style.display = 'none';
+    ariaAnnounce('Lecture arrêtée');
+  });
+
+  /* ----------------------------------------------------------------
+     RESET ALL
+  ---------------------------------------------------------------- */
+  $('reset-all-btn').addEventListener('click', function () {
+    try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+    ariaAnnounce('Réglages réinitialisés. Rechargement…');
+    setTimeout(function () { window.location.reload(); }, 1600);
+  });
+
+  /* ----------------------------------------------------------------
+     RESTORE PREFS
+  ---------------------------------------------------------------- */
+  function restorePrefs() {
+    /* Tab */
+    var savedTab = gp('activeTab', 'tab-doc');
+    if (savedTab && document.getElementById(savedTab)) activateTab(savedTab);
+
+    /* Theme */
+    var t = gp('theme', 'normal');
+    applyTheme(t);
+
+    /* Doc zoom */
+    var dz = gp('docZoom', 100);
+    zoomSlider.value = dz; applyDocZoom(dz);
+
+    /* Filters */
+    brightnessSlider.value = gp('docBrightness', 100);
+    contrastSlider.value   = gp('docContrast', 100);
+    updateDocFilter();
+
+    /* Lens */
+    var lz = gp('lensZoom', 2);
+    lensZoom = lz; lensZoomSlider.value = lz; lensZoomVal.textContent = '×' + lz;
+    var ls = gp('lensSize', 220);
+    lensSize = ls; lensSizeSlider.value = ls; lensSizeVal.textContent = ls + 'px';
+    lensEl.style.width = lensEl.style.height = ls + 'px';
+    lensEl.style.borderRadius = (ls / 2) + 'px';
+    if (gp('lensActive', false)) showLens();
+
+    /* Line reader */
+    var lh = gp('lineHeight', 40);
+    lineHeightSlider.value = lh; lineHeightValue.textContent = lh + 'px';
+    lineReaderEl.style.height = lh + 'px';
+    if (gp('lineReader', false)) lineReaderToggle.click();
+
+    /* Big cursor */
+    if (gp('bigCursor', false)) {
+      $('bigcursor-toggle').setAttribute('aria-checked', 'true');
+      document.body.classList.add('big-cursor');
+    }
+
+    /* Reticle */
+    if (gp('reticle', false)) {
+      reticleActive = true;
+      $('reticle-toggle').setAttribute('aria-checked', 'true');
+      document.body.classList.add('show-reticle');
+    }
+
+    /* Text panel */
+    var ut = gp('userText', '');
+    if (ut) { textInput.value = ut; updateTextDisplay(); }
+    var ts = gp('textSize', 2);
+    textSizeSlider.value = ts; applyTextSize(ts);
+    var tr = gp('ttsRate', 0.9);
+    ttsRateSlider.value = tr; ttsRateValue.textContent = tr + '×';
+  }
+
+  /* ----------------------------------------------------------------
+     INIT
+  ---------------------------------------------------------------- */
   lensX = Math.floor(window.innerWidth  / 2);
   lensY = Math.floor(window.innerHeight / 2);
-  placeLensAt(lensX, lensY);
 
-  // Announce app ready
-  announce('Lumen chargé. Utilisez le panneau à gauche pour ajuster la vision.');
+  restorePrefs();
 
-})();
+  setTimeout(function () {
+    ariaLive.textContent = 'Lumen chargé. Utilisez les onglets pour naviguer entre les fonctions.';
+  }, 700);
+
+}());
 </script>
 </body>
 </html>

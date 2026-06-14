@@ -3,27 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MathEase — Démo | LibreA11y</title>
-<meta name="description" content="Soutien à la dyscalculie : représentations multiples, opérations visuelles, argent. Démo hors-ligne, aucune donnée envoyée.">
+<title>MathEase — Maths accessibles | LibreA11y</title>
+<meta name="description" content="Soutien à la dyscalculie : représentations multiples, objets manipulables, opérations visuelles, argent, horloge, fractions. 100% hors-ligne.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0F4C81">
 <style>
 /* ===== VARIABLES & RESET ===== */
 :root {
   --marine:    #0F4C81;
   --marine-dk: #0A3A63;
+  --marine-lt: #1A6FBA;
   --or:        #F4B81C;
   --or-lt:     #FFD45E;
+  --or-dk:     #D49A18;
   --encre:     #16202E;
   --fond:      #F7F9FC;
   --surface:   #FFFFFF;
-  --border:    #D0D9E8;
+  --border:    #C8D4E6;
+  --border-dk: #9BAFC8;
   --focus-ring:#F4B81C;
   --radius:    12px;
   --radius-sm: 8px;
   --shadow:    0 2px 8px rgba(15,76,129,0.12);
-  --shadow-hv: 0 4px 16px rgba(15,76,129,0.22);
+  --shadow-hv: 0 4px 18px rgba(15,76,129,0.22);
   --tr:        0.18s ease;
   --success:   #1B6B3A;
   --success-bg:#E8F5EE;
+  --error:     #C0392B;
+  --error-bg:  #FDEDEC;
+  --font-sz:   16px;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
@@ -32,8 +40,8 @@ html, body {
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
   background: var(--fond);
   color: var(--encre);
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: var(--font-sz);
+  line-height: 1.55;
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
@@ -42,588 +50,439 @@ html, body {
 
 /* ===== SKIP LINK ===== */
 #skip-link {
-  position: absolute;
-  top: -100px;
-  left: 8px;
-  background: var(--or);
-  color: var(--encre);
-  font-weight: 700;
-  padding: 10px 18px;
-  border-radius: var(--radius-sm);
-  z-index: 9999;
-  text-decoration: none;
-  font-size: 1rem;
+  position: absolute; top: -100px; left: 8px;
+  background: var(--or); color: var(--encre);
+  font-weight: 700; padding: 10px 18px;
+  border-radius: var(--radius-sm); z-index: 9999;
+  text-decoration: none; font-size: 1rem;
 }
 #skip-link:focus { top: 8px; }
 
 /* ===== FOCUS ===== */
-:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 3px;
+:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 3px solid var(--focus-ring); outline-offset: 3px;
 }
+
+/* ===== ARIA LIVE ===== */
+#aria-live { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 
 /* ===== HEADER ===== */
 #app-header {
-  background: var(--marine);
-  color: #fff;
-  padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  background: var(--marine); color: #fff;
+  padding: 10px 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
   box-shadow: 0 2px 8px rgba(10,58,99,0.3);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  position: sticky; top: 0; z-index: 100;
 }
-#header-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+#header-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 #back-link {
-  color: var(--or-lt);
-  text-decoration: none;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-  min-height: 44px;
+  color: var(--or-lt); text-decoration: none; font-size: 0.92rem;
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 8px 12px; border-radius: var(--radius-sm);
+  min-height: 44px; white-space: nowrap;
   transition: background var(--tr);
 }
 #back-link:hover, #back-link:focus-visible { background: rgba(255,255,255,0.18); color: #fff; }
-#app-title {
-  font-size: 1.3rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+#app-title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.01em; }
+#header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+#header-notice { font-size: 0.7rem; color: rgba(255,255,255,0.7); white-space: nowrap; }
+#btn-settings {
+  background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.3);
+  color: #fff; border-radius: var(--radius-sm); padding: 6px 10px;
+  font-size: 0.82rem; cursor: pointer; min-height: 40px; min-width: 40px;
+  transition: background var(--tr);
 }
-#header-notice {
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.75);
-  white-space: nowrap;
-  letter-spacing: 0.01em;
-}
+#btn-settings:hover { background: rgba(255,255,255,0.25); }
 
 /* ===== NAV TABS ===== */
 #main-nav {
   background: var(--marine-dk);
-  display: flex;
-  overflow-x: auto;
-  gap: 4px;
-  padding: 6px 12px;
+  display: flex; overflow-x: auto; gap: 2px; padding: 4px 10px;
+  scrollbar-width: thin;
 }
 #main-nav button {
-  flex-shrink: 0;
-  background: none;
-  border: none;
-  color: rgba(255,255,255,0.75);
-  font-size: 0.88rem;
-  font-weight: 600;
-  padding: 10px 16px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  min-height: 44px;
-  transition: background var(--tr), color var(--tr);
-  white-space: nowrap;
+  flex-shrink: 0; background: none; border: none;
+  color: rgba(255,255,255,0.78); font-size: 0.84rem; font-weight: 600;
+  padding: 9px 13px; border-radius: var(--radius-sm); cursor: pointer;
+  min-height: 44px; min-width: 44px;
+  transition: background var(--tr), color var(--tr); white-space: nowrap;
 }
 #main-nav button:hover { background: rgba(255,255,255,0.12); color: #fff; }
-#main-nav button[aria-selected="true"] {
-  background: var(--or);
-  color: var(--encre);
-}
+#main-nav button[aria-selected="true"] { background: var(--or); color: var(--encre); }
 
 /* ===== MAIN ===== */
-#main-content {
-  max-width: 860px;
-  margin: 0 auto;
-  padding: 24px 16px 48px;
-}
+#main-content { max-width: 900px; margin: 0 auto; padding: 20px 14px 60px; }
 
 /* ===== PANELS ===== */
 .panel { display: none; }
 .panel.active { display: block; }
 
-/* ===== SECTION CARD ===== */
+/* ===== CARD ===== */
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
-  box-shadow: var(--shadow);
-  margin-bottom: 20px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+  box-shadow: var(--shadow); margin-bottom: 18px;
 }
 .card-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--marine);
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  font-size: 1.05rem; font-weight: 800; color: var(--marine);
+  margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
 }
+.card-desc { font-size: 0.93rem; margin-bottom: 14px; color: #3a4a5c; line-height: 1.6; }
 
 /* ===== BTN ===== */
 .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 12px 20px;
-  border-radius: var(--radius-sm);
-  border: none;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  min-height: 48px;
-  min-width: 48px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 18px; border-radius: var(--radius-sm); border: none;
+  font-size: 1rem; font-weight: 700; cursor: pointer;
+  min-height: 48px; min-width: 48px;
   transition: background var(--tr), transform var(--tr), box-shadow var(--tr);
+  line-height: 1.2;
 }
 .btn:active { transform: scale(0.97); }
-.btn-primary {
-  background: var(--marine);
-  color: #fff;
-}
+.btn-primary { background: var(--marine); color: #fff; }
 .btn-primary:hover { background: var(--marine-dk); box-shadow: var(--shadow-hv); }
-.btn-accent {
-  background: var(--or);
-  color: var(--encre);
-}
+.btn-accent { background: var(--or); color: var(--encre); }
 .btn-accent:hover { background: var(--or-lt); box-shadow: var(--shadow-hv); }
-.btn-lg {
-  font-size: 1.4rem;
-  min-height: 56px;
-  min-width: 56px;
-  padding: 12px 20px;
-  border-radius: 10px;
-}
-.btn-outline {
-  background: transparent;
-  border: 2px solid var(--marine);
-  color: var(--marine);
-}
+.btn-outline { background: transparent; border: 2px solid var(--marine); color: var(--marine); }
 .btn-outline:hover { background: var(--marine); color: #fff; }
-.btn-ghost {
-  background: var(--fond);
-  color: var(--marine);
-  border: 1px solid var(--border);
-}
+.btn-ghost { background: var(--fond); color: var(--marine); border: 1px solid var(--border); }
 .btn-ghost:hover { background: var(--border); }
+.btn-danger { background: var(--error); color: #fff; }
+.btn-danger:hover { background: #a93226; }
+.btn-sm { padding: 7px 12px; font-size: 0.88rem; min-height: 40px; }
+.btn-lg { font-size: 1.2rem; min-height: 56px; padding: 12px 22px; }
 
-/* ===== LIVE REGION ===== */
-#aria-live { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+/* ===== FORMS ===== */
+.field-group { display: flex; flex-direction: column; gap: 4px; }
+.field-label { font-size: 0.9rem; font-weight: 700; }
+.field-input, .field-select {
+  font-size: 1.1rem; font-weight: 700; text-align: center;
+  border: 2px solid var(--border); border-radius: var(--radius-sm);
+  padding: 8px 10px; background: var(--surface); color: var(--encre);
+  min-height: 48px; width: 80px;
+  transition: border-color var(--tr), box-shadow var(--tr);
+}
+.field-input:focus, .field-select:focus {
+  border-color: var(--marine); outline: none;
+  box-shadow: 0 0 0 3px rgba(244,184,28,0.5);
+}
+.field-select { width: auto; cursor: pointer; text-align: left; }
 
-/* ===== SECTION 1 — REPRÉSENTATIONS ===== */
-#num-selector-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
+/* ===== MISC ===== */
+.sr-only { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.row-end { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: flex-end; }
+.mt8 { margin-top: 8px; } .mt12 { margin-top: 12px; } .mt16 { margin-top: 16px; } .mt20 { margin-top: 20px; }
+.mb8 { margin-bottom: 8px; }
+.badge-success {
+  background: var(--success-bg); color: var(--success);
+  border: 1px solid #9ad4b2; border-radius: var(--radius-sm);
+  padding: 10px 14px; font-weight: 700; font-size: 0.93rem;
+  border-left: 4px solid var(--success);
 }
-#num-label { font-weight: 700; font-size: 1rem; }
-#num-input {
-  width: 80px;
-  font-size: 1.4rem;
-  font-weight: 700;
-  text-align: center;
-  border: 2px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 8px;
-  background: var(--surface);
-  color: var(--encre);
-  min-height: 48px;
+.badge-info {
+  background: #EBF3FB; color: var(--marine);
+  border: 1px solid #b3cfe8; border-radius: var(--radius-sm);
+  padding: 10px 14px; font-size: 0.93rem;
+  border-left: 4px solid var(--marine);
 }
-#num-input:focus { border-color: var(--marine); outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
-#btn-speak-num {
-  min-height: 48px;
-}
+.hidden { display: none !important; }
+.visually-shown { display: block !important; }
 
+/* ===== SETTINGS MODAL ===== */
+#settings-modal {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(10,30,60,0.55); display: none;
+  align-items: center; justify-content: center;
+}
+#settings-modal.open { display: flex; }
+#settings-box {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 28px; max-width: 380px; width: 92%; box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+}
+#settings-box h2 { font-size: 1.1rem; font-weight: 800; color: var(--marine); margin-bottom: 18px; }
+.settings-row { margin-bottom: 14px; }
+.settings-row label { font-size: 0.9rem; font-weight: 700; display: block; margin-bottom: 4px; }
+.settings-row input[type=range] { width: 100%; accent-color: var(--marine); }
+.settings-row select { width: 100%; min-height: 42px; font-size: 1rem; padding: 6px 10px; border: 2px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--encre); }
+
+/* ===== PROGRESSION ===== */
+.progress-bar-wrap { background: var(--border); border-radius: 99px; height: 10px; overflow: hidden; }
+.progress-bar { height: 100%; background: var(--or); border-radius: 99px; transition: width 0.4s ease; }
+.star { display: inline-block; color: var(--or); font-size: 1.3rem; }
+
+/* ===== PANEL 1 — REPRÉSENTATIONS ===== */
 .repr-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
 }
 .repr-card {
-  background: var(--fond);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 16px 12px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
+  background: var(--fond); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 14px 10px;
+  text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;
 }
-.repr-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--marine);
-}
-.repr-chiffre {
-  font-size: 3.5rem;
-  font-weight: 900;
-  color: var(--marine);
-  line-height: 1;
-}
-.repr-mot {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--encre);
-}
-.repr-tokens {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  justify-content: center;
-  min-height: 40px;
-  align-items: center;
-}
-.token {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--marine);
-  display: inline-block;
-  flex-shrink: 0;
-}
-.token-zero {
-  font-size: 0.9rem;
-  color: #888;
-}
-/* Ten frame */
-.ten-frame {
-  display: grid;
-  grid-template-columns: repeat(5, 28px);
-  gap: 4px;
-  justify-content: center;
-}
-.tf-cell {
-  width: 28px;
-  height: 28px;
-  border: 2px solid var(--border);
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+.repr-label { font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--marine); }
+.repr-chiffre { font-size: 3.2rem; font-weight: 900; color: var(--marine); line-height: 1; }
+.repr-mot { font-size: 1.3rem; font-weight: 700; color: var(--encre); }
+.repr-tokens { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; min-height: 36px; align-items: center; }
+.token { width: 20px; height: 20px; border-radius: 50%; background: var(--marine); display: inline-block; flex-shrink: 0; }
+.token-zero { font-size: 0.88rem; color: #7a8fa6; }
+
+/* Ten-frame */
+.ten-frame { display: grid; grid-template-columns: repeat(5, 26px); gap: 3px; justify-content: center; }
+.tf-cell { width: 26px; height: 26px; border: 2px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; }
 .tf-cell.filled { background: var(--marine); border-color: var(--marine); }
-.tf-cell.filled-gold { background: var(--or); border-color: #d49a18; }
+.tf-cell.filled-gold { background: var(--or); border-color: var(--or-dk); }
 
 /* Number line */
-.num-line-wrap {
-  width: 100%;
-  overflow-x: auto;
-  padding: 8px 0;
-}
+.num-line-wrap { width: 100%; overflow-x: auto; padding: 4px 0; }
 .num-line-svg { display: block; margin: 0 auto; }
 
-/* ===== SECTION 2 — JETONS ===== */
+/* Doigts SVG */
+.fingers-wrap { display: flex; gap: 6px; justify-content: center; align-items: flex-end; }
+.finger-svg { display: block; }
+
+/* ===== PANEL 2 — OBJETS ===== */
 #jeton-area {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  min-height: 60px;
-  align-items: flex-start;
-  border: 2px dashed var(--border);
-  border-radius: var(--radius-sm);
-  padding: 12px;
-  margin-bottom: 16px;
-  background: var(--fond);
+  display: flex; flex-wrap: wrap; gap: 6px;
+  min-height: 64px; align-items: flex-start;
+  border: 2px dashed var(--border-dk); border-radius: var(--radius-sm);
+  padding: 12px; background: var(--fond);
 }
-.jeton {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--marine);
-  display: inline-block;
-  flex-shrink: 0;
+.jeton-u {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--marine); display: inline-block; flex-shrink: 0;
+  cursor: grab; transition: transform var(--tr);
 }
-.jeton-dizaine {
-  background: var(--or);
-  border: 3px solid #d49a18;
-  border-radius: 6px;
-  width: 44px;
-  height: 36px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 900;
-  font-size: 1rem;
-  color: var(--encre);
-  flex-shrink: 0;
+.jeton-u:hover { transform: scale(1.15); }
+.jeton-d {
+  background: var(--or); border: 3px solid var(--or-dk); border-radius: 6px;
+  width: 46px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 0.95rem; color: var(--encre); flex-shrink: 0;
 }
-#jeton-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
+.jeton-c {
+  background: #c0392b; border: 3px solid #922b21; border-radius: 8px;
+  width: 56px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 0.88rem; color: #fff; flex-shrink: 0;
 }
-#jeton-count-display {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--marine);
-  min-width: 100px;
+#jeton-count-display { font-size: 1.05rem; font-weight: 700; color: var(--marine); min-width: 120px; }
+#exchange-msg {
+  font-size: 0.9rem; background: var(--success-bg); color: var(--success);
+  padding: 10px 14px; border-radius: var(--radius-sm);
+  border-left: 4px solid var(--success); font-weight: 700; margin-top: 10px;
 }
-#exchange-btn-wrap { margin-top: 10px; }
-#exchange-message {
-  font-size: 0.9rem;
-  background: var(--success-bg);
-  color: var(--success);
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  border-left: 4px solid var(--success);
-  display: none;
-  margin-top: 10px;
-  font-weight: 600;
-}
+#decompo-display { font-size: 0.95rem; margin-top: 10px; color: #3a4a5c; font-weight: 600; }
 
-/* ===== SECTION 3 — OPÉRATIONS ===== */
-.ops-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: flex-end;
-  margin-bottom: 20px;
-}
-.ops-form label { font-size: 0.9rem; font-weight: 600; display: block; margin-bottom: 4px; }
-.ops-input {
-  width: 70px;
-  font-size: 1.3rem;
-  font-weight: 700;
-  text-align: center;
-  border: 2px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 8px;
-  background: var(--surface);
-  color: var(--encre);
-  min-height: 48px;
-}
-.ops-input:focus { border-color: var(--marine); outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
-#ops-op-select {
-  font-size: 1.3rem;
-  font-weight: 700;
-  border: 2px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 8px 12px;
-  background: var(--surface);
-  color: var(--encre);
-  min-height: 48px;
-  cursor: pointer;
-}
-#ops-op-select:focus { border-color: var(--marine); outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
-
-#ops-steps-area { margin-top: 8px; }
+/* ===== PANEL 3 — OPÉRATIONS ===== */
 .step-box {
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 16px;
-  background: var(--fond);
-  margin-bottom: 12px;
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: 14px; background: var(--fond); margin-bottom: 10px;
 }
-.step-box.highlight {
-  border-color: var(--or);
-  background: #fffbe8;
-}
-.step-title { font-weight: 700; color: var(--marine); margin-bottom: 8px; font-size: 0.95rem; }
-.step-tokens { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; min-height: 30px; }
-.step-result {
-  font-size: 1.6rem;
-  font-weight: 900;
-  color: var(--marine);
-  margin-top: 10px;
-}
-#ops-encourage {
-  font-size: 0.95rem;
-  background: var(--success-bg);
-  color: var(--success);
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  border-left: 4px solid var(--success);
-  display: none;
-  margin-top: 10px;
-  font-weight: 600;
-}
-#btn-next-step { display: none; }
+.step-box.highlight { border-color: var(--or); background: #fffbe6; }
+.step-title { font-weight: 800; color: var(--marine); margin-bottom: 8px; font-size: 0.95rem; }
+.step-tokens { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; min-height: 28px; }
+.step-result { font-size: 1.8rem; font-weight: 900; color: var(--marine); margin-top: 8px; }
 
-/* ===== SECTION 4 — ARGENT ===== */
-.coins-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 20px;
+/* Adaptatif badge */
+.diff-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--marine); color: #fff; border-radius: 99px;
+  padding: 3px 10px; font-size: 0.78rem; font-weight: 700;
 }
+
+/* ===== PANEL 4 — ARGENT ===== */
+.coins-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
 .coin-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 10px 14px;
-  border-radius: 50%;
-  border: 3px solid var(--border);
-  background: #f5e8c0;
-  cursor: pointer;
-  min-height: 70px;
-  min-width: 70px;
-  font-weight: 900;
-  font-size: 1.05rem;
-  color: var(--encre);
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 8px 12px; border-radius: 50%; border: 3px solid var(--border);
+  background: #f5e8c0; cursor: pointer;
+  min-height: 68px; min-width: 68px; font-weight: 900; font-size: 1rem; color: var(--encre);
   transition: background var(--tr), transform var(--tr), box-shadow var(--tr);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  line-height: 1.2;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1); line-height: 1.1;
 }
 .coin-btn:hover { background: var(--or-lt); transform: translateY(-2px); box-shadow: var(--shadow-hv); }
 .coin-btn:active { transform: scale(0.96); }
-.coin-btn.billet {
-  border-radius: 10px;
-  background: #d4edda;
-  border-color: #6abf8a;
-  min-width: 90px;
-}
-.coin-label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; color: #666; }
-
+.coin-btn.billet { border-radius: 8px; background: #d4edda; border-color: #6abf8a; min-width: 88px; }
+.coin-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: #555; }
 #argent-panier {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-height: 56px;
-  border: 2px dashed var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px;
-  background: var(--fond);
-  align-items: center;
-  margin-bottom: 12px;
+  display: flex; flex-wrap: wrap; gap: 7px;
+  min-height: 52px; border: 2px dashed var(--border-dk); border-radius: var(--radius-sm);
+  padding: 10px; background: var(--fond); align-items: center; margin-bottom: 12px;
 }
 .argent-chip {
-  background: var(--marine);
-  color: #fff;
-  border-radius: 20px;
-  padding: 4px 12px;
-  font-size: 0.88rem;
-  font-weight: 700;
+  background: var(--marine); color: #fff; border-radius: 20px;
+  padding: 4px 12px; font-size: 0.88rem; font-weight: 700; cursor: pointer;
+  transition: background var(--tr);
 }
-.argent-chip.billet-chip {
-  background: var(--success);
-}
-#argent-total {
-  font-size: 1.6rem;
-  font-weight: 900;
-  color: var(--marine);
-  margin-bottom: 8px;
-}
-#argent-speak-btn { margin-top: 6px; }
-
-/* ===== ENCOURAGEMENTS ===== */
-.bravo {
-  background: var(--or);
-  color: var(--encre);
-  padding: 12px 16px;
-  border-radius: var(--radius-sm);
-  font-weight: 700;
-  font-size: 0.95rem;
-  margin-top: 10px;
-  display: none;
+.argent-chip:hover { background: var(--marine-dk); }
+.argent-chip.billet-chip { background: var(--success); }
+#argent-total { font-size: 1.5rem; font-weight: 900; color: var(--marine); margin-bottom: 10px; }
+.target-amount {
+  font-size: 1.1rem; font-weight: 700; color: #3a4a5c;
+  background: #EBF3FB; border-radius: var(--radius-sm); padding: 10px 14px;
+  border-left: 4px solid var(--marine); margin-bottom: 14px;
 }
 
-/* ===== MISC ===== */
-.sr-only {
-  position: absolute;
-  left: -9999px;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
+/* ===== PANEL 5 — HORLOGE ===== */
+#clock-svg-wrap { display: flex; justify-content: center; margin: 10px 0; }
+#clock-svg { display: block; }
+.time-display {
+  font-size: 2.6rem; font-weight: 900; color: var(--marine);
+  text-align: center; letter-spacing: 0.04em; margin: 8px 0;
+  font-variant-numeric: tabular-nums;
 }
-.row-gap { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.mt8 { margin-top: 8px; }
-.mt12 { margin-top: 12px; }
-.mt16 { margin-top: 16px; }
+.time-word { font-size: 1.05rem; font-weight: 700; text-align: center; color: #3a4a5c; margin-bottom: 10px; }
+.time-controls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+.time-control-group { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.time-control-label { font-size: 0.78rem; font-weight: 700; color: var(--marine); text-transform: uppercase; }
+.time-control-btn {
+  width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--border);
+  background: var(--fond); color: var(--marine); font-size: 1.3rem; font-weight: 900;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background var(--tr), transform var(--tr);
+  min-width: 52px;
+}
+.time-control-btn:hover { background: var(--marine); color: #fff; transform: scale(1.06); }
+
+/* ===== PANEL 6 — FRACTIONS ===== */
+.fraction-display { display: flex; align-items: center; gap: 8px; font-size: 1.1rem; font-weight: 700; }
+.frac { display: inline-flex; flex-direction: column; align-items: center; gap: 0; }
+.frac-num, .frac-den { font-size: 1.4rem; font-weight: 900; line-height: 1.1; }
+.frac-line { width: 32px; height: 3px; background: var(--encre); border-radius: 2px; margin: 2px 0; }
+#pizza-wrap { display: flex; justify-content: center; margin: 12px 0; }
+#bar-wrap { display: flex; gap: 0; height: 52px; border: 2px solid var(--border-dk); border-radius: 6px; overflow: hidden; margin-bottom: 12px; }
+.bar-part { flex: 1; transition: background var(--tr); }
+.bar-part.filled { background: var(--marine); }
+.bar-part.empty { background: var(--fond); border-right: 1px solid var(--border); }
+.bar-part:last-child { border-right: none; }
+
+/* ===== PANEL 7 — ENTRAÎNEMENT ===== */
+.quiz-question {
+  font-size: 1.8rem; font-weight: 900; color: var(--marine);
+  text-align: center; padding: 20px; background: #EBF3FB;
+  border-radius: var(--radius); margin-bottom: 16px;
+}
+.quiz-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.quiz-choice {
+  border: 2px solid var(--border); border-radius: var(--radius-sm); background: var(--surface);
+  font-size: 1.3rem; font-weight: 800; color: var(--encre);
+  padding: 14px 20px; cursor: pointer; min-height: 60px;
+  transition: background var(--tr), border-color var(--tr), transform var(--tr);
+}
+.quiz-choice:hover { background: #EBF3FB; border-color: var(--marine); transform: scale(1.02); }
+.quiz-choice.correct { background: var(--success-bg); border-color: var(--success); color: var(--success); }
+.quiz-choice.wrong { background: var(--error-bg); border-color: var(--error); color: var(--error); }
+.quiz-feedback { font-size: 1rem; font-weight: 700; text-align: center; padding: 10px; border-radius: var(--radius-sm); margin-top: 10px; }
+.quiz-feedback.ok { background: var(--success-bg); color: var(--success); }
+.quiz-feedback.ko { background: var(--error-bg); color: var(--error); }
+.stars-row { display: flex; gap: 4px; justify-content: center; font-size: 1.5rem; margin: 6px 0; }
+
+/* ===== PANEL 8 — PROFIL ===== */
+.profil-stat { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.profil-stat-label { font-size: 0.9rem; font-weight: 700; min-width: 130px; }
+.profil-stat-val { font-size: 1.3rem; font-weight: 900; color: var(--marine); }
+#profil-name-input {
+  font-size: 1.1rem; font-weight: 700; padding: 8px 12px;
+  border: 2px solid var(--border); border-radius: var(--radius-sm);
+  min-height: 48px; width: 200px; background: var(--surface); color: var(--encre);
+}
+#profil-name-input:focus { border-color: var(--marine); outline: none; box-shadow: 0 0 0 3px rgba(244,184,28,0.5); }
+.medals-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.medal {
+  background: var(--fond); border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 12px; font-size: 0.85rem; text-align: center; min-width: 80px;
+}
+.medal.earned { background: #fffbe6; border-color: var(--or-dk); }
+.medal-icon { font-size: 1.6rem; display: block; }
+.medal-label { font-weight: 700; font-size: 0.78rem; color: #3a4a5c; }
 </style>
 </head>
 <body>
 
-<!-- SKIP LINK -->
 <a href="#main-content" id="skip-link">Aller au contenu principal</a>
-
-<!-- LIVE REGION ARIA -->
-<div id="aria-live" aria-live="polite" aria-atomic="true"></div>
+<div id="aria-live" aria-live="polite" aria-atomic="true" aria-relevant="additions"></div>
+<div id="aria-live-assert" aria-live="assertive" aria-atomic="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;"></div>
 
 <!-- HEADER -->
 <header id="app-header" role="banner">
   <div id="header-left">
-    <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y">← LibreA11y</a>
-    <h1 id="app-title">🔢 MathEase — démo</h1>
+    <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y, page d'accueil">← LibreA11y</a>
+    <span id="app-title" aria-label="MathEase, application de maths accessibles">MathEase</span>
   </div>
-  <div id="header-notice" aria-label="Informations : démo hors-ligne, aucune donnée envoyée">
-    démo · 100% hors-ligne · aucune donnée envoyée
+  <div id="header-right">
+    <span id="header-notice" aria-hidden="true">100% hors-ligne · aucune donnée envoyée</span>
+    <button id="btn-settings" aria-label="Réglages affichage" aria-haspopup="dialog" onclick="openSettings()">⚙️ Réglages</button>
   </div>
 </header>
 
 <!-- NAV ONGLETS -->
 <nav id="main-nav" role="tablist" aria-label="Modules de MathEase">
-  <button role="tab" aria-selected="true"  aria-controls="panel-repr"  id="tab-repr"  onclick="switchTab('repr')">🔢 Représentations</button>
-  <button role="tab" aria-selected="false" aria-controls="panel-jeton" id="tab-jeton" onclick="switchTab('jeton')">🪙 Objets</button>
-  <button role="tab" aria-selected="false" aria-controls="panel-ops"   id="tab-ops"   onclick="switchTab('ops')">➕ Opérations</button>
+  <button role="tab" aria-selected="true"  aria-controls="panel-repr"   id="tab-repr"   onclick="switchTab('repr')">🔢 Représentations</button>
+  <button role="tab" aria-selected="false" aria-controls="panel-jeton"  id="tab-jeton"  onclick="switchTab('jeton')">🪙 Objets</button>
+  <button role="tab" aria-selected="false" aria-controls="panel-ops"    id="tab-ops"    onclick="switchTab('ops')">➕ Opérations</button>
   <button role="tab" aria-selected="false" aria-controls="panel-argent" id="tab-argent" onclick="switchTab('argent')">💶 Argent</button>
+  <button role="tab" aria-selected="false" aria-controls="panel-clock"  id="tab-clock"  onclick="switchTab('clock')">🕐 Horloge</button>
+  <button role="tab" aria-selected="false" aria-controls="panel-frac"   id="tab-frac"   onclick="switchTab('frac')">🍕 Fractions</button>
+  <button role="tab" aria-selected="false" aria-controls="panel-train"  id="tab-train"  onclick="switchTab('train')">🎯 Entraînement</button>
+  <button role="tab" aria-selected="false" aria-controls="panel-profil" id="tab-profil" onclick="switchTab('profil')">🏅 Mon profil</button>
 </nav>
 
 <!-- MAIN -->
 <main id="main-content" tabindex="-1">
-<div style="max-width:860px;margin:0 auto;padding:24px 16px 48px;">
+<div id="main-inner">
 
 <!-- ==================== PANEL 1 : REPRÉSENTATIONS ==================== -->
 <section id="panel-repr" class="panel active" role="tabpanel" aria-labelledby="tab-repr">
   <div class="card">
-    <div class="card-title">🔢 Un nombre, 5 façons de le voir</div>
-    <p style="margin-bottom:16px;font-size:0.95rem;">Choisis un nombre entre 0 et 20. Il s'affiche de 5 façons différentes.</p>
-
-    <div id="num-selector-row">
-      <label id="num-label" for="num-input">Nombre :</label>
-      <input type="number" id="num-input" min="0" max="20" value="7"
-             aria-describedby="num-hint"
-             oninput="updateRepresentations()">
-      <span id="num-hint" class="sr-only">Entre 0 et 20</span>
-      <button class="btn btn-primary" id="btn-speak-num" onclick="speakNumber()" aria-label="Écouter le nombre">
+    <div class="card-title">🔢 Un nombre, 6 façons de le voir</div>
+    <p class="card-desc">Choisis un nombre de 0 à 20. Il s'affiche de 6 façons différentes. Clique sur 🔊 pour entendre le nom du nombre.</p>
+    <div class="row mb8">
+      <div class="field-group">
+        <label class="field-label" for="num-input">Nombre (0–20)</label>
+        <input type="number" class="field-input" id="num-input" min="0" max="20" value="7"
+               aria-describedby="num-hint" oninput="updateRepresentations()" style="width:90px;">
+        <span id="num-hint" class="sr-only">Entrez un nombre entre 0 et 20</span>
+      </div>
+      <button class="btn btn-primary" id="btn-speak-num" onclick="speakNumber()" aria-label="Écouter le nom du nombre" style="align-self:flex-end;">
         🔊 Écouter
       </button>
+      <div class="row" style="gap:6px;align-self:flex-end;">
+        <button class="btn btn-ghost btn-sm" onclick="changeNum(-1)" aria-label="Nombre précédent">−</button>
+        <button class="btn btn-ghost btn-sm" onclick="changeNum(1)" aria-label="Nombre suivant">+</button>
+      </div>
     </div>
-
-    <div class="repr-grid" id="repr-grid" aria-live="polite" aria-label="Représentations du nombre">
-      <!-- Rempli par JS -->
+    <div class="repr-grid" id="repr-grid" aria-live="polite" aria-label="Représentations du nombre sélectionné" aria-atomic="false">
     </div>
   </div>
 </section>
 
-<!-- ==================== PANEL 2 : JETONS ==================== -->
+<!-- ==================== PANEL 2 : OBJETS ==================== -->
 <section id="panel-jeton" class="panel" role="tabpanel" aria-labelledby="tab-jeton">
   <div class="card">
-    <div class="card-title">🪙 Ajoute et retire des jetons</div>
-    <p style="font-size:0.95rem;margin-bottom:14px;">
-      Chaque petit rond bleu = 1 unité. Quand tu as 10 unités, tu peux les échanger contre 1 dizaine (carré doré).
-    </p>
+    <div class="card-title">🪙 Objets manipulables</div>
+    <p class="card-desc">Ajoute des jetons (rond bleu = 1 unité). Quand tu as 10 unités, échange-les contre 1 dizaine (carré doré). 10 dizaines = 1 centaine (rouge).</p>
 
-    <div id="jeton-controls">
-      <button class="btn btn-primary btn-lg" id="btn-add-jeton" onclick="addJeton()" aria-label="Ajouter un jeton">
-        ＋ Jeton
-      </button>
-      <button class="btn btn-ghost btn-lg" id="btn-remove-jeton" onclick="removeJeton()" aria-label="Retirer un jeton">
-        － Jeton
-      </button>
-      <div id="jeton-count-display" aria-live="polite" aria-label="Nombre total de jetons"></div>
+    <div class="row mb8">
+      <button class="btn btn-primary btn-lg" onclick="addJeton()" aria-label="Ajouter une unité">＋ Unité</button>
+      <button class="btn btn-ghost btn-lg" onclick="removeJeton()" aria-label="Retirer une unité">− Unité</button>
+      <button class="btn btn-accent" onclick="exchangeUp()" id="btn-exup" aria-label="Échanger 10 unités en 1 dizaine">🔄 ×10→dizaine</button>
+      <button class="btn btn-outline" onclick="exchangeDown()" id="btn-exdown" aria-label="Défaire une dizaine en 10 unités">↩ Dizaine→×10</button>
+      <button class="btn btn-ghost btn-sm" onclick="exchangeCentaine()" id="btn-exc" aria-label="Échanger 10 dizaines en 1 centaine">🔄 ×10→centaine</button>
     </div>
 
-    <div id="jeton-area" role="img" aria-label="Zone des jetons"></div>
-
-    <div id="exchange-btn-wrap">
-      <button class="btn btn-accent" id="btn-exchange" onclick="exchangeJetons()" style="display:none;" aria-label="Échanger 10 unités contre 1 dizaine">
-        🔄 Échanger 10 unités → 1 dizaine
-      </button>
+    <div id="jeton-area" role="group" aria-label="Zone des objets" aria-live="polite">
+      <span class="token-zero">Clique sur + Unité pour commencer.</span>
     </div>
-    <div id="exchange-message" role="status">✅ Bravo ! 10 petits jetons = 1 grande dizaine 🎉</div>
 
-    <div id="jeton-position" style="margin-top:14px;" aria-live="polite"></div>
+    <div id="jeton-count-display" aria-live="polite" class="mt12" style="font-size:1rem;font-weight:700;color:var(--marine);"></div>
+    <div id="decompo-display" aria-live="polite"></div>
+    <div id="exchange-msg" class="hidden badge-success mt8" role="status"></div>
+
+    <div class="mt16">
+      <button class="btn btn-ghost btn-sm" onclick="clearJetons()" aria-label="Tout effacer">🗑️ Effacer tout</button>
+    </div>
   </div>
 </section>
 
@@ -631,93 +490,263 @@ html, body {
 <section id="panel-ops" class="panel" role="tabpanel" aria-labelledby="tab-ops">
   <div class="card">
     <div class="card-title">➕ Opération pas à pas</div>
-    <p style="font-size:0.95rem;margin-bottom:14px;">
-      Choisis deux nombres (0–20) et une opération. L'ordinateur montre chaque étape avec des jetons.
-    </p>
+    <p class="card-desc">Choisis deux nombres et une opération. L'appli montre chaque étape avec des jetons et une explication parlée.</p>
 
-    <div class="ops-form">
-      <div>
-        <label for="ops-a">Premier nombre</label>
-        <input type="number" class="ops-input" id="ops-a" min="0" max="20" value="5">
+    <div class="row mb8" style="gap:12px;align-items:flex-end;">
+      <div class="field-group">
+        <label class="field-label" for="ops-a">1er nombre</label>
+        <input type="number" class="field-input" id="ops-a" min="0" max="99" value="8">
       </div>
-      <div>
-        <label for="ops-op">Opération</label>
-        <select id="ops-op-select">
-          <option value="add">＋ Addition</option>
-          <option value="sub">－ Soustraction</option>
+      <div class="field-group">
+        <label class="field-label" for="ops-op-select">Opération</label>
+        <select class="field-select" id="ops-op-select" style="width:auto;font-size:1.1rem;">
+          <option value="add">➕ Addition</option>
+          <option value="sub">➖ Soustraction</option>
+          <option value="mul">✖ Multiplication</option>
+          <option value="div">➗ Division</option>
         </select>
       </div>
-      <div>
-        <label for="ops-b">Deuxième nombre</label>
-        <input type="number" class="ops-input" id="ops-b" min="0" max="20" value="3">
+      <div class="field-group">
+        <label class="field-label" for="ops-b">2e nombre</label>
+        <input type="number" class="field-input" id="ops-b" min="0" max="99" value="5">
       </div>
-      <button class="btn btn-primary" onclick="startOps()" aria-label="Commencer l'opération">▶ Commencer</button>
+      <button class="btn btn-primary" onclick="startOps()" aria-label="Commencer l'opération pas à pas" style="align-self:flex-end;">▶ Commencer</button>
     </div>
 
-    <div id="ops-steps-area" aria-live="polite" aria-label="Étapes de l'opération"></div>
-    <div class="row-gap mt12">
-      <button class="btn btn-accent" id="btn-next-step" onclick="nextOpsStep()" aria-label="Étape suivante">Étape suivante →</button>
+    <div id="ops-steps-area" aria-live="polite" aria-label="Étapes de l'opération en cours"></div>
+    <div class="row mt12">
+      <button class="btn btn-accent hidden" id="btn-next-step" onclick="nextOpsStep()">Étape suivante →</button>
+      <button class="btn btn-primary hidden" id="btn-speak-step" onclick="speakCurrentStep()">🔊 Réécouter</button>
     </div>
-    <div id="ops-encourage" role="status"></div>
+    <div id="ops-encourage" class="badge-success mt12 hidden" role="status"></div>
   </div>
 </section>
 
 <!-- ==================== PANEL 4 : ARGENT ==================== -->
 <section id="panel-argent" class="panel" role="tabpanel" aria-labelledby="tab-argent">
   <div class="card">
-    <div class="card-title">💶 Compter avec de l'argent</div>
-    <p style="font-size:0.95rem;margin-bottom:14px;">
-      Clique sur les pièces et billets pour composer un montant. Le total s'affiche en bas.
-    </p>
+    <div class="card-title">💶 Argent et monnaie</div>
+    <p class="card-desc">Compose un montant en cliquant sur les pièces et billets. Active le mode « rendre la monnaie » pour t'entraîner.</p>
 
-    <div class="coins-grid" role="group" aria-label="Pièces et billets">
-      <button class="coin-btn" onclick="addCoin(1)" aria-label="Ajouter une pièce de 1 euro">
-        1 €<span class="coin-label">pièce</span>
-      </button>
-      <button class="coin-btn" onclick="addCoin(2)" aria-label="Ajouter une pièce de 2 euros">
-        2 €<span class="coin-label">pièce</span>
-      </button>
-      <button class="coin-btn" onclick="addCoin(5)" aria-label="Ajouter une pièce de 5 euros">
-        5 €<span class="coin-label">pièce</span>
-      </button>
-      <button class="coin-btn" onclick="addCoin(10)" aria-label="Ajouter une pièce de 10 euros">
-        10 €<span class="coin-label">pièce</span>
-      </button>
-      <button class="coin-btn billet" onclick="addCoin(20)" aria-label="Ajouter un billet de 20 euros">
-        20 €<span class="coin-label">billet</span>
-      </button>
-      <button class="coin-btn billet" onclick="addCoin(50)" aria-label="Ajouter un billet de 50 euros">
-        50 €<span class="coin-label">billet</span>
-      </button>
+    <div class="row mb8" style="gap:8px;">
+      <button class="btn btn-ghost btn-sm" id="btn-monnaie-mode" onclick="toggleMonnaieMode()" aria-pressed="false">💡 Rendre la monnaie</button>
+      <button class="btn btn-accent btn-sm" onclick="newMonnaieChallenge()" id="btn-new-challenge" aria-label="Nouveau défi monnaie">🎲 Nouveau défi</button>
+    </div>
+    <div id="monnaie-target" class="target-amount hidden" aria-live="polite"></div>
+    <div id="monnaie-diff" class="badge-info hidden mt8" aria-live="polite"></div>
+
+    <div class="coins-grid" role="group" aria-label="Pièces et billets disponibles">
+      <button class="coin-btn" onclick="addCoin(1)" aria-label="Ajouter pièce 1 centime">1 c<span class="coin-label">centime</span></button>
+      <button class="coin-btn" onclick="addCoin(2)" aria-label="Ajouter pièce 2 centimes">2 c<span class="coin-label">centimes</span></button>
+      <button class="coin-btn" onclick="addCoin(5)" aria-label="Ajouter pièce 5 centimes">5 c<span class="coin-label">centimes</span></button>
+      <button class="coin-btn" onclick="addCoin(10)" aria-label="Ajouter pièce 10 centimes">10 c<span class="coin-label">centimes</span></button>
+      <button class="coin-btn" onclick="addCoin(20)" aria-label="Ajouter pièce 20 centimes">20 c<span class="coin-label">centimes</span></button>
+      <button class="coin-btn" onclick="addCoin(50)" aria-label="Ajouter pièce 50 centimes">50 c<span class="coin-label">centimes</span></button>
+      <button class="coin-btn" onclick="addCoin(100)" aria-label="Ajouter pièce 1 euro">1 €<span class="coin-label">pièce</span></button>
+      <button class="coin-btn" onclick="addCoin(200)" aria-label="Ajouter pièce 2 euros">2 €<span class="coin-label">pièce</span></button>
+      <button class="coin-btn billet" onclick="addCoin(500)" aria-label="Ajouter billet 5 euros">5 €<span class="coin-label">billet</span></button>
+      <button class="coin-btn billet" onclick="addCoin(1000)" aria-label="Ajouter billet 10 euros">10 €<span class="coin-label">billet</span></button>
+      <button class="coin-btn billet" onclick="addCoin(2000)" aria-label="Ajouter billet 20 euros">20 €<span class="coin-label">billet</span></button>
+      <button class="coin-btn billet" onclick="addCoin(5000)" aria-label="Ajouter billet 50 euros">50 €<span class="coin-label">billet</span></button>
     </div>
 
-    <div id="argent-total" aria-live="polite" aria-label="Total">Total : 0 €</div>
-    <div id="argent-panier" aria-label="Panier des pièces et billets ajoutés" role="list"></div>
+    <div id="argent-total" aria-live="polite" aria-label="Total en cours">Total : 0,00 €</div>
+    <div id="argent-panier" role="list" aria-label="Pièces et billets ajoutés"></div>
 
-    <div class="row-gap mt12">
-      <button class="btn btn-ghost" onclick="removeLastCoin()" aria-label="Retirer la dernière pièce ou billet">
-        ← Retirer le dernier
-      </button>
-      <button class="btn btn-ghost" onclick="clearCoins()" aria-label="Tout effacer">
-        🗑️ Tout effacer
-      </button>
-      <button class="btn btn-primary" id="argent-speak-btn" onclick="speakTotal()" aria-label="Écouter le total">
-        🔊 Écouter le total
-      </button>
+    <div class="row mt12">
+      <button class="btn btn-ghost" onclick="removeLastCoin()" aria-label="Retirer la dernière pièce">← Retirer le dernier</button>
+      <button class="btn btn-ghost" onclick="clearCoins()" aria-label="Vider le panier">🗑️ Tout effacer</button>
+      <button class="btn btn-primary" onclick="speakTotal()" aria-label="Écouter le total à voix haute">🔊 Écouter</button>
     </div>
   </div>
 </section>
 
-</div><!-- /inner -->
+<!-- ==================== PANEL 5 : HORLOGE ==================== -->
+<section id="panel-clock" class="panel" role="tabpanel" aria-labelledby="tab-clock">
+  <div class="card">
+    <div class="card-title">🕐 Lire et régler l'heure</div>
+    <p class="card-desc">Règle l'heure avec les boutons + et −. L'horloge et l'heure en lettres s'affichent en même temps.</p>
+
+    <div id="clock-svg-wrap" aria-hidden="true"></div>
+    <div id="time-display" class="time-display" aria-live="polite" aria-label="Heure affichée"></div>
+    <div id="time-word" class="time-word" aria-live="polite"></div>
+
+    <div class="time-controls">
+      <div class="time-control-group">
+        <span class="time-control-label">Heures</span>
+        <button class="time-control-btn" onclick="changeTime('h',1)" aria-label="Augmenter les heures">+</button>
+        <button class="time-control-btn" onclick="changeTime('h',-1)" aria-label="Diminuer les heures">−</button>
+      </div>
+      <div class="time-control-group">
+        <span class="time-control-label">Minutes</span>
+        <button class="time-control-btn" onclick="changeTime('m',5)" aria-label="Augmenter les minutes de 5">+5</button>
+        <button class="time-control-btn" onclick="changeTime('m',-5)" aria-label="Diminuer les minutes de 5">−5</button>
+      </div>
+      <div class="time-control-group">
+        <span class="time-control-label">Maintenant</span>
+        <button class="btn btn-accent" onclick="setCurrentTime()" style="min-height:52px;min-width:52px;" aria-label="Afficher l'heure actuelle">Maintenant</button>
+      </div>
+    </div>
+    <div class="row-end mt12">
+      <button class="btn btn-primary" onclick="speakTime()" aria-label="Écouter l'heure">🔊 Écouter l'heure</button>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PANEL 6 : FRACTIONS ==================== -->
+<section id="panel-frac" class="panel" role="tabpanel" aria-labelledby="tab-frac">
+  <div class="card">
+    <div class="card-title">🍕 Fractions visuelles</div>
+    <p class="card-desc">Choisis le nombre de parts (dénominateur) et combien sont coloriées (numérateur). La pizza et la barre montrent la fraction.</p>
+
+    <div class="row mb8" style="gap:16px;align-items:flex-end;flex-wrap:wrap;">
+      <div class="field-group">
+        <label class="field-label" for="frac-num">Numérateur (parts colorées)</label>
+        <input type="number" class="field-input" id="frac-num" min="0" max="12" value="3" oninput="updateFraction()">
+      </div>
+      <div style="font-size:2rem;font-weight:900;padding-bottom:4px;">sur</div>
+      <div class="field-group">
+        <label class="field-label" for="frac-den">Dénominateur (parts totales)</label>
+        <input type="number" class="field-input" id="frac-den" min="1" max="12" value="4" oninput="updateFraction()">
+      </div>
+      <button class="btn btn-primary" onclick="speakFraction()" style="align-self:flex-end;" aria-label="Écouter la fraction">🔊 Écouter</button>
+    </div>
+
+    <div class="fraction-display mt12" aria-live="polite" id="frac-notation" aria-label="Fraction affichée"></div>
+    <div id="pizza-wrap" aria-hidden="true"></div>
+    <div id="bar-wrap" role="img" aria-label="Barre représentant la fraction" style="margin-bottom:12px;"></div>
+    <div id="frac-explain" class="badge-info mt8" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ==================== PANEL 7 : ENTRAÎNEMENT ==================== -->
+<section id="panel-train" class="panel" role="tabpanel" aria-labelledby="tab-train">
+  <div class="card">
+    <div class="card-title">🎯 Entraînement adaptatif</div>
+    <p class="card-desc">Des questions s'adaptent à ton niveau. Pas de pression : si tu te trompes, on t'explique. Tu peux recommencer autant de fois que tu veux.</p>
+
+    <div class="row mb8" style="gap:8px;">
+      <span class="diff-badge" id="diff-badge">Niveau 1</span>
+      <span id="train-score-display" style="font-weight:700;color:var(--marine);"></span>
+      <div style="flex:1;"></div>
+      <button class="btn btn-ghost btn-sm" onclick="newQuestion()" aria-label="Passer à une nouvelle question">⏭ Passer</button>
+    </div>
+
+    <div id="quiz-question" class="quiz-question" aria-live="polite" aria-atomic="true" tabindex="-1"></div>
+    <div id="quiz-visual" class="mt8" aria-hidden="true"></div>
+    <div id="quiz-choices" class="quiz-choices" role="group" aria-label="Choix de réponse"></div>
+    <div id="quiz-feedback" class="quiz-feedback hidden" role="alert" aria-live="assertive"></div>
+    <div class="stars-row mt8" id="stars-row" aria-live="polite"></div>
+    <div class="row mt12">
+      <button class="btn btn-accent hidden" id="btn-next-q" onclick="newQuestion()">Question suivante →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PANEL 8 : PROFIL ==================== -->
+<section id="panel-profil" class="panel" role="tabpanel" aria-labelledby="tab-profil">
+  <div class="card">
+    <div class="card-title">🏅 Mon profil et ma progression</div>
+    <p class="card-desc">Tes progrès sont sauvegardés uniquement sur cet appareil. Aucune donnée n'est envoyée ailleurs.</p>
+
+    <div class="row mb8">
+      <label class="field-label" for="profil-name-input">Mon prénom :</label>
+      <input type="text" id="profil-name-input" placeholder="Ton prénom" maxlength="30"
+             oninput="saveProfil()" aria-label="Entre ton prénom" style="min-height:48px;">
+    </div>
+
+    <div class="mt16">
+      <div class="profil-stat">
+        <span class="profil-stat-label">Questions répondues</span>
+        <span class="profil-stat-val" id="stat-total">0</span>
+      </div>
+      <div class="profil-stat">
+        <span class="profil-stat-label">Bonnes réponses</span>
+        <span class="profil-stat-val" id="stat-correct">0</span>
+      </div>
+      <div class="profil-stat">
+        <span class="profil-stat-label">Taux de réussite</span>
+        <span class="profil-stat-val" id="stat-rate">—</span>
+      </div>
+      <div class="profil-stat" style="flex-direction:column;align-items:flex-start;gap:4px;">
+        <span class="profil-stat-label">Progression</span>
+        <div class="progress-bar-wrap" style="width:100%;max-width:300px;">
+          <div class="progress-bar" id="prog-bar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt16">
+      <div class="card-title" style="font-size:0.95rem;">Médailles</div>
+      <div class="medals-row" id="medals-row"></div>
+    </div>
+
+    <div class="mt20 row">
+      <button class="btn btn-danger btn-sm" onclick="resetProfil()" aria-label="Réinitialiser toute la progression">🗑️ Remettre à zéro</button>
+    </div>
+  </div>
+</section>
+
+</div><!-- /main-inner -->
 </main>
 
+<!-- SETTINGS MODAL -->
+<div id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" onclick="closeSettingsOutside(event)">
+  <div id="settings-box">
+    <h2 id="settings-title">⚙️ Réglages</h2>
+    <div class="settings-row">
+      <label for="s-fontsize">Taille du texte</label>
+      <input type="range" id="s-fontsize" min="14" max="24" step="1" value="16"
+             oninput="applySettings()" aria-label="Taille du texte en pixels">
+      <span id="s-fontsize-val" style="font-size:0.85rem;color:#555;">16 px</span>
+    </div>
+    <div class="settings-row">
+      <label for="s-contrast">Contraste</label>
+      <select id="s-contrast" onchange="applySettings()">
+        <option value="normal">Normal</option>
+        <option value="high">Fort contraste</option>
+      </select>
+    </div>
+    <div class="settings-row">
+      <label for="s-speed">Vitesse de lecture</label>
+      <select id="s-speed" onchange="applySettings()">
+        <option value="0.7">Lente</option>
+        <option value="0.9" selected>Normale</option>
+        <option value="1.2">Rapide</option>
+      </select>
+    </div>
+    <div class="row-end mt16">
+      <button class="btn btn-primary" onclick="closeSettings()">✅ Fermer</button>
+    </div>
+  </div>
+</div>
+
 <script>
-/* =====================================================
+'use strict';
+
+/* ================================================================
+   UTILITAIRES GLOBAUX
+================================================================ */
+function clamp(v, mn, mx) { return Math.min(Math.max(v | 0, mn), mx); }
+function clampF(v, mn, mx) { return Math.min(Math.max(parseFloat(v) || mn, mn), mx); }
+
+function announce(text, assertive) {
+  const id = assertive ? 'aria-live-assert' : 'aria-live';
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = '';
+  setTimeout(() => { el.textContent = text; }, 60);
+}
+
+/* ================================================================
    SPEECH
-===================================================== */
+================================================================ */
 let voiceFR = null;
+let speechRate = 0.9;
+
 function loadVoices() {
-  const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+  if (!window.speechSynthesis) return;
+  const voices = window.speechSynthesis.getVoices();
   voiceFR = voices.find(v => v.lang && v.lang.startsWith('fr')) || null;
 }
 if (window.speechSynthesis) {
@@ -726,53 +755,220 @@ if (window.speechSynthesis) {
 }
 
 function speak(text) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  if (voiceFR) u.voice = voiceFR;
-  u.lang = 'fr-FR';
-  u.rate = 0.92;
-  window.speechSynthesis.speak(u);
-  announce(text);
+  if (!window.speechSynthesis) { announce(text); return; }
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    if (voiceFR) u.voice = voiceFR;
+    u.lang = 'fr-FR';
+    u.rate = speechRate;
+    window.speechSynthesis.speak(u);
+    announce(text);
+  } catch(e) { console.warn('speech error', e); }
 }
 
-function announce(text) {
-  const el = document.getElementById('aria-live');
-  el.textContent = '';
-  setTimeout(() => { el.textContent = text; }, 50);
+/* ================================================================
+   PERSISTENCE (localStorage, try/catch)
+================================================================ */
+function lsGet(key, def) {
+  try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : def; }
+  catch(e) { return def; }
+}
+function lsSet(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
 }
 
-/* =====================================================
-   NAVIGATION ONGLETS
-===================================================== */
-function switchTab(id) {
-  ['repr','jeton','ops','argent'].forEach(t => {
-    document.getElementById('tab-' + t).setAttribute('aria-selected', t === id ? 'true' : 'false');
-    document.getElementById('panel-' + t).classList.toggle('active', t === id);
+/* ================================================================
+   PROFIL & STATS
+================================================================ */
+let profil = lsGet('me_profil', { name: '', totalQ: 0, correctQ: 0, level: 1, xp: 0, medals: [] });
+
+function saveProfil() {
+  const nm = document.getElementById('profil-name-input');
+  if (nm) profil.name = nm.value.trim();
+  lsSet('me_profil', profil);
+  renderProfil();
+}
+
+function resetProfil() {
+  if (!confirm('Remettre à zéro ? Toute la progression sera effacée.')) return;
+  profil = { name: '', totalQ: 0, correctQ: 0, level: 1, xp: 0, medals: [] };
+  lsSet('me_profil', profil);
+  renderProfil();
+  const nm = document.getElementById('profil-name-input');
+  if (nm) nm.value = '';
+  announce('Progression réinitialisée.');
+}
+
+function recordAnswer(correct) {
+  profil.totalQ++;
+  if (correct) {
+    profil.correctQ++;
+    profil.xp += 10;
+  }
+  checkMedals();
+  lsSet('me_profil', profil);
+  renderProfil();
+}
+
+const MEDALS_DEF = [
+  { id: 'first', icon: '🎖️', label: 'Première réponse', cond: p => p.totalQ >= 1 },
+  { id: 'q10',   icon: '🥉', label: '10 questions', cond: p => p.totalQ >= 10 },
+  { id: 'q50',   icon: '🥈', label: '50 questions', cond: p => p.totalQ >= 50 },
+  { id: 'c10',   icon: '🥇', label: '10 bonnes réponses', cond: p => p.correctQ >= 10 },
+  { id: 'xp100', icon: '⭐', label: '100 points XP', cond: p => p.xp >= 100 },
+  { id: 'streak',icon: '🔥', label: '5 bonnes de suite', cond: p => p._streak >= 5 },
+];
+
+function checkMedals() {
+  MEDALS_DEF.forEach(m => {
+    if (!profil.medals.includes(m.id) && m.cond(profil)) {
+      profil.medals.push(m.id);
+      speak('Félicitations ! Tu as gagné la médaille : ' + m.label);
+    }
   });
-  document.getElementById('panel-' + id).focus();
 }
 
-/* Clavier sur les onglets */
+function renderProfil() {
+  const t = document.getElementById('stat-total');
+  const c = document.getElementById('stat-correct');
+  const r = document.getElementById('stat-rate');
+  const pb = document.getElementById('prog-bar');
+  if (t) t.textContent = profil.totalQ;
+  if (c) c.textContent = profil.correctQ;
+  if (r) r.textContent = profil.totalQ > 0
+    ? Math.round(profil.correctQ / profil.totalQ * 100) + ' %' : '—';
+  if (pb) pb.style.width = Math.min(profil.xp, 1000) / 10 + '%';
+
+  const mr = document.getElementById('medals-row');
+  if (mr) {
+    mr.innerHTML = '';
+    MEDALS_DEF.forEach(m => {
+      const div = document.createElement('div');
+      div.className = 'medal' + (profil.medals.includes(m.id) ? ' earned' : '');
+      div.setAttribute('aria-label', m.label + (profil.medals.includes(m.id) ? ' (obtenue)' : ' (pas encore)'));
+      div.innerHTML = `<span class="medal-icon">${m.icon}</span><span class="medal-label">${m.label}</span>`;
+      if (!profil.medals.includes(m.id)) div.style.opacity = '0.35';
+      mr.appendChild(div);
+    });
+  }
+  const ni = document.getElementById('profil-name-input');
+  if (ni && !ni.value && profil.name) ni.value = profil.name;
+}
+
+/* ================================================================
+   NAVIGATION ONGLETS
+================================================================ */
+const ALL_TABS = ['repr','jeton','ops','argent','clock','frac','train','profil'];
+
+function switchTab(id) {
+  ALL_TABS.forEach(t => {
+    const btn = document.getElementById('tab-' + t);
+    const pan = document.getElementById('panel-' + t);
+    if (btn) btn.setAttribute('aria-selected', t === id ? 'true' : 'false');
+    if (pan) pan.classList.toggle('active', t === id);
+  });
+  const target = document.getElementById('panel-' + id);
+  if (target) { setTimeout(() => target.focus(), 50); }
+  if (id === 'clock') renderClock();
+  if (id === 'frac') updateFraction();
+  if (id === 'train') { if (!currentQ) newQuestion(); }
+  if (id === 'profil') renderProfil();
+}
+
 document.getElementById('main-nav').addEventListener('keydown', function(e) {
   const tabs = Array.from(this.querySelectorAll('[role=tab]'));
   const idx = tabs.indexOf(document.activeElement);
-  if (e.key === 'ArrowRight') { tabs[(idx + 1) % tabs.length].focus(); e.preventDefault(); }
-  if (e.key === 'ArrowLeft')  { tabs[(idx - 1 + tabs.length) % tabs.length].focus(); e.preventDefault(); }
+  if (idx === -1) return;
+  let next = -1;
+  if (e.key === 'ArrowRight') next = (idx + 1) % tabs.length;
+  if (e.key === 'ArrowLeft')  next = (idx - 1 + tabs.length) % tabs.length;
+  if (e.key === 'Home') next = 0;
+  if (e.key === 'End')  next = tabs.length - 1;
+  if (next >= 0) { tabs[next].focus(); e.preventDefault(); }
 });
 
-/* =====================================================
-   NOMS DES NOMBRES EN FRANÇAIS
-===================================================== */
+/* ================================================================
+   SETTINGS
+================================================================ */
+function openSettings() {
+  const m = document.getElementById('settings-modal');
+  m.classList.add('open');
+  document.getElementById('s-fontsize').focus();
+  loadSettings();
+}
+function closeSettings() {
+  document.getElementById('settings-modal').classList.remove('open');
+  document.getElementById('btn-settings').focus();
+}
+function closeSettingsOutside(e) { if (e.target.id === 'settings-modal') closeSettings(); }
+document.getElementById('settings-modal').addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeSettings();
+});
+
+function applySettings() {
+  const sz = parseInt(document.getElementById('s-fontsize').value, 10);
+  document.getElementById('s-fontsize-val').textContent = sz + ' px';
+  document.documentElement.style.setProperty('--font-sz', sz + 'px');
+
+  const ct = document.getElementById('s-contrast').value;
+  document.documentElement.classList.toggle('high-contrast', ct === 'high');
+
+  speechRate = parseFloat(document.getElementById('s-speed').value);
+
+  lsSet('me_settings', { fontSize: sz, contrast: ct, speed: speechRate });
+}
+
+function loadSettings() {
+  const s = lsGet('me_settings', { fontSize: 16, contrast: 'normal', speed: 0.9 });
+  document.getElementById('s-fontsize').value = s.fontSize;
+  document.getElementById('s-fontsize-val').textContent = s.fontSize + ' px';
+  document.getElementById('s-contrast').value = s.contrast;
+  document.getElementById('s-speed').value = s.speed;
+  document.documentElement.style.setProperty('--font-sz', s.fontSize + 'px');
+  document.documentElement.classList.toggle('high-contrast', s.contrast === 'high');
+  speechRate = s.speed;
+}
+
+/* ================================================================
+   NOMBRES EN FRANÇAIS
+================================================================ */
 const MOTS = [
   'zéro','un','deux','trois','quatre','cinq','six','sept','huit','neuf','dix',
-  'onze','douze','treize','quatorze','quinze','seize','dix-sept','dix-huit','dix-neuf','vingt'
+  'onze','douze','treize','quatorze','quinze','seize','dix-sept','dix-huit','dix-neuf','vingt',
+  'vingt et un','vingt-deux','vingt-trois','vingt-quatre','vingt-cinq',
+  'vingt-six','vingt-sept','vingt-huit','vingt-neuf','trente',
+  'trente et un','trente-deux','trente-trois','trente-quatre','trente-cinq',
+  'trente-six','trente-sept','trente-huit','trente-neuf','quarante',
+  'quarante et un','quarante-deux','quarante-trois','quarante-quatre','quarante-cinq',
+  'quarante-six','quarante-sept','quarante-huit','quarante-neuf','cinquante',
+  'cinquante et un','cinquante-deux','cinquante-trois','cinquante-quatre','cinquante-cinq',
+  'cinquante-six','cinquante-sept','cinquante-huit','cinquante-neuf','soixante',
+  'soixante et un','soixante-deux','soixante-trois','soixante-quatre','soixante-cinq',
+  'soixante-six','soixante-sept','soixante-huit','soixante-neuf','soixante-dix',
+  'soixante et onze','soixante-douze','soixante-treize','soixante-quatorze','soixante-quinze',
+  'soixante-seize','soixante-dix-sept','soixante-dix-huit','soixante-dix-neuf','quatre-vingts',
+  'quatre-vingt-un','quatre-vingt-deux','quatre-vingt-trois','quatre-vingt-quatre','quatre-vingt-cinq',
+  'quatre-vingt-six','quatre-vingt-sept','quatre-vingt-huit','quatre-vingt-neuf','quatre-vingt-dix',
+  'quatre-vingt-onze','quatre-vingt-douze','quatre-vingt-treize','quatre-vingt-quatorze','quatre-vingt-quinze',
+  'quatre-vingt-seize','quatre-vingt-dix-sept','quatre-vingt-dix-huit','quatre-vingt-dix-neuf'
 ];
 
-/* =====================================================
+function numWord(n) {
+  if (n >= 0 && n < MOTS.length) return MOTS[n];
+  if (n === 100) return 'cent';
+  if (n > 100 && n < 200) return 'cent ' + numWord(n - 100);
+  return String(n);
+}
+
+/* ================================================================
    PANEL 1 — REPRÉSENTATIONS
-===================================================== */
-function clamp(v, min, max) { return Math.min(Math.max(v|0, min), max); }
+================================================================ */
+function changeNum(d) {
+  const inp = document.getElementById('num-input');
+  inp.value = clamp((parseInt(inp.value, 10) || 0) + d, 0, 20);
+  updateRepresentations();
+}
 
 function updateRepresentations() {
   const raw = document.getElementById('num-input').value;
@@ -783,370 +979,931 @@ function updateRepresentations() {
   grid.innerHTML = '';
 
   // 1. Chiffre
-  grid.appendChild(makeReprCard('Chiffre',
-    `<div class="repr-chiffre" aria-hidden="true">${n}</div>`
-  ));
+  grid.appendChild(makeRC('Chiffre',
+    `<div class="repr-chiffre" aria-label="${n}">${n}</div>`));
 
   // 2. Mot
-  grid.appendChild(makeReprCard('Mot',
-    `<div class="repr-mot">${MOTS[n]}</div>`
-  ));
+  grid.appendChild(makeRC('Mot',
+    `<div class="repr-mot">${numWord(n)}</div>`));
 
-  // 3. Points / jetons
-  let tokens = '';
-  if (n === 0) {
-    tokens = '<span class="token-zero">aucun jeton</span>';
-  } else {
-    for (let i = 0; i < n; i++) tokens += '<span class="token" aria-hidden="true"></span>';
-  }
-  grid.appendChild(makeReprCard('Jetons',
-    `<div class="repr-tokens" aria-label="${n} jeton${n>1?'s':''}">${tokens}</div>`
-  ));
+  // 3. Jetons
+  let tok = '';
+  if (n === 0) tok = '<span class="token-zero">aucun</span>';
+  else for (let i = 0; i < n; i++) tok += `<span class="token" aria-hidden="true"></span>`;
+  grid.appendChild(makeRC('Jetons',
+    `<div class="repr-tokens" aria-label="${n} jeton${n !== 1 ? 's' : ''}">${tok}</div>`));
 
-  // 4. Ten-frame (cadre de dix)
-  let tfHTML = '<div class="ten-frame" aria-label="Cadre de dix">';
+  // 4. Cadre de dix
+  let tf = '<div class="ten-frame" aria-label="Cadre de dix">';
   for (let i = 0; i < 10; i++) {
-    const filled = i < Math.min(n, 10);
-    tfHTML += `<div class="tf-cell${filled ? ' filled' : ''}" aria-hidden="true"></div>`;
+    tf += `<div class="tf-cell${i < Math.min(n, 10) ? ' filled' : ''}" aria-hidden="true"></div>`;
   }
-  tfHTML += '</div>';
+  tf += '</div>';
   if (n > 10) {
-    tfHTML += '<div class="ten-frame" aria-label="Deuxième cadre" style="margin-top:4px;">';
+    tf += '<div class="ten-frame" style="margin-top:3px;" aria-label="Deuxième cadre">';
     for (let i = 0; i < 10; i++) {
-      const filled = i < (n - 10);
-      tfHTML += `<div class="tf-cell${filled ? ' filled filled-gold' : ''}" aria-hidden="true"></div>`;
+      tf += `<div class="tf-cell${i < n - 10 ? ' filled filled-gold' : ''}" aria-hidden="true"></div>`;
     }
-    tfHTML += '</div>';
+    tf += '</div>';
   }
-  grid.appendChild(makeReprCard('Cadre de 10', tfHTML));
+  grid.appendChild(makeRC('Cadre de 10', tf));
 
-  // 5. Droite numérique (SVG inline)
-  grid.appendChild(makeReprCard('Droite numérique', makeNumberLine(n)));
+  // 5. Droite numérique
+  grid.appendChild(makeRC('Droite numérique', makeNumberLine(n)));
+
+  // 6. Doigts
+  grid.appendChild(makeRC('Doigts', makeFingers(n)));
 }
 
-function makeReprCard(label, inner) {
-  const div = document.createElement('div');
-  div.className = 'repr-card';
-  div.innerHTML = `<div class="repr-label">${label}</div>${inner}`;
-  return div;
+function makeRC(label, inner) {
+  const d = document.createElement('div');
+  d.className = 'repr-card';
+  d.innerHTML = `<div class="repr-label">${label}</div>${inner}`;
+  return d;
 }
 
 function makeNumberLine(n) {
-  const W = 240, H = 54, pad = 16;
+  const W = 220, H = 52, pad = 14;
   const usable = W - pad * 2;
   const step = usable / 20;
-  let svg = `<svg class="num-line-svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-label="Position de ${n} sur la droite numérique" role="img" xmlns="http://www.w3.org/2000/svg">`;
-  // Ligne
-  svg += `<line x1="${pad}" y1="30" x2="${W-pad}" y2="30" stroke="#D0D9E8" stroke-width="2"/>`;
-  // Graduations et étiquettes (0, 5, 10, 15, 20)
+  let svg = `<svg class="num-line-svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Droite numérique, ${n} est marqué" xmlns="http://www.w3.org/2000/svg">`;
+  svg += `<line x1="${pad}" y1="28" x2="${W-pad}" y2="28" stroke="#C8D4E6" stroke-width="2"/>`;
   [0,5,10,15,20].forEach(v => {
     const x = pad + v * step;
-    svg += `<line x1="${x}" y1="24" x2="${x}" y2="36" stroke="#888" stroke-width="1.5"/>`;
-    svg += `<text x="${x}" y="${H-4}" text-anchor="middle" font-size="9" fill="#888" font-family="system-ui">${v}</text>`;
+    svg += `<line x1="${x}" y1="22" x2="${x}" y2="34" stroke="#7a8fa6" stroke-width="1.5"/>`;
+    svg += `<text x="${x}" y="${H-3}" text-anchor="middle" font-size="8" fill="#7a8fa6" font-family="system-ui">${v}</text>`;
   });
-  // Curseur
   const cx = pad + n * step;
-  svg += `<circle cx="${cx}" cy="30" r="8" fill="#0F4C81" stroke="#fff" stroke-width="2"/>`;
-  svg += `<text x="${cx}" y="34" text-anchor="middle" font-size="8.5" fill="#fff" font-weight="bold" font-family="system-ui">${n}</text>`;
+  svg += `<circle cx="${cx}" cy="28" r="9" fill="#0F4C81" stroke="#fff" stroke-width="2"/>`;
+  svg += `<text x="${cx}" y="32" text-anchor="middle" font-size="8" fill="#fff" font-weight="bold" font-family="system-ui">${n}</text>`;
   svg += '</svg>';
   return `<div class="num-line-wrap">${svg}</div>`;
 }
 
-function speakNumber() {
-  const n = clamp(parseInt(document.getElementById('num-input').value, 10) || 0, 0, 20);
-  speak(`${n} : ${MOTS[n]}`);
+function makeFingers(n) {
+  // Show two hands, filled fingers represent the number
+  const total = Math.min(n, 10);
+  const leftF = Math.min(total, 5);
+  const rightF = total - leftF;
+  function hand(filled, flip) {
+    const W = 44, H = 64;
+    const cx = W / 2;
+    const fingerW = 7, gap = 2, baseY = H - 14;
+    const starts = [2, 11, 20, 29, 36];
+    let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"${flip ? ' style="transform:scaleX(-1)"' : ''}>`;
+    // Palm
+    s += `<rect x="2" y="${baseY - 2}" width="${W-4}" height="16" rx="4" fill="#F4B81C" stroke="#D49A18" stroke-width="1.5"/>`;
+    starts.forEach((fx, i) => {
+      const col = i < filled ? '#0F4C81' : '#E0EAF4';
+      const stroke = i < filled ? '#0A3A63' : '#C8D4E6';
+      const fh = i === 0 ? 20 : 28; // thumb shorter
+      s += `<rect x="${fx}" y="${baseY - fh}" width="${fingerW}" height="${fh}" rx="4" fill="${col}" stroke="${stroke}" stroke-width="1.5"/>`;
+    });
+    s += '</svg>';
+    return s;
+  }
+  return `<div class="fingers-wrap" aria-label="${n} doigt${n !== 1 ? 's' : ''} levé${n !== 1 ? 's' : ''}">
+    ${hand(leftF, false)}${hand(rightF, true)}
+  </div>`;
 }
 
-// Init panel 1
+function speakNumber() {
+  const n = clamp(parseInt(document.getElementById('num-input').value, 10) || 0, 0, 20);
+  speak(`${n}. ${numWord(n)}.`);
+}
+
 updateRepresentations();
 
-/* =====================================================
-   PANEL 2 — JETONS MANIPULABLES
-===================================================== */
-let unites = 0;
-let dizaines = 0;
+/* ================================================================
+   PANEL 2 — OBJETS MANIPULABLES
+================================================================ */
+let jetonState = { u: 0, d: 0, c: 0 };
 
 function renderJetons() {
   const area = document.getElementById('jeton-area');
   area.innerHTML = '';
 
-  // Dizaines d'abord
-  for (let i = 0; i < dizaines; i++) {
-    const d = document.createElement('span');
-    d.className = 'jeton-dizaine';
-    d.setAttribute('aria-label', 'Dizaine');
-    d.textContent = '10';
-    area.appendChild(d);
+  const { u, d, c } = jetonState;
+
+  for (let i = 0; i < c; i++) {
+    const el = document.createElement('span');
+    el.className = 'jeton-c';
+    el.setAttribute('aria-label', 'Centaine (100)');
+    el.textContent = '100';
+    area.appendChild(el);
   }
-  // Unités
-  for (let i = 0; i < unites; i++) {
-    const t = document.createElement('span');
-    t.className = 'jeton';
-    t.setAttribute('aria-hidden', 'true');
-    area.appendChild(t);
+  for (let i = 0; i < d; i++) {
+    const el = document.createElement('span');
+    el.className = 'jeton-d';
+    el.setAttribute('aria-label', 'Dizaine (10)');
+    el.textContent = '10';
+    area.appendChild(el);
   }
-  if (unites === 0 && dizaines === 0) {
-    area.textContent = 'Aucun jeton.';
+  for (let i = 0; i < u; i++) {
+    const el = document.createElement('span');
+    el.className = 'jeton-u';
+    el.setAttribute('aria-hidden', 'true');
+    area.appendChild(el);
+  }
+  if (u === 0 && d === 0 && c === 0) {
+    area.innerHTML = '<span class="token-zero">Aucun objet. Clique sur + Unité.</span>';
   }
 
-  const total = dizaines * 10 + unites;
-  const countEl = document.getElementById('jeton-count-display');
-  countEl.textContent = `Total : ${total} (${dizaines} dizaine${dizaines!==1?'s':''} + ${unites} unité${unites!==1?'s':''})`;
+  const total = c * 100 + d * 10 + u;
+  const cd = document.getElementById('jeton-count-display');
+  if (cd) cd.textContent = `Total : ${total}`;
 
-  // Bouton échange
-  const exBtn = document.getElementById('btn-exchange');
-  exBtn.style.display = unites >= 10 ? 'inline-flex' : 'none';
+  const dd = document.getElementById('decompo-display');
+  let decomp = [];
+  if (c > 0) decomp.push(`${c} centaine${c > 1 ? 's' : ''}`);
+  if (d > 0) decomp.push(`${d} dizaine${d > 1 ? 's' : ''}`);
+  if (u > 0) decomp.push(`${u} unité${u > 1 ? 's' : ''}`);
+  if (dd) dd.textContent = decomp.length > 0 ? decomp.join(' + ') : '';
 
-  // Message position
-  const pos = document.getElementById('jeton-position');
-  pos.textContent = total > 0 ? `🔢 ${total} = ${dizaines > 0 ? dizaines + ' dizaine' + (dizaines!==1?'s':'') : ''} ${unites > 0 ? (dizaines>0?'et ':'') + unites + ' unité' + (unites!==1?'s':'') : (dizaines===0?'zéro':'')}.` : '';
-
-  // Masquer message échange si plus >= 10
-  if (unites < 10) {
-    document.getElementById('exchange-message').style.display = 'none';
-  }
+  // Exchange buttons
+  const bu = document.getElementById('btn-exup');
+  const bd = document.getElementById('btn-exdown');
+  const bc = document.getElementById('btn-exc');
+  if (bu) bu.disabled = u < 10;
+  if (bd) bd.disabled = d < 1;
+  if (bc) bc.disabled = d < 10;
 }
 
 function addJeton() {
-  const total = dizaines * 10 + unites;
-  if (total >= 99) { announce("Maximum 99 atteint."); return; }
-  unites++;
+  const total = jetonState.c * 100 + jetonState.d * 10 + jetonState.u;
+  if (total >= 999) { announce('Maximum 999 atteint.', true); return; }
+  jetonState.u++;
   renderJetons();
-  const msg = unites >= 10 ? `${unites} unités — tu peux faire un échange !` : `${dizaines * 10 + unites} au total`;
-  announce(msg);
+  const t = jetonState.c * 100 + jetonState.d * 10 + jetonState.u;
+  announce(t + ' au total.');
 }
 
 function removeJeton() {
-  if (unites > 0) {
-    unites--;
+  if (jetonState.u > 0) {
+    jetonState.u--;
     renderJetons();
-    announce(`${dizaines * 10 + unites} au total`);
-  } else if (dizaines > 0) {
-    dizaines--;
-    unites = 9;
+    announce((jetonState.c * 100 + jetonState.d * 10 + jetonState.u) + ' au total.');
+  } else if (jetonState.d > 0) {
+    jetonState.d--;
+    jetonState.u = 9;
     renderJetons();
-    announce(`J'ai défait une dizaine. ${dizaines * 10 + unites} au total.`);
+    announce('J\'ai défait une dizaine en 9 unités.');
+  } else if (jetonState.c > 0) {
+    jetonState.c--;
+    jetonState.d = 9;
+    renderJetons();
+    announce('J\'ai défait une centaine en 9 dizaines.');
   } else {
-    announce("Il n'y a plus de jeton.");
+    announce('Il n\'y a plus rien.', true);
   }
 }
 
-function exchangeJetons() {
-  if (unites >= 10) {
-    unites -= 10;
-    dizaines++;
-    renderJetons();
-    document.getElementById('exchange-message').style.display = 'block';
-    speak(`Super ! 10 unités deviennent 1 dizaine. Tu as maintenant ${dizaines} dizaine${dizaines>1?'s':''} et ${unites} unité${unites!==1?'s':''}.`);
-  }
+function exchangeUp() {
+  if (jetonState.u < 10) { announce('Il faut 10 unités pour faire un échange.', true); return; }
+  jetonState.u -= 10;
+  jetonState.d++;
+  renderJetons();
+  showExchangeMsg('Super ! 10 unités → 1 dizaine.');
+  speak('Super ! 10 unités deviennent 1 dizaine.');
+}
+
+function exchangeDown() {
+  if (jetonState.d < 1) { announce('Il n\'y a aucune dizaine à défaire.', true); return; }
+  jetonState.d--;
+  jetonState.u += 10;
+  renderJetons();
+  showExchangeMsg('1 dizaine → 10 unités.');
+  speak('J\'ai transformé 1 dizaine en 10 unités.');
+}
+
+function exchangeCentaine() {
+  if (jetonState.d < 10) { announce('Il faut 10 dizaines pour faire une centaine.', true); return; }
+  jetonState.d -= 10;
+  jetonState.c++;
+  renderJetons();
+  showExchangeMsg('Excellent ! 10 dizaines → 1 centaine.');
+  speak('Excellent ! 10 dizaines deviennent 1 centaine.');
+}
+
+function showExchangeMsg(text) {
+  const el = document.getElementById('exchange-msg');
+  if (!el) return;
+  el.textContent = text;
+  el.classList.remove('hidden');
+  setTimeout(() => el.classList.add('hidden'), 4000);
+}
+
+function clearJetons() {
+  jetonState = { u: 0, d: 0, c: 0 };
+  renderJetons();
+  announce('Tous les objets ont été effacés.');
 }
 
 renderJetons();
 
-/* =====================================================
-   PANEL 3 — OPÉRATIONS
-===================================================== */
-let opsSteps = [];
-let opsCurrentStep = 0;
+/* ================================================================
+   PANEL 3 — OPÉRATIONS PAS À PAS
+================================================================ */
+let opsSteps = [], opsCurrentStep = 0, opsCurrentSpeak = '';
 
 function startOps() {
-  const a = clamp(parseInt(document.getElementById('ops-a').value, 10) || 0, 0, 20);
-  const b = clamp(parseInt(document.getElementById('ops-b').value, 10) || 0, 0, 20);
+  const a = clamp(parseInt(document.getElementById('ops-a').value, 10) || 0, 0, 99);
+  const b = clamp(parseInt(document.getElementById('ops-b').value, 10) || 0, 0, 99);
   const op = document.getElementById('ops-op-select').value;
-
   document.getElementById('ops-a').value = a;
   document.getElementById('ops-b').value = b;
 
   opsSteps = buildSteps(a, b, op);
   opsCurrentStep = 0;
 
-  document.getElementById('ops-steps-area').innerHTML = '';
-  document.getElementById('ops-encourage').style.display = 'none';
-  document.getElementById('btn-next-step').style.display = 'inline-flex';
+  const area = document.getElementById('ops-steps-area');
+  if (area) area.innerHTML = '';
+  const enc = document.getElementById('ops-encourage');
+  if (enc) enc.classList.add('hidden');
+  const ns = document.getElementById('btn-next-step');
+  if (ns) ns.classList.remove('hidden');
+  const ss = document.getElementById('btn-speak-step');
+  if (ss) ss.classList.remove('hidden');
 
   renderOpsStep();
 }
 
 function buildSteps(a, b, op) {
   const steps = [];
-  const opSign = op === 'add' ? '+' : '−';
-  const result = op === 'add' ? a + b : a - b;
+  const signs = { add: '+', sub: '−', mul: '×', div: '÷' };
+  const sign = signs[op] || '+';
+  let result;
+  if (op === 'add') result = a + b;
+  else if (op === 'sub') result = a - b;
+  else if (op === 'mul') result = a * b;
+  else result = b !== 0 ? a / b : null;
+
+  const opNames = { add: 'plus', sub: 'moins', mul: 'fois', div: 'divisé par' };
+  const opName = opNames[op];
 
   // Étape 0 : présentation
   steps.push({
-    title: `🎯 On va calculer : ${a} ${opSign} ${b}`,
-    tokens: null,
-    text: op === 'add'
-      ? `On part de ${a}, puis on ajoute ${b}.`
-      : `On part de ${a}, puis on enlève ${b}.`,
-    speak: op === 'add'
-      ? `On calcule ${a} plus ${b}. On part de ${a}, puis on ajoute ${b}.`
-      : `On calcule ${a} moins ${b}. On part de ${a}, puis on enlève ${b}.`
+    title: `🎯 Calcul : ${a} ${sign} ${b}`,
+    text: `On va calculer ${numWord(a)} ${opName} ${numWord(b)}.`,
+    speak: `On va calculer ${a} ${opName} ${b}.`,
+    tokens: null
   });
 
-  // Étape 1 : afficher A
-  steps.push({
-    title: `1️⃣ Je montre ${a}`,
-    tokens: tokensHTML(a, 'blue', 0),
-    text: `Voici ${a} jeton${a!==1?'s':''}.`,
-    speak: `Je montre ${a} avec ${a} jeton${a!==1?'s':''}.`
-  });
-
-  // Étape 2 : ajouter/enlever B
   if (op === 'add') {
     steps.push({
-      title: `2️⃣ J'ajoute ${b}`,
-      tokens: tokensHTML(a, 'blue', 0) + tokensHTML(b, 'gold', a),
-      text: `J'ajoute ${b} jeton${b!==1?'s':''} (en or). Total provisoire : ${a} + ${b}.`,
-      speak: `J'ajoute ${b} jeton${b!==1?'s':''}. Maintenant je compte tout.`
+      title: `1️⃣ Je pose ${a} jetons`,
+      tokens: tokBlue(Math.min(a, 20)),
+      text: `Je commence avec ${a} jeton${a !== 1 ? 's' : ''} bleus.`,
+      speak: `Je pose ${a} jeton${a !== 1 ? 's' : ''}.`
     });
-  } else {
-    const bSafe = Math.min(b, a);
     steps.push({
-      title: `2️⃣ J'enlève ${bSafe}`,
-      tokens: tokensHTML(a - bSafe, 'blue', 0) + tokensStrike(bSafe),
-      text: `J'enlève ${bSafe} jeton${bSafe!==1?'s':''} (barrés). Il reste ${a - bSafe}.`,
-      speak: `J'enlève ${bSafe} jeton${bSafe!==1?'s':''}. Il reste ${a - bSafe}.`
+      title: `2️⃣ J'ajoute ${b} jetons (en or)`,
+      tokens: tokBlue(Math.min(a, 20)) + tokGold(Math.min(b, 20)),
+      text: `J'ajoute ${b} jeton${b !== 1 ? 's' : ''} dorés. Je vais maintenant compter le total.`,
+      speak: `J'ajoute ${b} jeton${b !== 1 ? 's' : ''}. Maintenant je compte tout ensemble.`
     });
+    steps.push({
+      title: `✅ Résultat : ${a} + ${b} = ${result}`,
+      tokens: tokBlue(Math.min(result, 30)),
+      text: `${a} + ${b} = ${result}. En lettres : ${numWord(a)} plus ${numWord(b)} égale ${numWord(result)}.`,
+      speak: `Bravo ! ${a} plus ${b} égale ${result}. ${numWord(result)}.`,
+      result, isLast: true
+    });
+  } else if (op === 'sub') {
+    const safe = Math.max(0, Math.min(b, a));
+    const res = a - safe;
+    steps.push({
+      title: `1️⃣ Je montre ${a} jetons`,
+      tokens: tokBlue(Math.min(a, 20)),
+      text: `Je commence avec ${a} jeton${a !== 1 ? 's' : ''}.`,
+      speak: `Je commence avec ${a} jeton${a !== 1 ? 's' : ''}.`
+    });
+    steps.push({
+      title: `2️⃣ J'enlève ${safe} jetons (barrés)`,
+      tokens: tokBlue(Math.min(res, 20)) + tokStrike(Math.min(safe, 10)),
+      text: `J'enlève ${safe} jeton${safe !== 1 ? 's' : ''} (barrés en rouge). Il reste ${res}.`,
+      speak: `J'enlève ${safe} jeton${safe !== 1 ? 's' : ''}. Il reste ${res}.`
+    });
+    if (b > a) {
+      steps.push({
+        title: `⚠️ Attention ! ${a} − ${b}`,
+        text: `On ne peut pas enlever ${b} quand on n'a que ${a}. Dans les nombres naturels, le résultat serait négatif (${a - b}). On ne peut pas retirer plus qu'on a.`,
+        speak: `Attention. On ne peut pas enlever ${b} quand on n'a que ${a}.`,
+        tokens: null, isLast: true
+      });
+    } else {
+      steps.push({
+        title: `✅ Résultat : ${a} − ${b} = ${res}`,
+        tokens: tokBlue(Math.min(res, 20)),
+        text: `${a} − ${b} = ${res}. En lettres : ${numWord(res)}.`,
+        speak: `Bravo ! ${a} moins ${b} égale ${res}. ${numWord(res)}.`,
+        result: res, isLast: true
+      });
+    }
+  } else if (op === 'mul') {
+    steps.push({
+      title: `1️⃣ ${a} × ${b} = ${b} groupes de ${a}`,
+      tokens: null,
+      text: `Multiplier, c'est faire ${b} fois le nombre ${a}. On va faire ${b} groupe${b !== 1 ? 's' : ''} de ${a} jeton${a !== 1 ? 's' : ''}.`,
+      speak: `${a} fois ${b} signifie ${b} groupe${b !== 1 ? 's' : ''} de ${a}.`
+    });
+    // Show up to 6 groups
+    const showGroups = Math.min(b, 6);
+    let groupTok = '';
+    for (let g = 0; g < showGroups; g++) {
+      groupTok += `<span style="display:inline-flex;gap:3px;flex-wrap:wrap;border:1.5px dashed #9BAFC8;padding:3px;border-radius:4px;margin:2px;">${tokBlue(Math.min(a, 10))}</span>`;
+    }
+    if (b > 6) groupTok += `<span style="font-size:0.88rem;color:#555;">… et ${b - 6} autre${b - 6 > 1 ? 's' : ''} groupe${b - 6 > 1 ? 's' : ''}</span>`;
+    steps.push({
+      title: `2️⃣ Voici ${showGroups} groupe${showGroups !== 1 ? 's' : ''} de ${a}`,
+      tokens: groupTok,
+      text: `Chaque groupe contient ${a} jeton${a !== 1 ? 's' : ''}. Je vais maintenant tout compter.`,
+      speak: `Je vois ${showGroups} groupe${showGroups !== 1 ? 's' : ''} de ${a} jeton${a !== 1 ? 's' : ''}.`
+    });
+    steps.push({
+      title: `✅ Résultat : ${a} × ${b} = ${result}`,
+      tokens: result <= 30 ? tokBlue(result) : `<span style="font-size:1.1rem;font-weight:700;">${result} jetons au total</span>`,
+      text: `${a} × ${b} = ${result}. En lettres : ${numWord(a)} fois ${numWord(b)} égale ${numWord(result)}.`,
+      speak: `Bravo ! ${a} fois ${b} égale ${result}. ${numWord(result)}.`,
+      result, isLast: true
+    });
+  } else { // div
+    if (b === 0) {
+      steps.push({
+        title: '⚠️ Division par zéro',
+        text: 'On ne peut pas diviser par zéro. C\'est impossible !',
+        speak: 'On ne peut pas diviser par zéro.',
+        tokens: null, isLast: true
+      });
+    } else {
+      const quot = Math.floor(a / b);
+      const rem = a % b;
+      steps.push({
+        title: `1️⃣ Diviser ${a} en groupes de ${b}`,
+        tokens: tokBlue(Math.min(a, 20)),
+        text: `Je commence avec ${a} jetons. Je vais les répartir en groupes de ${b}.`,
+        speak: `Je commence avec ${a} jetons. Je vais faire des groupes de ${b}.`
+      });
+      const showG = Math.min(quot, 6);
+      let gTok = '';
+      for (let g = 0; g < showG; g++) {
+        gTok += `<span style="display:inline-flex;gap:3px;flex-wrap:wrap;border:1.5px dashed #9BAFC8;padding:3px;border-radius:4px;margin:2px;">${tokBlue(Math.min(b, 10))}</span>`;
+      }
+      if (quot > 6) gTok += `<span style="font-size:0.88rem;color:#555;">… ${quot - 6} autre${quot - 6 > 1 ? 's' : ''} groupe${quot - 6 > 1 ? 's' : ''}</span>`;
+      if (rem > 0) gTok += `<span style="display:inline-flex;gap:3px;flex-wrap:wrap;border:1.5px dashed #c0392b;padding:3px;border-radius:4px;margin:2px;">${tokBlue(rem)}</span><span style="font-size:0.78rem;color:#c0392b;font-weight:700;">reste</span>`;
+      steps.push({
+        title: `2️⃣ Je fais ${quot} groupe${quot !== 1 ? 's' : ''} de ${b}${rem > 0 ? ` et il reste ${rem}` : ''}`,
+        tokens: gTok,
+        text: `${a} divisé par ${b} : j'ai fait ${quot} groupe${quot !== 1 ? 's' : ''} complets de ${b}. ${rem > 0 ? 'Il reste ' + rem + ' jeton' + (rem > 1 ? 's' : '') + '.' : 'Pas de reste !'}`,
+        speak: `${a} divisé par ${b} égale ${quot}${rem > 0 ? ' reste ' + rem : ''}.`
+      });
+      steps.push({
+        title: `✅ Résultat : ${a} ÷ ${b} = ${quot}${rem > 0 ? ' reste ' + rem : ''}`,
+        tokens: null,
+        text: `La réponse est ${quot}.${rem > 0 ? ' Il reste ' + rem + '.' : ''}`,
+        speak: `Bravo ! ${a} divisé par ${b} égale ${quot}${rem > 0 ? ', reste ' + rem : ''}.`,
+        result: quot, isLast: true
+      });
+    }
   }
-
-  // Étape 3 : résultat
-  steps.push({
-    title: `✅ Résultat : ${a} ${opSign} ${b} = ${result < 0 ? '(négatif !)' : result}`,
-    tokens: result >= 0 ? tokensHTML(result, 'blue', 0) : '',
-    text: result >= 0
-      ? `La réponse est ${result}.`
-      : `La soustraction donne un nombre négatif (${result}). On ne peut pas enlever plus qu'on n'a !`,
-    speak: result >= 0
-      ? `Bravo ! ${a} ${op === 'add' ? 'plus' : 'moins'} ${b} égale ${result}.`
-      : `Attention ! ${a} moins ${b} donne un résultat négatif. On ne peut pas enlever plus qu'on n'a.`,
-    result: result,
-    isLast: true
-  });
-
   return steps;
 }
 
-function tokensHTML(n, color, offset) {
-  let html = '';
-  const style = color === 'gold'
-    ? 'width:22px;height:22px;border-radius:50%;background:var(--or);border:2px solid #d49a18;display:inline-block;flex-shrink:0;'
-    : 'width:22px;height:22px;border-radius:50%;background:var(--marine);display:inline-block;flex-shrink:0;';
-  for (let i = 0; i < n; i++) {
-    html += `<span style="${style}" aria-hidden="true"></span>`;
-  }
-  return html;
+function tokBlue(n) {
+  let h = '';
+  for (let i = 0; i < n; i++) h += `<span style="width:20px;height:20px;border-radius:50%;background:var(--marine);display:inline-block;flex-shrink:0;" aria-hidden="true"></span>`;
+  return h;
 }
-
-function tokensStrike(n) {
-  let html = '';
-  for (let i = 0; i < n; i++) {
-    html += `<span style="width:22px;height:22px;border-radius:50%;background:#ccc;border:2px dashed #999;display:inline-block;flex-shrink:0;position:relative;" aria-hidden="true"><span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#c00;font-size:14px;font-weight:900;line-height:1;">✕</span></span>`;
-  }
-  return html;
+function tokGold(n) {
+  let h = '';
+  for (let i = 0; i < n; i++) h += `<span style="width:20px;height:20px;border-radius:50%;background:var(--or);border:2px solid var(--or-dk);display:inline-block;flex-shrink:0;" aria-hidden="true"></span>`;
+  return h;
+}
+function tokStrike(n) {
+  let h = '';
+  for (let i = 0; i < n; i++) h += `<span style="width:20px;height:20px;border-radius:50%;background:#ccc;border:2px dashed #999;display:inline-block;flex-shrink:0;position:relative;" aria-hidden="true"><span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#c0392b;font-size:12px;font-weight:900;line-height:1;">✕</span></span>`;
+  return h;
 }
 
 function renderOpsStep() {
   if (opsCurrentStep >= opsSteps.length) return;
   const step = opsSteps[opsCurrentStep];
   const area = document.getElementById('ops-steps-area');
+  if (!area) return;
 
-  // Enlève le highlight précédent
   area.querySelectorAll('.step-box').forEach(b => b.classList.remove('highlight'));
 
   const box = document.createElement('div');
   box.className = 'step-box highlight';
   box.setAttribute('tabindex', '-1');
   let inner = `<div class="step-title">${step.title}</div>`;
-  if (step.text) inner += `<p style="font-size:0.95rem;margin-bottom:8px;">${step.text}</p>`;
+  if (step.text) inner += `<p style="font-size:0.93rem;margin-bottom:8px;">${step.text}</p>`;
   if (step.tokens !== null && step.tokens !== undefined) {
     inner += `<div class="step-tokens">${step.tokens}</div>`;
   }
-  if (step.result !== undefined && step.result >= 0) {
+  if (step.result !== undefined && step.result !== null) {
     inner += `<div class="step-result">${step.result}</div>`;
   }
   box.innerHTML = inner;
   area.appendChild(box);
   setTimeout(() => box.focus(), 50);
 
-  speak(step.speak);
+  opsCurrentSpeak = step.speak || '';
+  speak(opsCurrentSpeak);
 
+  const ns = document.getElementById('btn-next-step');
+  const enc = document.getElementById('ops-encourage');
   if (step.isLast) {
-    document.getElementById('btn-next-step').style.display = 'none';
-    const enc = document.getElementById('ops-encourage');
-    enc.style.display = 'block';
-    enc.textContent = '🌟 Super travail ! Tu peux recommencer avec d\'autres nombres.';
+    if (ns) ns.classList.add('hidden');
+    if (enc) {
+      enc.classList.remove('hidden');
+      enc.textContent = '🌟 Super travail ! Tu peux recommencer avec d\'autres nombres.';
+    }
+  } else {
+    if (ns) ns.classList.remove('hidden');
+    if (enc) enc.classList.add('hidden');
   }
 }
 
 function nextOpsStep() {
   opsCurrentStep++;
-  if (opsCurrentStep < opsSteps.length) {
-    renderOpsStep();
-  }
+  if (opsCurrentStep < opsSteps.length) renderOpsStep();
 }
 
-/* =====================================================
-   PANEL 4 — ARGENT
-===================================================== */
+function speakCurrentStep() {
+  if (opsCurrentSpeak) speak(opsCurrentSpeak);
+}
+
+/* ================================================================
+   PANEL 4 — ARGENT (centimes en interne)
+================================================================ */
 let coins = [];
+let monnaieMode = false;
+let monnaieTarget = 0;
+
+function toggleMonnaieMode() {
+  monnaieMode = !monnaieMode;
+  const btn = document.getElementById('btn-monnaie-mode');
+  if (btn) btn.setAttribute('aria-pressed', monnaieMode ? 'true' : 'false');
+  document.getElementById('monnaie-target').classList.toggle('hidden', !monnaieMode);
+  document.getElementById('btn-new-challenge').classList.toggle('hidden', !monnaieMode);
+  document.getElementById('monnaie-diff').classList.toggle('hidden', !monnaieMode);
+  if (monnaieMode) newMonnaieChallenge();
+  else document.getElementById('monnaie-target').textContent = '';
+}
+
+function newMonnaieChallenge() {
+  const amounts = [150, 200, 250, 300, 350, 500, 700, 1000, 1200, 1500, 2000, 2500];
+  monnaieTarget = amounts[Math.floor(Math.random() * amounts.length)];
+  coins = [];
+  updateArgent();
+  const t = document.getElementById('monnaie-target');
+  if (t) t.textContent = `Objectif : composer ${formatEur(monnaieTarget)}`;
+  announce('Nouveau défi : composer ' + formatEur(monnaieTarget));
+}
+
+function formatEur(c) {
+  if (c >= 100) return (c / 100).toFixed(c % 100 === 0 ? 0 : 2).replace('.', ',') + ' €';
+  return c + ' centime' + (c > 1 ? 's' : '');
+}
 
 function addCoin(val) {
   coins.push(val);
   updateArgent();
-  const names = {1:'un euro',2:'deux euros',5:'cinq euros',10:'dix euros',20:'vingt euros',50:'cinquante euros'};
-  announce(`${names[val] || val + ' euros'} ajouté${val>1?'s':''}. Total : ${coins.reduce((a,b)=>a+b,0)} euros.`);
+  announce(formatEur(val) + ' ajouté. Total : ' + formatEur(coins.reduce((a, b) => a + b, 0)) + '.');
 }
 
 function removeLastCoin() {
-  if (coins.length === 0) { announce("Le panier est vide."); return; }
-  const removed = coins.pop();
+  if (!coins.length) { announce('Le panier est vide.', true); return; }
+  const rem = coins.pop();
   updateArgent();
-  announce(`${removed} euro${removed>1?'s':''} retiré${removed>1?'s':''}. Total : ${coins.reduce((a,b)=>a+b,0)} euros.`);
+  announce(formatEur(rem) + ' retiré. Total : ' + formatEur(coins.reduce((a, b) => a + b, 0)) + '.');
 }
 
-function clearCoins() {
-  coins = [];
-  updateArgent();
-  announce("Panier vidé. Total : 0 euro.");
-}
+function clearCoins() { coins = []; updateArgent(); announce('Panier vidé.'); }
 
 function updateArgent() {
   const total = coins.reduce((a, b) => a + b, 0);
-  document.getElementById('argent-total').textContent = `Total : ${total} €`;
+  const tot = document.getElementById('argent-total');
+  if (tot) tot.textContent = 'Total : ' + formatEur(total);
 
-  const panier = document.getElementById('argent-panier');
-  panier.innerHTML = '';
-  if (coins.length === 0) {
-    const em = document.createElement('em');
-    em.style.color = '#888';
-    em.style.fontSize = '0.9rem';
-    em.textContent = 'Clique sur les pièces et billets ci-dessus.';
-    panier.appendChild(em);
-    return;
+  const pan = document.getElementById('argent-panier');
+  if (pan) {
+    pan.innerHTML = '';
+    if (!coins.length) {
+      const em = document.createElement('em');
+      em.style.color = '#7a8fa6';
+      em.style.fontSize = '0.9rem';
+      em.textContent = 'Clique sur les pièces et billets ci-dessus.';
+      pan.appendChild(em);
+    } else {
+      const count = {};
+      coins.forEach(c => { count[c] = (count[c] || 0) + 1; });
+      [1,2,5,10,20,50,100,200,500,1000,2000,5000].forEach(v => {
+        if (count[v]) {
+          const chip = document.createElement('button');
+          chip.className = 'argent-chip' + (v >= 500 ? ' billet-chip' : '');
+          chip.setAttribute('role', 'listitem');
+          chip.setAttribute('aria-label', `${count[v]} fois ${formatEur(v)}, cliquer pour retirer un`);
+          chip.textContent = `${count[v]} × ${formatEur(v)}`;
+          chip.onclick = () => {
+            const idx = coins.lastIndexOf(v);
+            if (idx !== -1) { coins.splice(idx, 1); updateArgent(); announce(formatEur(v) + ' retiré.'); }
+          };
+          pan.appendChild(chip);
+        }
+      });
+    }
   }
 
-  // Grouper par valeur pour l'affichage
-  const count = {};
-  coins.forEach(c => { count[c] = (count[c] || 0) + 1; });
-  [1,2,5,10,20,50].forEach(v => {
-    if (count[v]) {
-      const chip = document.createElement('span');
-      chip.className = 'argent-chip' + (v >= 20 ? ' billet-chip' : '');
-      chip.setAttribute('role', 'listitem');
-      chip.textContent = `${count[v]} × ${v}€`;
-      panier.appendChild(chip);
+  if (monnaieMode) {
+    const diff = monnaieTarget - total;
+    const d = document.getElementById('monnaie-diff');
+    if (d) {
+      d.classList.remove('hidden');
+      if (diff === 0) {
+        d.textContent = '✅ Parfait ! Tu as composé exactement le montant demandé.';
+        speak('Parfait ! Bravo !');
+      } else if (diff > 0) {
+        d.textContent = `Il manque encore ${formatEur(diff)}.`;
+      } else {
+        d.textContent = `Tu as mis ${formatEur(-diff)} de trop.`;
+      }
     }
-  });
+  }
 }
 
 function speakTotal() {
   const total = coins.reduce((a, b) => a + b, 0);
-  speak(`Total : ${total} euro${total!==1?'s':''}.`);
+  speak('Total : ' + formatEur(total) + '.');
 }
 
-// Init panier vide
 updateArgent();
+
+/* ================================================================
+   PANEL 5 — HORLOGE
+================================================================ */
+let clockH = 10, clockM = 0;
+
+function setCurrentTime() {
+  const now = new Date();
+  clockH = now.getHours();
+  clockM = now.getMinutes();
+  renderClock();
+  speakTime();
+}
+
+function changeTime(what, delta) {
+  if (what === 'h') { clockH = ((clockH + delta) % 24 + 24) % 24; }
+  else { clockM = ((clockM + delta) % 60 + 60) % 60; }
+  renderClock();
+}
+
+function renderClock() {
+  const wrap = document.getElementById('clock-svg-wrap');
+  if (!wrap) return;
+
+  const R = 110, cx = R, cy = R;
+  const hourAngle = ((clockH % 12) / 12 + clockM / 720) * 2 * Math.PI - Math.PI / 2;
+  const minAngle  = (clockM / 60) * 2 * Math.PI - Math.PI / 2;
+
+  const hx = cx + 55 * Math.cos(hourAngle);
+  const hy = cy + 55 * Math.sin(hourAngle);
+  const mx = cx + 78 * Math.cos(minAngle);
+  const my = cy + 78 * Math.sin(minAngle);
+
+  let svg = `<svg id="clock-svg" width="${R*2}" height="${R*2}" viewBox="0 0 ${R*2} ${R*2}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Horloge analogique">`;
+  svg += `<circle cx="${cx}" cy="${cy}" r="${R-4}" fill="#fff" stroke="#C8D4E6" stroke-width="3"/>`;
+  // Ticks
+  for (let i = 0; i < 60; i++) {
+    const a = (i / 60) * 2 * Math.PI - Math.PI / 2;
+    const r1 = i % 5 === 0 ? R - 14 : R - 10;
+    const r2 = R - 6;
+    svg += `<line x1="${cx + r1 * Math.cos(a)}" y1="${cy + r1 * Math.sin(a)}" x2="${cx + r2 * Math.cos(a)}" y2="${cy + r2 * Math.sin(a)}" stroke="${i % 5 === 0 ? '#0F4C81' : '#C8D4E6'}" stroke-width="${i % 5 === 0 ? 2 : 1}"/>`;
+  }
+  // Numbers
+  for (let i = 1; i <= 12; i++) {
+    const a = (i / 12) * 2 * Math.PI - Math.PI / 2;
+    const rx = cx + (R - 24) * Math.cos(a);
+    const ry = cy + (R - 24) * Math.sin(a) + 4;
+    svg += `<text x="${rx}" y="${ry}" text-anchor="middle" font-size="13" font-weight="700" fill="#0F4C81" font-family="system-ui">${i}</text>`;
+  }
+  // Hands
+  svg += `<line x1="${cx}" y1="${cy}" x2="${hx}" y2="${hy}" stroke="#0F4C81" stroke-width="5" stroke-linecap="round"/>`;
+  svg += `<line x1="${cx}" y1="${cy}" x2="${mx}" y2="${my}" stroke="#F4B81C" stroke-width="3" stroke-linecap="round"/>`;
+  svg += `<circle cx="${cx}" cy="${cy}" r="5" fill="#0F4C81"/>`;
+  svg += '</svg>';
+  wrap.innerHTML = svg;
+
+  const hStr = String(clockH).padStart(2, '0');
+  const mStr = String(clockM).padStart(2, '0');
+  const td = document.getElementById('time-display');
+  if (td) td.textContent = `${hStr} h ${mStr}`;
+
+  const tw = document.getElementById('time-word');
+  if (tw) tw.textContent = timeWord(clockH, clockM);
+}
+
+function timeWord(h, m) {
+  const hmod = h % 12 || 12;
+  const hname = hmod === 1 ? 'une heure' : numWord(hmod) + ' heures';
+  if (m === 0) return hname + ' pile';
+  if (m === 15) return hname + ' et quart';
+  if (m === 30) return hname + ' et demie';
+  if (m === 45) {
+    const next = (hmod % 12) + 1;
+    const nn = next === 1 ? 'une heure' : numWord(next) + ' heures';
+    return nn + ' moins le quart';
+  }
+  return hname + ' ' + numWord(m);
+}
+
+function speakTime() {
+  speak('Il est ' + timeWord(clockH, clockM) + '.');
+}
+
+renderClock();
+
+/* ================================================================
+   PANEL 6 — FRACTIONS
+================================================================ */
+function updateFraction() {
+  const num = clamp(parseInt(document.getElementById('frac-num').value, 10) || 0, 0, 12);
+  const den = clamp(parseInt(document.getElementById('frac-den').value, 10) || 1, 1, 12);
+  const safeNum = Math.min(num, den);
+  document.getElementById('frac-num').value = safeNum;
+  document.getElementById('frac-den').value = den;
+
+  // Notation fraction
+  const fn = document.getElementById('frac-notation');
+  if (fn) fn.innerHTML = `
+    <span class="frac" aria-label="${safeNum} sur ${den}">
+      <span class="frac-num">${safeNum}</span>
+      <span class="frac-line" aria-hidden="true"></span>
+      <span class="frac-den">${den}</span>
+    </span>
+    <span style="font-size:0.9rem;margin-left:10px;color:#3a4a5c;">${fracWord(safeNum, den)}</span>
+  `;
+
+  // Pizza SVG
+  drawPizza(safeNum, den);
+
+  // Barre
+  const bar = document.getElementById('bar-wrap');
+  if (bar) {
+    bar.innerHTML = '';
+    for (let i = 0; i < den; i++) {
+      const p = document.createElement('div');
+      p.className = 'bar-part ' + (i < safeNum ? 'filled' : 'empty');
+      p.setAttribute('aria-hidden', 'true');
+      bar.appendChild(p);
+    }
+  }
+
+  const ex = document.getElementById('frac-explain');
+  if (ex) {
+    ex.textContent = `La pizza est coupée en ${den} part${den > 1 ? 's' : ''} égales. ${safeNum} part${safeNum > 1 ? 's sont' : ' est'} colorée${safeNum > 1 ? 's' : ''}.`;
+  }
+}
+
+function fracWord(n, d) {
+  if (n === 0) return 'zéro';
+  const dens = ['','entier','demi','tiers','quart','cinquième','sixième','septième','huitième','neuvième','dixième','onzième','douzième'];
+  const den = d <= 12 ? (n > 1 ? dens[d] + 's' : dens[d]) : `${d}e${n > 1 ? 's' : ''}`;
+  if (d === 1) return n === 1 ? 'entier' : numWord(n);
+  return numWord(n) + ' ' + den;
+}
+
+function drawPizza(n, d) {
+  const R = 90, cx = R + 4, cy = R + 4;
+  const S = (R + 4) * 2;
+  let svg = `<svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pizza représentant ${n} sur ${d}">`;
+  svg += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="#FFF3CD" stroke="#D49A18" stroke-width="2"/>`;
+  for (let i = 0; i < d; i++) {
+    const a1 = (i / d) * 2 * Math.PI - Math.PI / 2;
+    const a2 = ((i + 1) / d) * 2 * Math.PI - Math.PI / 2;
+    const x1 = cx + R * Math.cos(a1), y1 = cy + R * Math.sin(a1);
+    const x2 = cx + R * Math.cos(a2), y2 = cy + R * Math.sin(a2);
+    const large = (a2 - a1 > Math.PI) ? 1 : 0;
+    const fill = i < n ? '#0F4C81' : 'none';
+    if (fill !== 'none') {
+      svg += `<path d="M${cx},${cy} L${x1},${y1} A${R},${R} 0 ${large},1 ${x2},${y2} Z" fill="${fill}" fill-opacity="0.7" stroke="#fff" stroke-width="1.5"/>`;
+    }
+    svg += `<line x1="${cx}" y1="${cy}" x2="${x1}" y2="${y1}" stroke="#D49A18" stroke-width="1.5"/>`;
+  }
+  svg += `<circle cx="${cx}" cy="${cy}" r="5" fill="#D49A18"/>`;
+  svg += '</svg>';
+  const pw = document.getElementById('pizza-wrap');
+  if (pw) pw.innerHTML = svg;
+}
+
+function speakFraction() {
+  const n = parseInt(document.getElementById('frac-num').value, 10) || 0;
+  const d = parseInt(document.getElementById('frac-den').value, 10) || 1;
+  speak(`${n} sur ${d}. ${fracWord(n, d)}.`);
+}
+
+updateFraction();
+
+/* ================================================================
+   PANEL 7 — ENTRAÎNEMENT ADAPTATIF
+================================================================ */
+let trainLevel = lsGet('me_trainlevel', 1);
+let trainStreak = 0;
+let currentQ = null;
+let questionAnswered = false;
+
+// Adaptive: streak >=3 correct → level up, streak <=-2 → level down
+function adjustLevel(correct) {
+  if (correct) {
+    trainStreak++;
+    if (trainStreak >= 3 && trainLevel < 5) { trainLevel++; trainStreak = 0; lsSet('me_trainlevel', trainLevel); }
+  } else {
+    trainStreak = Math.min(trainStreak - 1, 0);
+    if (trainStreak <= -2 && trainLevel > 1) { trainLevel--; trainStreak = 0; lsSet('me_trainlevel', trainLevel); }
+  }
+  profil._streak = (profil._streak || 0);
+  if (correct) profil._streak++;
+  else profil._streak = 0;
+  updateDiffBadge();
+}
+
+function updateDiffBadge() {
+  const b = document.getElementById('diff-badge');
+  if (b) b.textContent = 'Niveau ' + trainLevel;
+  const labels = document.getElementById('train-score-display');
+  if (labels) labels.textContent = `${profil.correctQ} bonne${profil.correctQ > 1 ? 's' : ''} / ${profil.totalQ}`;
+}
+
+function genQuestion() {
+  const lvl = trainLevel;
+  const types = lvl <= 2 ? ['add','sub','repr'] : lvl <= 3 ? ['add','sub','mul','repr'] : ['add','sub','mul','div','repr','frac'];
+  const type = types[Math.floor(Math.random() * types.length)];
+
+  let max = lvl === 1 ? 10 : lvl === 2 ? 20 : lvl === 3 ? 50 : lvl === 4 ? 99 : 999;
+
+  if (type === 'repr') {
+    const n = Math.floor(Math.random() * Math.min(max, 20));
+    const correct = numWord(n);
+    const wrongs = new Set();
+    while (wrongs.size < 3) {
+      const w = Math.floor(Math.random() * 21);
+      if (w !== n) wrongs.add(numWord(w));
+    }
+    return { type: 'repr', question: `Comment s'écrit le nombre ${n} en lettres ?`, correctAnswer: correct, choices: shuffle([correct, ...wrongs]), n };
+  }
+  if (type === 'frac') {
+    const d = [2,3,4,5][Math.floor(Math.random()*4)];
+    const n = Math.floor(Math.random()*(d+1));
+    const correct = `${n}/${d}`;
+    const wrongs = new Set();
+    while (wrongs.size < 3) {
+      const wn = Math.floor(Math.random()*(d+1));
+      const c = `${wn}/${d}`;
+      if (c !== correct) wrongs.add(c);
+    }
+    return { type: 'frac', question: `Combien de parts (sur ${d}) sont colorées ?`, visual: { n, d }, correctAnswer: correct, choices: shuffle([correct, ...wrongs]) };
+  }
+
+  let a, b, result;
+  if (type === 'add') { a = ri(0, max); b = ri(0, max - a); result = a + b; }
+  else if (type === 'sub') { a = ri(1, max); b = ri(0, a); result = a - b; }
+  else if (type === 'mul') { a = ri(1, Math.min(12, max)); b = ri(1, Math.min(12, max)); result = a * b; }
+  else { b = ri(1, Math.min(12, max)); result = ri(1, Math.min(12, max)); a = b * result; }
+
+  const signs = { add: '+', sub: '−', mul: '×', div: '÷' };
+  const sign = signs[type];
+  const question = type === 'div' ? `${a} ÷ ${b} = ?` : `${a} ${sign} ${b} = ?`;
+  const correct = String(result);
+  const wrongs = new Set();
+  while (wrongs.size < 3) {
+    const off = ri(-5, 5) || 1;
+    const w = String(Math.max(0, result + off));
+    if (w !== correct) wrongs.add(w);
+  }
+  return { type, question, correctAnswer: correct, choices: shuffle([correct, ...wrongs]) };
+}
+
+function ri(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) { const j = ri(0, i); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+function newQuestion() {
+  currentQ = genQuestion();
+  questionAnswered = false;
+  updateDiffBadge();
+
+  const qEl = document.getElementById('quiz-question');
+  if (qEl) { qEl.textContent = currentQ.question; qEl.focus(); }
+
+  const vis = document.getElementById('quiz-visual');
+  if (vis) {
+    vis.innerHTML = '';
+    if (currentQ.type === 'frac' && currentQ.visual) {
+      const tmp = document.createElement('div');
+      tmp.style.display = 'flex'; tmp.style.justifyContent = 'center';
+      const { n, d } = currentQ.visual;
+      const R = 55, cx = R + 4, cy = R + 4, S = (R+4)*2;
+      let svg = `<svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg" aria-label="Pizza fraction" aria-hidden="true">`;
+      svg += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="#FFF3CD" stroke="#D49A18" stroke-width="2"/>`;
+      for (let i = 0; i < d; i++) {
+        const a1 = (i/d)*2*Math.PI-Math.PI/2, a2 = ((i+1)/d)*2*Math.PI-Math.PI/2;
+        const x1=cx+R*Math.cos(a1), y1=cy+R*Math.sin(a1), x2=cx+R*Math.cos(a2), y2=cy+R*Math.sin(a2);
+        const large = (a2-a1>Math.PI)?1:0;
+        if (i < n) svg += `<path d="M${cx},${cy} L${x1},${y1} A${R},${R} 0 ${large},1 ${x2},${y2} Z" fill="#0F4C81" fill-opacity="0.7" stroke="#fff" stroke-width="1.5"/>`;
+        svg += `<line x1="${cx}" y1="${cy}" x2="${x1}" y2="${y1}" stroke="#D49A18" stroke-width="1.5"/>`;
+      }
+      svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="#D49A18"/></svg>`;
+      tmp.innerHTML = svg;
+      vis.appendChild(tmp);
+    }
+  }
+
+  const choices = document.getElementById('quiz-choices');
+  if (choices) {
+    choices.innerHTML = '';
+    currentQ.choices.forEach(ch => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-choice';
+      btn.textContent = ch;
+      btn.setAttribute('aria-label', 'Répondre : ' + ch);
+      btn.onclick = () => answerQuestion(ch, btn);
+      choices.appendChild(btn);
+    });
+  }
+
+  const fb = document.getElementById('quiz-feedback');
+  if (fb) fb.classList.add('hidden');
+  const sr = document.getElementById('stars-row');
+  if (sr) sr.innerHTML = '';
+  const nq = document.getElementById('btn-next-q');
+  if (nq) nq.classList.add('hidden');
+
+  speak(currentQ.question);
+}
+
+function answerQuestion(answer, btn) {
+  if (questionAnswered) return;
+  questionAnswered = true;
+
+  const correct = answer === currentQ.correctAnswer;
+  adjustLevel(correct);
+  recordAnswer(correct);
+
+  const allBtns = document.querySelectorAll('.quiz-choice');
+  allBtns.forEach(b => {
+    b.disabled = true;
+    if (b.textContent === currentQ.correctAnswer) b.classList.add('correct');
+    else if (b === btn && !correct) b.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('quiz-feedback');
+  if (fb) {
+    fb.classList.remove('hidden');
+    fb.classList.toggle('ok', correct);
+    fb.classList.toggle('ko', !correct);
+    if (correct) {
+      fb.textContent = '✅ Bravo ! C\'est la bonne réponse.';
+      speak('Bravo ! C\'est correct.');
+    } else {
+      fb.textContent = `❌ Pas tout à fait. La bonne réponse était : ${currentQ.correctAnswer}.`;
+      speak(`Pas tout à fait. La bonne réponse était ${currentQ.correctAnswer}.`);
+    }
+  }
+
+  const sr = document.getElementById('stars-row');
+  if (sr) {
+    const stars = correct ? Math.min(3, Math.max(1, trainLevel - 1)) : 0;
+    sr.innerHTML = Array(3).fill(0).map((_, i) => `<span class="star" aria-hidden="true">${i < stars ? '⭐' : '☆'}</span>`).join('');
+  }
+
+  const nq = document.getElementById('btn-next-q');
+  if (nq) nq.classList.remove('hidden');
+}
+
+// Init first question when tab is first shown
+// (lazy: called in switchTab)
+
+/* ================================================================
+   INIT GLOBAL
+================================================================ */
+loadSettings();
+renderProfil();
+updateDiffBadge();
+
+/* ================================================================
+   SERVICE WORKER
+================================================================ */
+if ('serviceWorker' in navigator) {
+  try {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('[MathEase] Service Worker enregistré.'))
+      .catch(e => console.warn('[MathEase] SW non enregistré :', e));
+  } catch(e) { console.warn('[MathEase] SW erreur :', e); }
+}
 </script>
 </body>
 </html>

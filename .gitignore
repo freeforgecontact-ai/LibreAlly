@@ -44,3 +44,6 @@ temp/
 # Artefacts de packaging
 *.tgz
 *.zip
+
+# Fichiers temporaires FUSE (montage)
+.fuse_hidden*

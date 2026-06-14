@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DysReader — Lecture adaptée | LibreA11y</title>
+<meta name="description" content="Lecture adaptée à la dyslexie : taille, espacement, coloration syllabique, règle de lecture et lecture vocale. Démo hors-ligne, aucune donnée envoyée.">
+<style>
+/* ===== VARIABLES & RESET ===== */
+:root {
+  --marine:    #0F4C81;
+  --marine-dk: #0A3A63;
+  --or:        #F4B81C;
+  --or-lt:     #FFD45E;
+  --encre:     #16202E;
+  --fond:      #F7F9FC;
+  --surface:   #FFFFFF;
+  --border:    #D0D9E8;
+  --focus-ring: #F4B81C;
+  --radius:    12px;
+  --radius-sm: 8px;
+  --shadow:    0 2px 8px rgba(15,76,129,0.12);
+  --shadow-hv: 0 4px 16px rgba(15,76,129,0.22);
+  --tr:        0.15s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --tr: 0ms; }
+  * { animation: none !important; transition: none !important; }
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; }
+body {
+  min-height: 100%;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--fond);
+  color: var(--encre);
+  font-size: 16px;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== FOCUS ===== */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* ===== SKIP LINK ===== */
+#skip-link {
+  position: absolute;
+  top: -999px;
+  left: 8px;
+  background: var(--or);
+  color: var(--encre);
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  z-index: 1000;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+#skip-link:focus { top: 8px; }
+
+/* ===== HEADER ===== */
+#app-header {
+  background: var(--marine);
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(10,58,99,0.3);
+  flex-shrink: 0;
+}
+#header-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+#back-link {
+  color: var(--or-lt);
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  transition: background var(--tr);
+  min-height: 40px;
+}
+#back-link:hover, #back-link:focus-visible { background: rgba(255,255,255,0.15); color: #fff; }
+h1#app-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#header-notice {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.65);
+  text-align: right;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+/* ===== TTS WARNING ===== */
+#tts-warning {
+  background: #fff3cd;
+  color: #7d5000;
+  padding: 10px 20px;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #f4d56a;
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+#tts-warning.visible { display: flex; }
+
+/* ===== LAYOUT MAIN ===== */
+main#main-content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 16px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  main#main-content { grid-template-columns: 1fr; }
+}
+
+/* ===== PANEL REGLAGES ===== */
+#panel-settings {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 16px;
+}
+.settings-section { display: flex; flex-direction: column; gap: 10px; }
+.settings-section-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--marine);
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--border);
+}
+
+/* Sliders */
+.slider-row { display: flex; flex-direction: column; gap: 4px; }
+.slider-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.slider-label span { font-weight: 400; color: var(--marine); }
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--marine);
+  cursor: pointer;
+  height: 6px;
+}
+
+/* Checkboxes */
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  padding: 4px 0;
+}
+.check-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  accent-color: var(--marine);
+  cursor: pointer;
+  margin-top: 1px;
+}
+.check-label { font-size: 0.88rem; line-height: 1.4; }
+.check-desc { font-size: 0.78rem; color: #5a6a7e; margin-top: 1px; }
+
+/* Boutons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--tr), box-shadow var(--tr), transform var(--tr);
+  min-height: 48px;
+  padding: 0 18px;
+  line-height: 1;
+}
+.btn:active:not(:disabled) { transform: scale(0.97); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-primary { background: var(--marine); color: #fff; }
+.btn-primary:hover:not(:disabled), .btn-primary:focus-visible:not(:disabled) {
+  background: var(--marine-dk); box-shadow: var(--shadow-hv);
+}
+.btn-accent { background: var(--or); color: var(--encre); }
+.btn-accent:hover:not(:disabled), .btn-accent:focus-visible:not(:disabled) {
+  background: var(--or-lt); box-shadow: var(--shadow-hv);
+}
+.btn-ghost { background: var(--fond); color: var(--encre); border: 1.5px solid var(--border); }
+.btn-ghost:hover:not(:disabled), .btn-ghost:focus-visible:not(:disabled) { background: var(--border); }
+.btn-sm { min-height: 40px; font-size: 0.85rem; padding: 0 14px; }
+
+/* ===== ZONE LECTURE ===== */
+#panel-reading { display: flex; flex-direction: column; gap: 12px; }
+
+/* Barre TTS */
+#tts-bar {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+#tts-bar .btn { min-height: 52px; }
+#tts-status {
+  font-size: 0.82rem;
+  color: #5a6a7e;
+  margin-left: auto;
+  min-width: 120px;
+  text-align: right;
+}
+
+/* Zone texte */
+#text-container {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+#text-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+#text-toolbar-label { font-size: 0.82rem; font-weight: 600; color: var(--marine); }
+#text-toolbar-hint { font-size: 0.78rem; color: #6b7a8d; }
+
+/* Zone editable */
+#text-edit-area {
+  width: 100%;
+  min-height: 360px;
+  max-height: 540px;
+  overflow-y: auto;
+  padding: 24px;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  resize: vertical;
+  background: var(--surface);
+  color: var(--encre);
+  outline: none;
+  display: block;
+}
+#text-edit-area:focus { box-shadow: inset 0 0 0 2px var(--marine); }
+
+/* Zone de rendu */
+#text-render-area {
+  display: none;
+  width: 100%;
+  min-height: 360px;
+  max-height: 540px;
+  overflow-y: auto;
+  padding: 24px;
+  background: var(--surface);
+  color: var(--encre);
+  white-space: pre-wrap;
+  word-break: break-word;
+  outline: none;
+}
+#text-render-area:focus { box-shadow: inset 0 0 0 2px var(--marine); }
+
+/* Lignes render */
+.render-line {
+  display: block;
+  padding: 3px 6px;
+  border-radius: 4px;
+  transition: background var(--tr), opacity var(--tr);
+  line-height: inherit;
+}
+.render-line.line-dimmed { opacity: 0.28; }
+.render-line.line-active { background: rgba(244,184,28,0.18); opacity: 1 !important; }
+.render-line.line-speaking { background: rgba(244,184,28,0.32); opacity: 1 !important; }
+
+/* Syllabes */
+.syl-a { color: var(--marine); font-weight: 600; }
+.syl-b { color: #005f5f; font-weight: 600; }
+
+/* Surbrillance TTS */
+.word-hi { background: var(--or); color: var(--encre); border-radius: 3px; padding: 0 2px; }
+
+/* ===== FOOTER ===== */
+footer#app-footer {
+  text-align: center;
+  font-size: 0.78rem;
+  color: #6b7a8d;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+footer a { color: var(--marine); }
+
+/* ===== LIVE REGION ===== */
+#aria-live {
+  position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;
+}
+</style>
+</head>
+<body>
+
+<a href="#main-content" id="skip-link">Aller au contenu principal</a>
+<div id="aria-live" aria-live="polite" aria-atomic="true"></div>
+
+<!-- HEADER -->
+<header id="app-header" role="banner">
+  <div id="header-left">
+    <a href="../index.html" id="back-link" aria-label="Retour a LibreA11y">&#8592; LibreA11y</a>
+    <h1 id="app-title">&#128218; DysReader &#8212; demo</h1>
+  </div>
+  <div id="header-notice" aria-label="Informations sur la demo">
+    demo &middot; 100&nbsp;% hors-ligne<br>aucune donnee envoyee
+  </div>
+</header>
+
+<!-- AVERTISSEMENT TTS -->
+<div id="tts-warning" role="alert">
+  <span aria-hidden="true">&#9888;&#65039;</span>
+  <span>La lecture vocale n'est pas disponible dans votre navigateur.</span>
+</div>
+
+<!-- MAIN -->
+<main id="main-content" tabindex="-1">
+
+  <!-- PANNEAU REGLAGES -->
+  <aside id="panel-settings" aria-label="Reglages d'affichage">
+
+    <div class="settings-section">
+      <div class="settings-section-title" aria-hidden="true">Typographie</div>
+
+      <div class="slider-row">
+        <label class="slider-label" for="sl-fontsize">
+          Taille de police <span id="sl-fontsize-val">20 px</span>
+        </label>
+        <input type="range" id="sl-fontsize" min="14" max="40" value="20" step="1"
+               aria-valuemin="14" aria-valuemax="40" aria-valuenow="20" aria-label="Taille de police, en pixels">
+      </div>
+
+      <div class="slider-row">
+        <label class="slider-label" for="sl-letterspacing">
+          Espacement lettres <span id="sl-letterspacing-val">0.05 em</span>
+        </label>
+        <input type="range" id="sl-letterspacing" min="0" max="0.30" value="0.05" step="0.01"
+               aria-valuemin="0" aria-valuemax="0.3" aria-valuenow="0.05" aria-label="Espacement entre les lettres, en em">
+      </div>
+
+      <div class="slider-row">
+        <label class="slider-label" for="sl-wordspacing">
+          Espacement mots <span id="sl-wordspacing-val">0.15 em</span>
+        </label>
+        <input type="range" id="sl-wordspacing" min="0" max="0.80" value="0.15" step="0.01"
+               aria-valuemin="0" aria-valuemax="0.8" aria-valuenow="0.15" aria-label="Espacement entre les mots, en em">
+      </div>
+
+      <div class="slider-row">
+        <label class="slider-label" for="sl-lineheight">
+          Interligne <span id="sl-lineheight-val">1.8</span>
+        </label>
+        <input type="range" id="sl-lineheight" min="1.2" max="3.0" value="1.8" step="0.1"
+               aria-valuemin="1.2" aria-valuemax="3.0" aria-valuenow="1.8" aria-label="Hauteur de ligne">
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title" aria-hidden="true">Aides visuelles</div>
+
+      <label class="check-row" for="chk-dyspreset">
+        <input type="checkbox" id="chk-dyspreset">
+        <span>
+          <span class="check-label">Espacement dyslexie</span><br>
+          <span class="check-desc">Applique un preréglage généreux (lettres, mots, interligne)</span>
+        </span>
+      </label>
+
+      <label class="check-row" for="chk-syllables">
+        <input type="checkbox" id="chk-syllables">
+        <span>
+          <span class="check-label">Coloration syllabique</span><br>
+          <span class="check-desc">Alterne les couleurs sur chaque syllabe</span>
+        </span>
+      </label>
+
+      <label class="check-row" for="chk-ruler">
+        <input type="checkbox" id="chk-ruler">
+        <span>
+          <span class="check-label">Regle de lecture</span><br>
+          <span class="check-desc">Surligne la ligne courante ; Fleche Haut / Bas pour naviguer</span>
+        </span>
+      </label>
+    </div>
+
+    <div class="settings-section">
+      <button class="btn btn-ghost btn-sm" id="btn-reset" type="button">
+        Reinitialiser le texte
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ZONE LECTURE -->
+  <div id="panel-reading">
+
+    <!-- Barre TTS -->
+    <div id="tts-bar" role="group" aria-label="Controles de lecture vocale">
+      <button class="btn btn-accent" id="btn-play" type="button" aria-label="Lire le texte a voix haute">
+        &#128266; Lire
+      </button>
+      <button class="btn btn-ghost" id="btn-pause" type="button" disabled aria-label="Pause">
+        &#9208; Pause
+      </button>
+      <button class="btn btn-ghost" id="btn-stop" type="button" disabled aria-label="Arreter la lecture">
+        &#9209; Stop
+      </button>
+      <div id="tts-status" aria-live="polite" aria-atomic="true">En attente</div>
+    </div>
+
+    <!-- Zone texte -->
+    <div id="text-container">
+      <div id="text-toolbar">
+        <span id="text-toolbar-label">Zone de texte</span>
+        <span id="text-toolbar-hint">Cliquez pour editer</span>
+      </div>
+
+      <textarea id="text-edit-area"
+                aria-label="Zone de texte editable"
+                spellcheck="false"
+                autocorrect="off"
+                autocapitalize="off">La dyslexie est une particularite neurologique qui affecte la facon dont le cerveau traite les mots ecrits. Elle concerne environ 10 % de la population mondiale, independamment de l'intelligence ou de la motivation.
+
+Les personnes dyslexiques peuvent avoir des difficultes a reconnaitre les lettres, a les associer aux sons correspondants, ou a lire couramment. Ces difficultes varient d'une personne a l'autre : certains confondent des lettres similaires comme b et d, d'autres lisent les syllabes dans le desordre.
+
+Des adaptations simples peuvent considerablement faciliter la lecture : agrandir le texte, augmenter l'espacement entre les lettres et les mots, choisir un interligne confortable, ou encore colorer les syllabes pour aider l'oeil a segmenter les mots.
+
+La regle de lecture permet de se concentrer sur une seule ligne a la fois, en attenuant les autres. La lecture vocale peut accompagner la lecture visuelle pour renforcer la comprehension.
+
+Chaque lecteur est unique. Ces outils sont la pour s'adapter a vous, pas l'inverse.</textarea>
+
+      <div id="text-render-area"
+           tabindex="0"
+           role="document"
+           aria-label="Texte avec mise en forme adaptee. Utilisez Fleche Haut et Bas pour naviguer entre les lignes quand la regle de lecture est activee.">
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer id="app-footer" role="contentinfo">
+  <a href="../index.html">LibreA11y</a> &mdash; DysReader &middot; Demo open source &middot; 100&nbsp;% hors-ligne &middot;
+  <span id="footer-year"></span>
+</footer>
+
+<script>
+/* ============================================================
+   DysReader — Logique applicative
+   100 % hors-ligne, aucune dependance externe
+   ============================================================ */
+'use strict';
+
+/* ---- Utilitaires ---- */
+function eid(id) { return document.getElementById(id); }
+function announce(msg) {
+  var el = eid('aria-live');
+  el.textContent = '';
+  setTimeout(function() { el.textContent = msg; }, 60);
+}
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ---- Texte par defaut ---- */
+var DEFAULT_TEXT = eid('text-edit-area').value;
+
+/* ---- Footer annee ---- */
+eid('footer-year').textContent = new Date().getFullYear();
+
+/* ---- Etat global ---- */
+var S = {
+  fontSize:      20,
+  letterSpacing: 0.05,
+  wordSpacing:   0.15,
+  lineHeight:    1.8,
+  syllables:     false,
+  ruler:         false,
+  rulerIdx:      0,
+  ttsReady:      false,
+  ttsPlaying:    false,
+  ttsPaused:     false
+};
+
+/* ============================================================
+   PERSISTANCE localStorage
+   ============================================================ */
+function savePrefs() {
+  try {
+    localStorage.setItem('dys_prefs', JSON.stringify({
+      fontSize:      S.fontSize,
+      letterSpacing: S.letterSpacing,
+      wordSpacing:   S.wordSpacing,
+      lineHeight:    S.lineHeight,
+      syllables:     S.syllables,
+      ruler:         S.ruler
+    }));
+  } catch(e) {}
+}
+function loadPrefs() {
+  try {
+    var p = JSON.parse(localStorage.getItem('dys_prefs') || 'null');
+    if (!p) return;
+    if (p.fontSize      !== undefined) S.fontSize      = p.fontSize;
+    if (p.letterSpacing !== undefined) S.letterSpacing = p.letterSpacing;
+    if (p.wordSpacing   !== undefined) S.wordSpacing   = p.wordSpacing;
+    if (p.lineHeight    !== undefined) S.lineHeight    = p.lineHeight;
+    if (p.syllables     !== undefined) S.syllables     = p.syllables;
+    if (p.ruler         !== undefined) S.ruler         = p.ruler;
+  } catch(e) {}
+}
+function saveText() {
+  try { localStorage.setItem('dys_text', eid('text-edit-area').value); } catch(e) {}
+}
+function loadText() {
+  try {
+    var t = localStorage.getItem('dys_text');
+    if (t) eid('text-edit-area').value = t;
+  } catch(e) {}
+}
+
+/* ============================================================
+   SYLLABATION — heuristique francaise simplifiee
+   ============================================================ */
+var VOWELS = 'aeiouyaaeeiouoeae';  /* inclut lettres accentuees courantes */
+var VOWEL_SET = 'aeiouyaàâäéèêëîïôöùûüœæ';
+
+function isVowel(ch) {
+  return VOWEL_SET.indexOf(ch.toLowerCase()) >= 0;
+}
+
+/* Digrammes consonantiques inséparables */
+var DIGRAPHS = ['ch','ph','gn','bl','br','cl','cr','dr','fl','fr','gl','gr','pl','pr','tr','vr','th','qu','sc','sp','st','ck'];
+
+function isDiGraph(a, b) {
+  if (!a || !b) return false;
+  return DIGRAPHS.indexOf((a+b).toLowerCase()) >= 0;
+}
+
+function syllabify(word) {
+  if (word.length <= 2) return [word];
+  var n = word.length;
+  var cuts = [0];
+  var i = 0;
+
+  while (i < n) {
+    if (!isVowel(word[i])) { i++; continue; }
+    /* on est sur une voyelle, avancer sur les voyelles consécutives */
+    var j = i + 1;
+    while (j < n && isVowel(word[j])) j++;
+    /* j = premiere consonne apres voyelle(s), ou fin */
+    if (j >= n) break;
+    /* chercher fin du bloc consonantique */
+    var k = j;
+    while (k < n && !isVowel(word[k])) k++;
+    /* k = prochaine voyelle ou fin */
+    if (k >= n) break;
+    var nbC = k - j;
+    var cut;
+    if (nbC === 1) {
+      cut = j; /* V|CV */
+    } else if (nbC === 2) {
+      if (isDiGraph(word[j], word[j+1])) {
+        cut = j;   /* V|DGV */
+      } else {
+        cut = j + 1; /* VC|CV */
+      }
+    } else {
+      /* >= 3 consonnes */
+      if (isDiGraph(word[j+1], word[j+2])) {
+        cut = j + 1;
+      } else if (isDiGraph(word[j], word[j+1])) {
+        cut = j + 2;
+      } else {
+        cut = j + 1;
+      }
+    }
+    if (cut > cuts[cuts.length - 1]) cuts.push(cut);
+    i = k;
+  }
+
+  var syls = [];
+  for (var s = 0; s < cuts.length; s++) {
+    var st = cuts[s];
+    var en = (s + 1 < cuts.length) ? cuts[s+1] : n;
+    syls.push(word.slice(st, en));
+  }
+  return syls.length ? syls : [word];
+}
+
+/* Colore un mot ; retourne {html, count} */
+function colorWord(raw, baseIdx) {
+  /* Separe ponctuation pre/post du noyau */
+  var m = raw.match(/^([\W_]*)([\wÀ-ɏ''-]+)([\W_]*)$/);
+  if (!m) return { html: escHtml(raw), count: 0 };
+  var pre = m[1], core = m[2], post = m[3];
+  var syls = syllabify(core);
+  var html = escHtml(pre);
+  for (var i = 0; i < syls.length; i++) {
+    var cls = ((baseIdx + i) % 2 === 0) ? 'syl-a' : 'syl-b';
+    html += '<span class="' + cls + '">' + escHtml(syls[i]) + '</span>';
+  }
+  html += escHtml(post);
+  return { html: html, count: syls.length };
+}
+
+/* ============================================================
+   RENDU DU TEXTE
+   ============================================================ */
+var editArea   = eid('text-edit-area');
+var renderArea = eid('text-render-area');
+var hintEl     = eid('text-toolbar-hint');
+
+function applyTypo(el) {
+  el.style.fontSize      = S.fontSize + 'px';
+  el.style.letterSpacing = S.letterSpacing + 'em';
+  el.style.wordSpacing   = S.wordSpacing + 'em';
+  el.style.lineHeight    = S.lineHeight;
+}
+
+function renderText() {
+  var useRender = S.syllables || S.ruler;
+
+  if (!useRender) {
+    editArea.style.display   = 'block';
+    renderArea.style.display = 'none';
+    hintEl.textContent = 'Cliquez pour editer';
+    applyTypo(editArea);
+    return;
+  }
+
+  editArea.style.display   = 'none';
+  renderArea.style.display = 'block';
+  hintEl.textContent = 'Cliquez "Reinitialiser" pour editer a nouveau';
+  applyTypo(renderArea);
+
+  var lines = editArea.value.split('\n');
+  var total = lines.length;
+  var html  = '';
+
+  for (var li = 0; li < total; li++) {
+    var line = lines[li];
+    var cls  = 'render-line';
+    if (S.ruler) {
+      if (li === S.rulerIdx)  cls += ' line-active';
+      else                    cls += ' line-dimmed';
+    }
+    var lineContent;
+    if (line.trim() === '') {
+      lineContent = '&nbsp;';
+    } else if (S.syllables) {
+      var words = line.split(/(\s+)/);
+      var sylIdx = 0;
+      var lh = '';
+      for (var wi = 0; wi < words.length; wi++) {
+        if (/^\s+$/.test(words[wi])) {
+          lh += escHtml(words[wi]);
+        } else {
+          var res = colorWord(words[wi], sylIdx);
+          lh += res.html;
+          sylIdx += res.count;
+        }
+      }
+      lineContent = lh;
+    } else {
+      lineContent = escHtml(line);
+    }
+    html += '<span class="render-line ' + (S.ruler ? (li === S.rulerIdx ? 'line-active' : 'line-dimmed') : '') + '" data-li="' + li + '">' + lineContent + '</span>';
+  }
+
+  renderArea.innerHTML = html;
+}
+
+/* ============================================================
+   REGLE DE LECTURE
+   ============================================================ */
+renderArea.addEventListener('keydown', function(e) {
+  if (!S.ruler) return;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    var count = editArea.value.split('\n').length;
+    S.rulerIdx = Math.min(count - 1, S.rulerIdx + 1);
+    renderText();
+    announce('Ligne ' + (S.rulerIdx + 1) + ' sur ' + count);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    S.rulerIdx = Math.max(0, S.rulerIdx - 1);
+    var total2 = editArea.value.split('\n').length;
+    renderText();
+    announce('Ligne ' + (S.rulerIdx + 1) + ' sur ' + total2);
+  }
+});
+
+/* ============================================================
+   CONTROLES UI
+   ============================================================ */
+function syncControls() {
+  eid('sl-fontsize').value          = S.fontSize;
+  eid('sl-fontsize-val').textContent = S.fontSize + ' px';
+  eid('sl-letterspacing').value     = S.letterSpacing;
+  eid('sl-letterspacing-val').textContent = S.letterSpacing.toFixed(2) + ' em';
+  eid('sl-wordspacing').value       = S.wordSpacing;
+  eid('sl-wordspacing-val').textContent   = S.wordSpacing.toFixed(2) + ' em';
+  eid('sl-lineheight').value        = S.lineHeight;
+  eid('sl-lineheight-val').textContent    = S.lineHeight.toFixed(1);
+  eid('chk-syllables').checked = S.syllables;
+  eid('chk-ruler').checked     = S.ruler;
+}
+
+function sliderSetup(sliderId, valId, unit, decimals, prop, multiplier) {
+  var sl = eid(sliderId);
+  var vl = eid(valId);
+  sl.addEventListener('input', function() {
+    S[prop] = parseFloat(this.value);
+    vl.textContent = S[prop].toFixed(decimals) + ' ' + unit;
+    sl.setAttribute('aria-valuenow', S[prop]);
+    renderText();
+    savePrefs();
+  });
+}
+sliderSetup('sl-fontsize',      'sl-fontsize-val',      'px', 0, 'fontSize',      1);
+sliderSetup('sl-letterspacing', 'sl-letterspacing-val', 'em', 2, 'letterSpacing', 1);
+sliderSetup('sl-wordspacing',   'sl-wordspacing-val',   'em', 2, 'wordSpacing',   1);
+sliderSetup('sl-lineheight',    'sl-lineheight-val',    '',   1, 'lineHeight',    1);
+
+/* Preréglage dyslexie — c'est un déclencheur, pas un état persisté comme booléen */
+eid('chk-dyspreset').addEventListener('change', function() {
+  if (this.checked) {
+    S.fontSize      = 22;
+    S.letterSpacing = 0.12;
+    S.wordSpacing   = 0.25;
+    S.lineHeight    = 2.2;
+    syncControls();
+    renderText();
+    savePrefs();
+    announce('Preréglage dyslexie appliqué');
+  }
+  this.checked = false; /* toujours décoché : c'est un bouton déguisé */
+});
+
+eid('chk-syllables').addEventListener('change', function() {
+  S.syllables = this.checked;
+  renderText();
+  announce(S.syllables ? 'Coloration syllabique activée' : 'Coloration syllabique désactivée');
+  savePrefs();
+});
+
+eid('chk-ruler').addEventListener('change', function() {
+  S.ruler    = this.checked;
+  S.rulerIdx = 0;
+  renderText();
+  if (S.ruler) {
+    renderArea.focus();
+    announce('Regle de lecture activée. Utilisez Fleche Haut et Bas pour naviguer entre les lignes.');
+  } else {
+    announce('Regle de lecture desactivée');
+  }
+  savePrefs();
+});
+
+editArea.addEventListener('input', function() {
+  S.rulerIdx = 0;
+  saveText();
+  renderText();
+});
+
+eid('btn-reset').addEventListener('click', function() {
+  editArea.value = DEFAULT_TEXT;
+  S.rulerIdx = 0;
+  saveText();
+  renderText();
+  announce('Texte réinitialisé');
+});
+
+/* ============================================================
+   SYNTHESE VOCALE
+   ============================================================ */
+var ttsUtt           = null;
+var ttsBoundaryOk    = false;
+var ttsVoiceFR       = null;
+var ttsPhraseTimer   = null;
+var ttsPhraseList    = [];
+var ttsPhraseIdx     = 0;
+var ttsSpeakLine     = -1; /* ligne en cours de lecture */
+
+function ttsStatus(msg) { eid('tts-status').textContent = msg; }
+
+function updateTTSBtns() {
+  var pl = S.ttsPlaying, pa = S.ttsPaused;
+  eid('btn-play').disabled  = pl && !pa;
+  eid('btn-pause').disabled = !pl;
+  eid('btn-stop').disabled  = !pl;
+  if (pa) {
+    eid('btn-pause').textContent = '▶ Reprendre';
+    eid('btn-pause').setAttribute('aria-label', 'Reprendre la lecture');
+  } else {
+    eid('btn-pause').innerHTML = '&#9208; Pause';
+    eid('btn-pause').setAttribute('aria-label', 'Mettre en pause');
+  }
+}
+
+function clearTTSHighlight() {
+  /* Retire surbrillance de la zone de rendu */
+  var els = renderArea.querySelectorAll('.line-speaking');
+  els.forEach(function(e) { e.classList.remove('line-speaking'); });
+  ttsSpeakLine = -1;
+}
+
+function highlightLine(lineIdx) {
+  clearTTSHighlight();
+  if (renderArea.style.display === 'none') return;
+  var span = renderArea.querySelector('[data-li="' + lineIdx + '"]');
+  if (span) { span.classList.add('line-speaking'); ttsSpeakLine = lineIdx; }
+}
+
+function findVoiceFR() {
+  if (!window.speechSynthesis) return;
+  var vs = window.speechSynthesis.getVoices();
+  ttsVoiceFR = null;
+  for (var i = 0; i < vs.length; i++) {
+    if (vs[i].lang && vs[i].lang.toLowerCase().slice(0,2) === 'fr') {
+      ttsVoiceFR = vs[i]; break;
+    }
+  }
+}
+
+function initTTS() {
+  if (!window.speechSynthesis) {
+    eid('tts-warning').classList.add('visible');
+    eid('btn-play').disabled = true;
+    return;
+  }
+  S.ttsReady = true;
+  findVoiceFR();
+  if (window.speechSynthesis.onvoiceschanged !== undefined) {
+    window.speechSynthesis.addEventListener('voiceschanged', findVoiceFR);
+  }
+}
+
+/* Découpe en phrases */
+function splitPhrases(text) {
+  var raw = text.match(/[^\n.!?]+[\n.!?]?/g) || [text];
+  return raw.filter(function(p) { return p.trim().length > 0; });
+}
+
+/* Surlignage phrase par phrase (repli si boundary absent) */
+function startPhraseFallback(text) {
+  ttsPhraseList = splitPhrases(text);
+  ttsPhraseIdx  = 0;
+  var lines     = text.split('\n');
+
+  function nextPhrase() {
+    if (!S.ttsPlaying || S.ttsPaused) return;
+    if (ttsPhraseIdx >= ttsPhraseList.length) return;
+    var phrase = ttsPhraseList[ttsPhraseIdx];
+    /* Chercher la ligne qui contient cette phrase */
+    for (var li = 0; li < lines.length; li++) {
+      if (lines[li].indexOf(phrase.trim()) >= 0 || phrase.trim().indexOf(lines[li].trim()) >= 0) {
+        highlightLine(li);
+        break;
+      }
+    }
+    var wc = phrase.split(/\s+/).filter(Boolean).length || 1;
+    var ms = Math.max(500, (wc / 2.8) * 1000); /* ~2.8 mots/sec */
+    ttsPhraseIdx++;
+    ttsPhraseTimer = setTimeout(nextPhrase, ms);
+  }
+  nextPhrase();
+}
+
+function stopTTS(silent) {
+  if (ttsPhraseTimer) { clearTimeout(ttsPhraseTimer); ttsPhraseTimer = null; }
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  S.ttsPlaying = false;
+  S.ttsPaused  = false;
+  clearTTSHighlight();
+  if (!silent) {
+    ttsStatus('En attente');
+    announce('Lecture arrêtee');
+  }
+  updateTTSBtns();
+}
+
+function startTTS() {
+  if (!S.ttsReady) return;
+
+  /* Reprise après pause */
+  if (S.ttsPaused && window.speechSynthesis.paused) {
+    window.speechSynthesis.resume();
+    S.ttsPaused  = false;
+    S.ttsPlaying = true;
+    ttsStatus('Lecture en cours…');
+    updateTTSBtns();
+    /* relancer le repli si nécessaire */
+    if (!ttsBoundaryOk) startPhraseFallback(editArea.value);
+    return;
+  }
+
+  stopTTS(true);
+
+  var text = editArea.value.trim();
+  if (!text) { announce('La zone de texte est vide.'); return; }
+
+  ttsBoundaryOk = false;
+  ttsUtt = new SpeechSynthesisUtterance(text);
+  ttsUtt.lang  = 'fr-FR';
+  if (ttsVoiceFR) ttsUtt.voice = ttsVoiceFR;
+  ttsUtt.rate  = 0.95;
+  ttsUtt.pitch = 1.0;
+
+  ttsUtt.addEventListener('boundary', function(ev) {
+    if (ev.name !== 'word') return;
+    ttsBoundaryOk = true;
+    /* Trouve la ligne du mot */
+    var ci   = ev.charIndex;
+    var full = text;
+    var before = full.slice(0, ci);
+    var li   = (before.match(/\n/g) || []).length;
+    highlightLine(li);
+  });
+
+  ttsUtt.addEventListener('start', function() {
+    S.ttsPlaying = true;
+    S.ttsPaused  = false;
+    ttsStatus('Lecture en cours…');
+    updateTTSBtns();
+    /* Attendre 1s pour voir si boundary fonctionne */
+    setTimeout(function() {
+      if (!ttsBoundaryOk && S.ttsPlaying) startPhraseFallback(text);
+    }, 1000);
+  });
+
+  ttsUtt.addEventListener('end', function() {
+    if (ttsPhraseTimer) { clearTimeout(ttsPhraseTimer); ttsPhraseTimer = null; }
+    S.ttsPlaying = false;
+    S.ttsPaused  = false;
+    clearTTSHighlight();
+    ttsStatus('Lecture terminée');
+    updateTTSBtns();
+    announce('Lecture terminée');
+  });
+
+  ttsUtt.addEventListener('error', function(ev) {
+    if (ev.error === 'interrupted' || ev.error === 'canceled') {
+      /* normal — déclenché par stopTTS */
+      return;
+    }
+    S.ttsPlaying = false;
+    S.ttsPaused  = false;
+    ttsStatus('Erreur vocale');
+    updateTTSBtns();
+  });
+
+  window.speechSynthesis.speak(ttsUtt);
+}
+
+function pauseTTS() {
+  if (!S.ttsPlaying) return;
+  if (!S.ttsPaused) {
+    window.speechSynthesis.pause();
+    if (ttsPhraseTimer) { clearTimeout(ttsPhraseTimer); ttsPhraseTimer = null; }
+    S.ttsPaused = true;
+    ttsStatus('En pause');
+    announce('Lecture en pause');
+  } else {
+    window.speechSynthesis.resume();
+    S.ttsPaused = false;
+    ttsStatus('Lecture en cours…');
+    announce('Lecture reprise');
+    if (!ttsBoundaryOk) startPhraseFallback(editArea.value);
+  }
+  updateTTSBtns();
+}
+
+eid('btn-play').addEventListener('click', startTTS);
+eid('btn-pause').addEventListener('click', pauseTTS);
+eid('btn-stop').addEventListener('click', function() { stopTTS(false); });
+
+/* ============================================================
+   INITIALISATION
+   ============================================================ */
+loadPrefs();
+loadText();
+syncControls();
+initTTS();
+renderText();
+updateTTSBtns();
+</script>
+</body>
+</html>

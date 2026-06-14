@@ -15,7 +15,7 @@
 
 ## Démo
 
-▶️ Démo fonctionnelle : [../../site/parlo/](../../site/parlo/)
+▶ **Démo en ligne** : https://freeforgecontact-ai.github.io/LibreAlly/parlo/ · **Démo locale** : [../../site/parlo/](../../site/parlo/)
 
 ---
 

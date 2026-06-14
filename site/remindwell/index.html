@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RemindWell — Démo | LibreA11y</title>
+<meta name="description" content="Aide-mémoire et autonomie pour personnes âgées, démence, lésion cérébrale. Démo hors-ligne, aucune donnée envoyée.">
+<style>
+/* ===== VARIABLES & RESET ===== */
+:root {
+  --marine:    #0F4C81;
+  --marine-dk: #0A3A63;
+  --or:        #F4B81C;
+  --or-lt:     #FFD45E;
+  --encre:     #16202E;
+  --fond:      #F7F9FC;
+  --surface:   #FFFFFF;
+  --border:    #D0D9E8;
+  --focus-ring: #F4B81C;
+  --radius:    14px;
+  --radius-sm: 10px;
+  --shadow:    0 2px 10px rgba(15,76,129,0.13);
+  --shadow-hv: 0 4px 20px rgba(15,76,129,0.24);
+  --tr:        0.15s ease;
+  --text-xl:   2rem;
+  --text-lg:   1.35rem;
+  --text-md:   1.1rem;
+  --text-base: 1rem;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  background: var(--fond);
+  color: var(--encre);
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+/* ===== SKIP LINK ===== */
+#skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 9999;
+}
+#skip-link:focus {
+  position: fixed;
+  left: 16px;
+  top: 16px;
+  width: auto;
+  height: auto;
+  padding: 10px 18px;
+  background: var(--marine);
+  color: #fff;
+  font-size: var(--text-md);
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  outline: 3px solid var(--or);
+  outline-offset: 2px;
+}
+
+/* ===== FOCUS ===== */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* ===== HEADER ===== */
+#app-header {
+  background: var(--marine);
+  color: #fff;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 10px rgba(10,58,99,0.35);
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+#header-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+#back-link {
+  color: var(--or-lt);
+  text-decoration: none;
+  font-size: var(--text-base);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  transition: background var(--tr);
+  font-weight: 600;
+}
+#back-link:hover, #back-link:focus-visible { background: rgba(255,255,255,0.15); color: #fff; }
+#app-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.2px;
+  color: #fff;
+}
+#header-notice {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.65);
+  text-align: right;
+  line-height: 1.4;
+  min-width: 0;
+}
+
+/* ===== TTS BANNER ===== */
+#tts-banner {
+  background: #fff3cd;
+  color: #7d5000;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  border-bottom: 2px solid #f4d56a;
+  display: none;
+  align-items: center;
+  gap: 10px;
+}
+#tts-banner.visible { display: flex; }
+
+/* ===== LAYOUT ===== */
+#app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 70px);
+}
+
+/* ===== NAVIGATION TABS ===== */
+#nav-tabs {
+  display: flex;
+  overflow-x: auto;
+  background: var(--marine-dk);
+  padding: 0 12px;
+  gap: 4px;
+  scrollbar-width: none;
+}
+#nav-tabs::-webkit-scrollbar { display: none; }
+
+.nav-tab {
+  flex-shrink: 0;
+  padding: 0 18px;
+  height: 56px;
+  min-width: 56px;
+  background: transparent;
+  border: none;
+  border-bottom: 4px solid transparent;
+  color: rgba(255,255,255,0.72);
+  font-size: var(--text-base);
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color var(--tr), border-color var(--tr), background var(--tr);
+  white-space: nowrap;
+}
+.nav-tab:hover { background: rgba(255,255,255,0.10); color: #fff; }
+.nav-tab[aria-selected="true"] {
+  border-bottom-color: var(--or);
+  color: #fff;
+}
+.nav-tab:focus-visible {
+  outline: 3px solid var(--or-lt);
+  outline-offset: -3px;
+}
+
+/* ===== PANELS ===== */
+.panel { display: none; padding: 20px; max-width: 860px; margin: 0 auto; width: 100%; }
+.panel.active { display: block; }
+
+/* ===== SECTION HEADINGS ===== */
+.section-heading {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--marine);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ===== HORLOGE ===== */
+#clock-display {
+  background: var(--marine);
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  text-align: center;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+#clock-time {
+  font-size: clamp(3rem, 10vw, 5.5rem);
+  font-weight: 800;
+  letter-spacing: 3px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 8px;
+}
+#clock-date {
+  font-size: clamp(1.1rem, 3vw, 1.5rem);
+  font-weight: 500;
+  color: var(--or-lt);
+  letter-spacing: 0.5px;
+  text-transform: capitalize;
+}
+
+/* ===== CARDS ===== */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+  border: 2px solid var(--border);
+}
+.card-title {
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--marine);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ===== BOUTONS ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 22px;
+  font-size: var(--text-md);
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  transition: background var(--tr), box-shadow var(--tr), transform var(--tr);
+  min-height: 56px;
+  min-width: 56px;
+  line-height: 1.2;
+  text-align: center;
+}
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+.btn-primary {
+  background: var(--marine);
+  color: #fff;
+}
+.btn-primary:hover:not(:disabled) { background: var(--marine-dk); box-shadow: var(--shadow-hv); }
+
+.btn-accent {
+  background: var(--or);
+  color: var(--encre);
+}
+.btn-accent:hover:not(:disabled) { background: var(--or-lt); box-shadow: var(--shadow-hv); }
+
+.btn-success {
+  background: #166534;
+  color: #fff;
+}
+.btn-success:hover:not(:disabled) { background: #14532d; }
+
+.btn-sm {
+  padding: 10px 16px;
+  font-size: var(--text-base);
+  min-height: 44px;
+}
+
+.btn-block { width: 100%; margin-bottom: 8px; }
+
+.btn-speak-inline {
+  background: var(--fond);
+  border: 2px solid var(--marine);
+  color: var(--marine);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background var(--tr);
+}
+.btn-speak-inline:hover { background: var(--marine); color: #fff; }
+
+/* ===== FORMULAIRES ===== */
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block;
+  font-weight: 700;
+  font-size: var(--text-base);
+  margin-bottom: 6px;
+  color: var(--encre);
+}
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: var(--text-md);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--encre);
+  transition: border-color var(--tr);
+  min-height: 56px;
+}
+.form-input:focus {
+  outline: none;
+  border-color: var(--marine);
+  box-shadow: 0 0 0 3px rgba(15,76,129,0.18);
+}
+.form-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+.form-row .form-group { flex: 1; min-width: 140px; }
+
+/* ===== LISTES DE RAPPELS / MÉDICAMENTS ===== */
+.item-list { list-style: none; padding: 0; margin: 0; }
+.item-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  transition: border-color var(--tr), background var(--tr);
+}
+.item-list li.highlighted {
+  border-color: var(--or);
+  background: #fffbeb;
+  animation: pulse-border 1s ease-in-out infinite alternate;
+}
+@media (prefers-reduced-motion: reduce) {
+  .item-list li.highlighted { animation: none; border-color: var(--or); background: #fffbeb; }
+}
+@keyframes pulse-border {
+  from { border-color: var(--or); box-shadow: 0 0 0 0 rgba(244,184,28,0.3); }
+  to   { border-color: #e6a000; box-shadow: 0 0 0 6px rgba(244,184,28,0); }
+}
+
+.item-list li.taken {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+.item-time {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--marine);
+  font-variant-numeric: tabular-nums;
+  min-width: 72px;
+  flex-shrink: 0;
+}
+.item-label {
+  flex: 1;
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+.item-meta {
+  font-size: 0.85rem;
+  color: #5a7090;
+  font-weight: 400;
+}
+.item-actions { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
+
+.item-del {
+  background: none;
+  border: 2px solid #d0d9e8;
+  color: #6b7280;
+  font-size: 1rem;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--tr), color var(--tr), border-color var(--tr);
+}
+.item-del:hover { background: #fee2e2; border-color: #f87171; color: #b91c1c; }
+
+.empty-state {
+  text-align: center;
+  padding: 32px 20px;
+  color: #6b7280;
+  font-size: var(--text-base);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.empty-state span { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+
+/* ===== VISAGES ===== */
+#faces-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.face-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 14px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  transition: border-color var(--tr), box-shadow var(--tr);
+}
+.face-card:hover { border-color: var(--marine); box-shadow: var(--shadow-hv); }
+.face-avatar {
+  font-size: 3.2rem;
+  line-height: 1;
+  margin-bottom: 10px;
+  display: block;
+}
+.face-name {
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--encre);
+  margin-bottom: 4px;
+}
+.face-link {
+  font-size: 0.88rem;
+  color: #5a7090;
+  font-style: italic;
+}
+.face-btn-row { margin-top: 10px; display: flex; gap: 8px; justify-content: center; }
+.face-card .btn-speak-inline { font-size: 0.85rem; padding: 5px 10px; min-height: 40px; }
+.face-card .item-del { font-size: 0.85rem; padding: 5px 10px; min-height: 40px; min-width: 40px; }
+
+/* ===== AUJOURD'HUI ===== */
+#today-hero {
+  background: linear-gradient(135deg, var(--marine) 0%, var(--marine-dk) 100%);
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 24px 22px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+#today-hero-time {
+  font-size: clamp(2.8rem, 9vw, 4.8rem);
+  font-weight: 800;
+  letter-spacing: 2px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+#today-hero-date {
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+  color: var(--or-lt);
+  margin-top: 6px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+#today-next {
+  background: var(--or);
+  color: var(--encre);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 80px;
+}
+#today-next-icon { font-size: 2rem; flex-shrink: 0; }
+#today-next-text { flex: 1; }
+#today-next-sub { font-size: var(--text-base); font-weight: 500; margin-top: 3px; }
+
+.today-section { margin-bottom: 18px; }
+.today-section-title {
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--marine);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 6px;
+}
+.today-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  font-size: var(--text-md);
+}
+.today-item.done { background: #f0fdf4; border-color: #86efac; text-decoration: line-through; color: #4b7a60; }
+.today-item .item-time { font-size: 1.2rem; min-width: 60px; }
+
+/* ===== ALERTES DE RAPPELS ===== */
+#alert-banner {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--marine);
+  color: #fff;
+  padding: 16px 24px;
+  border-radius: var(--radius);
+  box-shadow: 0 8px 32px rgba(15,76,129,0.35);
+  font-size: var(--text-md);
+  font-weight: 700;
+  z-index: 1000;
+  max-width: 90vw;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 3px solid var(--or);
+  display: none;
+}
+#alert-banner.visible { display: flex; }
+#alert-icon { font-size: 2rem; flex-shrink: 0; }
+#alert-text { flex: 1; }
+#alert-close {
+  background: rgba(255,255,255,0.2);
+  border: 2px solid rgba(255,255,255,0.4);
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+#alert-close:hover { background: rgba(255,255,255,0.35); }
+
+/* ===== STATUS LIVE ===== */
+#live-status {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--marine-dk);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.2s;
+  max-width: 320px;
+}
+#live-status.visible { opacity: 1; }
+
+/* ===== NOTIFICATIONS PERMISSION ===== */
+#notif-bar {
+  background: #eff6ff;
+  border-bottom: 2px solid #bfdbfe;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: var(--marine-dk);
+  flex-wrap: wrap;
+}
+#notif-bar.hidden { display: none; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .panel { padding: 14px 12px; }
+  #faces-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  .form-row { flex-direction: column; }
+  .item-list li { flex-wrap: wrap; }
+  .item-time { min-width: 60px; font-size: 1.2rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+
+<a href="#main-content" id="skip-link">Aller au contenu principal</a>
+
+<!-- HEADER -->
+<header id="app-header" role="banner">
+  <div id="header-left">
+    <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y">← LibreA11y</a>
+    <h1 id="app-title">🧠 RemindWell — démo</h1>
+  </div>
+  <p id="header-notice" aria-label="Informations : démo, 100 % hors-ligne, aucune donnée envoyée">
+    démo · 100 % hors-ligne<br>aucune donnée envoyée
+  </p>
+</header>
+
+<!-- TTS BANNER -->
+<div id="tts-banner" role="status" aria-live="polite"></div>
+
+<!-- NOTIFICATION PERMISSION BAR -->
+<div id="notif-bar" role="region" aria-label="Notifications navigateur">
+  <span>🔔 Activer les notifications pour recevoir des alertes de rappels ?</span>
+  <button class="btn btn-sm btn-primary" id="btn-notif-yes" type="button">Oui, activer</button>
+  <button class="btn btn-sm" id="btn-notif-no" type="button" style="background:var(--border);color:var(--encre);">Non merci</button>
+</div>
+
+<!-- NAVIGATION -->
+<nav id="nav-tabs" role="tablist" aria-label="Sections de RemindWell">
+  <button class="nav-tab" role="tab" aria-selected="true"  aria-controls="panel-today"    id="tab-today"    type="button">🏠 Aujourd'hui</button>
+  <button class="nav-tab" role="tab" aria-selected="false" aria-controls="panel-clock"    id="tab-clock"    type="button">🕐 Horloge</button>
+  <button class="nav-tab" role="tab" aria-selected="false" aria-controls="panel-reminders" id="tab-reminders" type="button">🔔 Rappels</button>
+  <button class="nav-tab" role="tab" aria-selected="false" aria-controls="panel-meds"     id="tab-meds"     type="button">💊 Médicaments</button>
+  <button class="nav-tab" role="tab" aria-selected="false" aria-controls="panel-faces"    id="tab-faces"    type="button">👤 Visages</button>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main id="main-content" tabindex="-1">
+
+  <!-- ====== PANNEAU AUJOURD'HUI ====== -->
+  <section class="panel active" id="panel-today" role="tabpanel" aria-labelledby="tab-today">
+    <div id="today-hero" aria-live="off">
+      <div id="today-hero-time" aria-label="Heure actuelle"></div>
+      <div id="today-hero-date"></div>
+    </div>
+
+    <div id="today-next" aria-live="polite" aria-label="Prochain événement">
+      <span id="today-next-icon" aria-hidden="true">📋</span>
+      <div id="today-next-text">
+        <div id="today-next-label">Chargement…</div>
+        <div id="today-next-sub"></div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap;">
+      <button class="btn btn-accent" id="btn-speak-today" type="button" style="flex:1;min-width:180px;">
+        🔊 Lire le résumé du jour
+      </button>
+      <button class="btn btn-primary btn-sm" id="btn-refresh-today" type="button" style="flex:0 0 auto;">
+        🔄 Rafraîchir
+      </button>
+    </div>
+
+    <div class="today-section" id="today-reminders-section">
+      <div class="today-section-title">🔔 Rappels du jour</div>
+      <div id="today-reminders-list"></div>
+    </div>
+
+    <div class="today-section" id="today-meds-section">
+      <div class="today-section-title">💊 Médicaments du jour</div>
+      <div id="today-meds-list"></div>
+    </div>
+  </section>
+
+  <!-- ====== PANNEAU HORLOGE ====== -->
+  <section class="panel" id="panel-clock" role="tabpanel" aria-labelledby="tab-clock" hidden>
+    <div id="clock-display" aria-live="off" aria-label="Horloge">
+      <div id="clock-time" aria-label="Heure"></div>
+      <div id="clock-date" aria-label="Date"></div>
+    </div>
+
+    <button class="btn btn-accent" id="btn-speak-datetime" type="button" style="width:100%;margin-bottom:16px;">
+      🔊 Écouter l'heure et la date
+    </button>
+
+    <div class="card">
+      <div class="card-title">📅 Informations utiles</div>
+      <div id="clock-extra" style="font-size:var(--text-md); line-height:2;"></div>
+    </div>
+  </section>
+
+  <!-- ====== PANNEAU RAPPELS ====== -->
+  <section class="panel" id="panel-reminders" role="tabpanel" aria-labelledby="tab-reminders" hidden>
+    <h2 class="section-heading">🔔 Mes rappels</h2>
+
+    <div class="card">
+      <div class="card-title">➕ Ajouter un rappel</div>
+      <form id="form-reminder" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="reminder-time">Heure</label>
+            <input class="form-input" type="time" id="reminder-time" name="reminder-time" required aria-required="true">
+          </div>
+          <div class="form-group" style="flex:3">
+            <label class="form-label" for="reminder-label">Libellé (ex. : Appeler le médecin)</label>
+            <input class="form-input" type="text" id="reminder-label" name="reminder-label"
+              placeholder="Que dois-je faire ?" maxlength="80" required aria-required="true">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit">Ajouter ce rappel</button>
+      </form>
+    </div>
+
+    <div aria-live="polite" id="reminders-list-region">
+      <ul class="item-list" id="reminders-list" aria-label="Liste des rappels"></ul>
+      <div class="empty-state" id="reminders-empty" hidden>
+        <span>🔔</span>
+        Aucun rappel pour l'instant.<br>Ajoutez-en un ci-dessus.
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== PANNEAU MÉDICAMENTS ====== -->
+  <section class="panel" id="panel-meds" role="tabpanel" aria-labelledby="tab-meds" hidden>
+    <h2 class="section-heading">💊 Mes médicaments</h2>
+
+    <div class="card">
+      <div class="card-title">➕ Ajouter un médicament</div>
+      <form id="form-med" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="med-time">Heure de prise</label>
+            <input class="form-input" type="time" id="med-time" name="med-time" required aria-required="true">
+          </div>
+          <div class="form-group" style="flex:3">
+            <label class="form-label" for="med-name">Nom du médicament</label>
+            <input class="form-input" type="text" id="med-name" name="med-name"
+              placeholder="Ex. : Amlodipine 5mg" maxlength="80" required aria-required="true">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit">Ajouter ce médicament</button>
+      </form>
+    </div>
+
+    <div aria-live="polite" id="meds-list-region">
+      <ul class="item-list" id="meds-list" aria-label="Liste des médicaments"></ul>
+      <div class="empty-state" id="meds-empty" hidden>
+        <span>💊</span>
+        Aucun médicament enregistré.<br>Ajoutez-en un ci-dessus.
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== PANNEAU VISAGES ====== -->
+  <section class="panel" id="panel-faces" role="tabpanel" aria-labelledby="tab-faces" hidden>
+    <h2 class="section-heading">👤 Visages et noms</h2>
+
+    <div class="card">
+      <div class="card-title">➕ Ajouter une personne</div>
+      <form id="form-face" novalidate>
+        <div class="form-row">
+          <div class="form-group" style="flex:0 0 120px">
+            <label class="form-label" for="face-avatar">Initiale ou emoji</label>
+            <input class="form-input" type="text" id="face-avatar" name="face-avatar"
+              placeholder="👩 ou M" maxlength="4" required aria-required="true">
+          </div>
+          <div class="form-group" style="flex:2">
+            <label class="form-label" for="face-name">Prénom / Nom</label>
+            <input class="form-input" type="text" id="face-name" name="face-name"
+              placeholder="Marie" maxlength="40" required aria-required="true">
+          </div>
+          <div class="form-group" style="flex:3">
+            <label class="form-label" for="face-link">Lien (ex. : votre fille)</label>
+            <input class="form-input" type="text" id="face-link" name="face-link"
+              placeholder="votre fille" maxlength="60">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit">Ajouter cette personne</button>
+      </form>
+    </div>
+
+    <div aria-live="polite">
+      <div id="faces-grid" aria-label="Cartes des personnes connues" role="list"></div>
+      <div class="empty-state" id="faces-empty" hidden>
+        <span>👤</span>
+        Aucune personne enregistrée.<br>Ajoutez un visage ci-dessus.
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ALERTE DE RAPPEL -->
+<div id="alert-banner" role="alertdialog" aria-modal="false" aria-labelledby="alert-text" aria-live="assertive">
+  <span id="alert-icon" aria-hidden="true">🔔</span>
+  <div id="alert-text"></div>
+  <button id="alert-close" type="button" aria-label="Fermer cette alerte">✕</button>
+</div>
+
+<!-- STATUS LIVE REGION (invisible) -->
+<div id="live-status" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     UTILS
+  ============================================================ */
+  function escH(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  function nowHHMM() {
+    var d = new Date();
+    return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  /* ============================================================
+     STORAGE
+  ============================================================ */
+  var STORE_KEY = 'remindwell_v1';
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) { /* silent */ }
+    return { reminders: [], meds: [], faces: [] };
+  }
+
+  function saveState() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* silent */ }
+  }
+
+  var state = loadState();
+  if (!Array.isArray(state.reminders)) state.reminders = [];
+  if (!Array.isArray(state.meds))      state.meds = [];
+  if (!Array.isArray(state.faces))     state.faces = [];
+
+  /* ============================================================
+     TTS
+  ============================================================ */
+  var hasTTS = ('speechSynthesis' in window);
+  var voices = [];
+  var frVoice = null;
+  var ttsBanner = document.getElementById('tts-banner');
+
+  function showTTSBanner(msg) {
+    ttsBanner.textContent = msg;
+    ttsBanner.classList.add('visible');
+  }
+
+  function loadVoices() {
+    if (!hasTTS) return;
+    var v = window.speechSynthesis.getVoices();
+    if (!v || v.length === 0) return;
+    voices = v;
+    var fr = voices.filter(function(x) { return x.lang && x.lang.indexOf('fr') === 0; });
+    if (fr.length === 0) {
+      showTTSBanner('⚠️ Voix française indisponible — la lecture vocale utilisera la voix par défaut.');
+      frVoice = null;
+    } else {
+      frVoice = fr.find(function(x) { return x.lang === 'fr-FR'; }) || fr[0];
+    }
+  }
+
+  if (hasTTS) {
+    loadVoices();
+    if ('onvoiceschanged' in window.speechSynthesis) {
+      window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
+    }
+    setTimeout(loadVoices, 250);
+    setTimeout(loadVoices, 900);
+  } else {
+    showTTSBanner('⚠️ La lecture vocale n\'est pas disponible dans ce navigateur. Tout le reste fonctionne normalement.');
+  }
+
+  function speak(text) {
+    if (!hasTTS || !text || !text.trim()) return;
+    window.speechSynthesis.cancel();
+    var utt = new SpeechSynthesisUtterance(text);
+    utt.lang  = 'fr-FR';
+    utt.rate  = 0.92;
+    utt.pitch = 1.0;
+    if (frVoice) utt.voice = frVoice;
+    window.speechSynthesis.speak(utt);
+  }
+
+  /* ============================================================
+     STATUS TOAST
+  ============================================================ */
+  var liveStatus = document.getElementById('live-status');
+  var statusTimer = null;
+
+  function showStatus(msg) {
+    liveStatus.textContent = msg;
+    liveStatus.classList.add('visible');
+    if (statusTimer) clearTimeout(statusTimer);
+    statusTimer = setTimeout(function () {
+      liveStatus.classList.remove('visible');
+    }, 3000);
+  }
+
+  /* ============================================================
+     HORLOGE
+  ============================================================ */
+  var clockTime      = document.getElementById('clock-time');
+  var clockDate      = document.getElementById('clock-date');
+  var clockExtra     = document.getElementById('clock-extra');
+  var todayHeroTime  = document.getElementById('today-hero-time');
+  var todayHeroDate  = document.getElementById('today-hero-date');
+
+  var JOURS  = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+  var MOIS   = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+
+  function formatTime(d) {
+    return pad2(d.getHours()) + ' h ' + pad2(d.getMinutes());
+  }
+
+  function formatDateLong(d) {
+    return JOURS[d.getDay()] + ' ' + d.getDate() + ' ' + MOIS[d.getMonth()] + ' ' + d.getFullYear();
+  }
+
+  function updateClock() {
+    var d = new Date();
+    var t = formatTime(d);
+    var dt = formatDateLong(d);
+
+    clockTime.textContent = t;
+    clockDate.textContent = dt;
+    todayHeroTime.textContent = t;
+    todayHeroDate.textContent = dt;
+
+    // Numéro de semaine
+    var startYear = new Date(d.getFullYear(), 0, 1);
+    var weekNum = Math.ceil(((d - startYear) / 86400000 + startYear.getDay() + 1) / 7);
+
+    if (clockExtra) {
+      clockExtra.innerHTML =
+        '📅 Semaine <strong>' + weekNum + '</strong><br>' +
+        '🌅 Saison : <strong>' + getSaison(d.getMonth()) + '</strong><br>' +
+        '🗓️ Jour n°&nbsp;<strong>' + getDayOfYear(d) + '</strong> de l\'année';
+    }
+
+    // Check reminders every tick
+    checkReminders();
+  }
+
+  function getSaison(m) {
+    if (m >= 2 && m <= 4) return 'Printemps';
+    if (m >= 5 && m <= 7) return 'Été';
+    if (m >= 8 && m <= 10) return 'Automne';
+    return 'Hiver';
+  }
+
+  function getDayOfYear(d) {
+    var start = new Date(d.getFullYear(), 0, 0);
+    var diff = d - start;
+    return Math.floor(diff / 86400000);
+  }
+
+  /* ============================================================
+     NOTIFICATIONS
+  ============================================================ */
+  var notifBar = document.getElementById('notif-bar');
+  var notifPerm = (typeof Notification !== 'undefined') ? Notification.permission : 'unavailable';
+
+  if (notifPerm === 'granted' || notifPerm === 'denied' || notifPerm === 'unavailable') {
+    notifBar.classList.add('hidden');
+  }
+
+  document.getElementById('btn-notif-yes').addEventListener('click', function () {
+    if (typeof Notification === 'undefined') {
+      notifBar.classList.add('hidden');
+      showStatus('Notifications non disponibles dans ce navigateur.');
+      return;
+    }
+    Notification.requestPermission(function(perm) {
+      notifBar.classList.add('hidden');
+      if (perm === 'granted') showStatus('✅ Notifications activées !');
+      else showStatus('Notifications refusées — les alertes s\'afficheront à l\'écran.');
+    });
+  });
+
+  document.getElementById('btn-notif-no').addEventListener('click', function () {
+    notifBar.classList.add('hidden');
+    showStatus('Notifications désactivées. Les alertes s\'afficheront à l\'écran.');
+  });
+
+  function sendNotif(title, body) {
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+    try { new Notification(title, { body: body, icon: '' }); } catch(e) { /* silent */ }
+  }
+
+  /* ============================================================
+     ALERTE DE RAPPEL
+  ============================================================ */
+  var alertBanner = document.getElementById('alert-banner');
+  var alertText   = document.getElementById('alert-text');
+  var alertClose  = document.getElementById('alert-close');
+  var alertTimer  = null;
+
+  function showAlert(msg, icon) {
+    document.getElementById('alert-icon').textContent = icon || '🔔';
+    alertText.textContent = msg;
+    alertBanner.classList.add('visible');
+    alertBanner.style.display = 'flex';
+    alertClose.focus();
+    if (alertTimer) clearTimeout(alertTimer);
+    alertTimer = setTimeout(function () { closeAlert(); }, 30000);
+  }
+
+  function closeAlert() {
+    alertBanner.classList.remove('visible');
+    alertBanner.style.display = 'none';
+    if (alertTimer) clearTimeout(alertTimer);
+  }
+
+  alertClose.addEventListener('click', closeAlert);
+
+  /* ============================================================
+     RAPPELS
+  ============================================================ */
+  var firedToday = {};   // id -> dateStr, so it fires only once per calendar day
+
+  function checkReminders() {
+    var hhmm = nowHHMM();
+    var today = new Date().toDateString();
+    state.reminders.forEach(function(r) {
+      var key = r.id + today;
+      if (r.time === hhmm && !firedToday[key]) {
+        firedToday[key] = true;
+        fireReminder(r);
+      }
+    });
+  }
+
+  function fireReminder(r) {
+    var msg = 'Rappel : ' + r.label;
+    showAlert(msg + ' (' + r.time + ')', '🔔');
+    speak(msg);
+    sendNotif('🔔 RemindWell — Rappel', msg);
+    // Highlight in list
+    var li = document.getElementById('ri-' + r.id);
+    if (li) { li.classList.add('highlighted'); setTimeout(function(){ li.classList.remove('highlighted'); }, 60000); }
+    renderToday();
+  }
+
+  function sortByTime(arr) {
+    return arr.slice().sort(function(a, b) { return a.time.localeCompare(b.time); });
+  }
+
+  function renderReminders() {
+    var list  = document.getElementById('reminders-list');
+    var empty = document.getElementById('reminders-empty');
+    list.innerHTML = '';
+    var sorted = sortByTime(state.reminders);
+
+    if (sorted.length === 0) {
+      empty.hidden = false;
+    } else {
+      empty.hidden = true;
+      sorted.forEach(function(r) {
+        var li = document.createElement('li');
+        li.id = 'ri-' + r.id;
+        li.innerHTML =
+          '<span class="item-time">' + escH(r.time) + '</span>' +
+          '<span class="item-label">' + escH(r.label) + '</span>' +
+          '<span class="item-actions">' +
+            '<button class="btn-speak-inline" type="button" data-id="' + r.id + '" data-action="speak-r" aria-label="Lire : ' + escH(r.label) + '">🔊</button>' +
+            '<button class="item-del" type="button" data-id="' + r.id + '" data-action="del-r" aria-label="Supprimer le rappel ' + escH(r.label) + '">🗑</button>' +
+          '</span>';
+        list.appendChild(li);
+      });
+    }
+    renderToday();
+  }
+
+  document.getElementById('form-reminder').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var t = document.getElementById('reminder-time').value.trim();
+    var l = document.getElementById('reminder-label').value.trim();
+    if (!t || !l) { showStatus('⚠️ Veuillez remplir l\'heure et le libellé.'); return; }
+    state.reminders.push({ id: uid(), time: t, label: l });
+    saveState();
+    renderReminders();
+    document.getElementById('reminder-label').value = '';
+    showStatus('✅ Rappel ajouté : ' + l + ' à ' + t);
+    speak('Rappel ajouté : ' + l + ' à ' + t.replace(':','h'));
+  });
+
+  document.getElementById('reminders-list').addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    var id  = btn.dataset.id;
+    var act = btn.dataset.action;
+    if (act === 'del-r') {
+      var r = state.reminders.find(function(x){ return x.id === id; });
+      state.reminders = state.reminders.filter(function(x){ return x.id !== id; });
+      saveState();
+      renderReminders();
+      showStatus('Rappel supprimé.');
+    } else if (act === 'speak-r') {
+      var r = state.reminders.find(function(x){ return x.id === id; });
+      if (r) speak('Rappel à ' + r.time.replace(':','h') + ' : ' + r.label);
+    }
+  });
+
+  /* ============================================================
+     MÉDICAMENTS
+  ============================================================ */
+  function renderMeds() {
+    var list  = document.getElementById('meds-list');
+    var empty = document.getElementById('meds-empty');
+    list.innerHTML = '';
+    var sorted = sortByTime(state.meds);
+
+    if (sorted.length === 0) {
+      empty.hidden = false;
+    } else {
+      empty.hidden = true;
+      sorted.forEach(function(m) {
+        var taken = m.takenAt ? true : false;
+        var li = document.createElement('li');
+        li.id = 'mi-' + m.id;
+        if (taken) li.classList.add('taken');
+        li.setAttribute('aria-label', m.name + (taken ? ' — pris' : ' — non pris'));
+
+        var takenInfo = taken
+          ? '<span class="item-meta">Pris à ' + escH(m.takenAt) + '</span>'
+          : '';
+
+        li.innerHTML =
+          '<span class="item-time">' + escH(m.time) + '</span>' +
+          '<span class="item-label">' + escH(m.name) + takenInfo + '</span>' +
+          '<span class="item-actions">' +
+            (!taken
+              ? '<button class="btn btn-success btn-sm" type="button" data-id="' + m.id + '" data-action="take" aria-label="Marquer ' + escH(m.name) + ' comme pris">✓ Pris</button>'
+              : '<span style="color:#166534;font-weight:700;font-size:1rem;">✅ Pris</span>'
+            ) +
+            '<button class="btn-speak-inline" type="button" data-id="' + m.id + '" data-action="speak-m" aria-label="Lire : ' + escH(m.name) + '">🔊</button>' +
+            '<button class="item-del" type="button" data-id="' + m.id + '" data-action="del-m" aria-label="Supprimer ' + escH(m.name) + '">🗑</button>' +
+          '</span>';
+        list.appendChild(li);
+      });
+    }
+    renderToday();
+  }
+
+  document.getElementById('form-med').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var t = document.getElementById('med-time').value.trim();
+    var n = document.getElementById('med-name').value.trim();
+    if (!t || !n) { showStatus('⚠️ Veuillez remplir l\'heure et le nom du médicament.'); return; }
+    state.meds.push({ id: uid(), time: t, name: n, takenAt: null });
+    saveState();
+    renderMeds();
+    document.getElementById('med-name').value = '';
+    showStatus('✅ Médicament ajouté : ' + n + ' à ' + t);
+    speak('Médicament ajouté : ' + n + ' à ' + t.replace(':','h'));
+  });
+
+  document.getElementById('meds-list').addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    var id  = btn.dataset.id;
+    var act = btn.dataset.action;
+    var m   = state.meds.find(function(x){ return x.id === id; });
+    if (!m) return;
+
+    if (act === 'take') {
+      m.takenAt = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+      saveState();
+      renderMeds();
+      var msg = m.name + ' pris à ' + m.takenAt + '. Bien !';
+      showStatus('✅ ' + msg);
+      speak(msg);
+    } else if (act === 'speak-m') {
+      var status = m.takenAt ? 'Pris à ' + m.takenAt + '.' : 'Pas encore pris.';
+      speak(m.name + ' à ' + m.time.replace(':','h') + '. ' + status);
+    } else if (act === 'del-m') {
+      state.meds = state.meds.filter(function(x){ return x.id !== id; });
+      saveState();
+      renderMeds();
+      showStatus('Médicament supprimé.');
+    }
+  });
+
+  /* ============================================================
+     VISAGES & NOMS
+  ============================================================ */
+  function renderFaces() {
+    var grid  = document.getElementById('faces-grid');
+    var empty = document.getElementById('faces-empty');
+    grid.innerHTML = '';
+
+    if (state.faces.length === 0) {
+      empty.hidden = false;
+    } else {
+      empty.hidden = true;
+      state.faces.forEach(function(f) {
+        var card = document.createElement('div');
+        card.className = 'face-card';
+        card.setAttribute('role', 'listitem');
+        card.setAttribute('aria-label', f.name + (f.link ? ', ' + f.link : ''));
+
+        card.innerHTML =
+          '<span class="face-avatar" aria-hidden="true">' + escH(f.avatar) + '</span>' +
+          '<div class="face-name">' + escH(f.name) + '</div>' +
+          (f.link ? '<div class="face-link">' + escH(f.link) + '</div>' : '') +
+          '<div class="face-btn-row">' +
+            '<button class="btn-speak-inline" type="button" data-id="' + f.id + '" data-action="speak-f" aria-label="Présenter ' + escH(f.name) + '">🔊</button>' +
+            '<button class="item-del" type="button" data-id="' + f.id + '" data-action="del-f" aria-label="Supprimer ' + escH(f.name) + '">🗑</button>' +
+          '</div>';
+
+        grid.appendChild(card);
+      });
+    }
+  }
+
+  document.getElementById('form-face').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var a = document.getElementById('face-avatar').value.trim();
+    var n = document.getElementById('face-name').value.trim();
+    var l = document.getElementById('face-link').value.trim();
+    if (!a || !n) { showStatus('⚠️ Veuillez remplir l\'initiale et le prénom.'); return; }
+    state.faces.push({ id: uid(), avatar: a, name: n, link: l });
+    saveState();
+    renderFaces();
+    document.getElementById('face-avatar').value = '';
+    document.getElementById('face-name').value = '';
+    document.getElementById('face-link').value = '';
+    showStatus('✅ ' + n + ' ajouté(e).');
+    speak((l ? l.replace(/^votre /i,'Votre ') + ' ' : '') + n + ' a été ajouté.');
+  });
+
+  document.getElementById('faces-grid').addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    var id  = btn.dataset.id;
+    var act = btn.dataset.action;
+    var f   = state.faces.find(function(x){ return x.id === id; });
+    if (!f) return;
+
+    if (act === 'speak-f') {
+      var txt = 'Cette personne s\'appelle ' + f.name + (f.link ? '. C\'est ' + f.link + '.' : '.');
+      speak(txt);
+    } else if (act === 'del-f') {
+      state.faces = state.faces.filter(function(x){ return x.id !== id; });
+      saveState();
+      renderFaces();
+      showStatus('Personne supprimée.');
+    }
+  });
+
+  /* ============================================================
+     PANNEAU AUJOURD'HUI
+  ============================================================ */
+  function renderToday() {
+    var now   = nowHHMM();
+    var sorted_r = sortByTime(state.reminders);
+    var sorted_m = sortByTime(state.meds);
+
+    // NEXT EVENT
+    var nextLabel = document.getElementById('today-next-label');
+    var nextSub   = document.getElementById('today-next-sub');
+    var nextIcon  = document.getElementById('today-next-icon');
+
+    // Find next upcoming reminder or med
+    var upcoming = [];
+    sorted_r.forEach(function(r) { upcoming.push({time: r.time, label: r.label, type: 'reminder'}); });
+    sorted_m.forEach(function(m) { if (!m.takenAt) upcoming.push({time: m.time, label: m.name, type: 'med'}); });
+    upcoming.sort(function(a,b){ return a.time.localeCompare(b.time); });
+    var next = upcoming.find(function(x){ return x.time >= now; });
+
+    if (next) {
+      nextIcon.textContent  = next.type === 'med' ? '💊' : '🔔';
+      nextLabel.textContent = next.label;
+      nextSub.textContent   = (next.type === 'med' ? 'Médicament' : 'Rappel') + ' à ' + next.time;
+    } else if (upcoming.length === 0) {
+      nextIcon.textContent  = '✅';
+      nextLabel.textContent = 'Rien de prévu';
+      nextSub.textContent   = 'Ajoutez des rappels ou des médicaments.';
+    } else {
+      nextIcon.textContent  = '🌙';
+      nextLabel.textContent = 'Plus rien pour aujourd\'hui';
+      nextSub.textContent   = 'Tout est fait !';
+    }
+
+    // REMINDERS LIST
+    var rList = document.getElementById('today-reminders-list');
+    rList.innerHTML = '';
+    if (sorted_r.length === 0) {
+      rList.innerHTML = '<p style="color:#6b7280;font-size:var(--text-base);">Aucun rappel. <button class="btn-speak-inline" type="button" onclick="document.getElementById(\'tab-reminders\').click()">Ajouter un rappel →</button></p>';
+    } else {
+      sorted_r.forEach(function(r) {
+        var div = document.createElement('div');
+        div.className = 'today-item' + (r.time < now ? ' done' : '');
+        div.innerHTML =
+          '<span class="item-time">' + escH(r.time) + '</span>' +
+          '<span style="flex:1">' + escH(r.label) + '</span>';
+        rList.appendChild(div);
+      });
+    }
+
+    // MEDS LIST
+    var mList = document.getElementById('today-meds-list');
+    mList.innerHTML = '';
+    if (sorted_m.length === 0) {
+      mList.innerHTML = '<p style="color:#6b7280;font-size:var(--text-base);">Aucun médicament. <button class="btn-speak-inline" type="button" onclick="document.getElementById(\'tab-meds\').click()">Ajouter →</button></p>';
+    } else {
+      sorted_m.forEach(function(m) {
+        var div = document.createElement('div');
+        div.className = 'today-item' + (m.takenAt ? ' done' : '');
+        div.innerHTML =
+          '<span class="item-time">' + escH(m.time) + '</span>' +
+          '<span style="flex:1">' + escH(m.name) + (m.takenAt ? ' — pris à ' + escH(m.takenAt) : '') + '</span>';
+        mList.appendChild(div);
+      });
+    }
+  }
+
+  // Lecture du résumé du jour
+  document.getElementById('btn-speak-today').addEventListener('click', function() {
+    var d = new Date();
+    var parts = [];
+    parts.push('Nous sommes ' + formatDateLong(d) + '. Il est ' + formatTime(d) + '.');
+
+    var sorted_r = sortByTime(state.reminders);
+    var sorted_m = sortByTime(state.meds);
+
+    if (sorted_r.length > 0) {
+      parts.push('Rappels du jour :');
+      sorted_r.forEach(function(r) { parts.push('À ' + r.time.replace(':','h') + ', ' + r.label + '.'); });
+    } else {
+      parts.push('Aucun rappel prévu.');
+    }
+
+    if (sorted_m.length > 0) {
+      parts.push('Médicaments :');
+      sorted_m.forEach(function(m) {
+        if (m.takenAt) parts.push(m.name + ', pris à ' + m.takenAt + '.');
+        else parts.push(m.name + ' à prendre à ' + m.time.replace(':','h') + '.');
+      });
+    } else {
+      parts.push('Aucun médicament enregistré.');
+    }
+
+    speak(parts.join(' '));
+    showStatus('🔊 Lecture du résumé…');
+  });
+
+  document.getElementById('btn-refresh-today').addEventListener('click', function() {
+    renderToday();
+    showStatus('Écran mis à jour.');
+  });
+
+  // Lecture horloge
+  document.getElementById('btn-speak-datetime').addEventListener('click', function() {
+    var d = new Date();
+    speak('Il est ' + formatTime(d) + '. Nous sommes ' + formatDateLong(d) + '.');
+  });
+
+  /* ============================================================
+     NAVIGATION PAR ONGLETS
+  ============================================================ */
+  var tabs   = document.querySelectorAll('.nav-tab');
+  var panels = document.querySelectorAll('.panel');
+
+  function switchTab(targetId) {
+    tabs.forEach(function(t) {
+      var sel = t.getAttribute('aria-controls') === targetId;
+      t.setAttribute('aria-selected', sel ? 'true' : 'false');
+    });
+    panels.forEach(function(p) {
+      if (p.id === targetId) { p.classList.add('active'); p.hidden = false; }
+      else                   { p.classList.remove('active'); p.hidden = true; }
+    });
+  }
+
+  tabs.forEach(function(tab, i) {
+    tab.addEventListener('click', function() { switchTab(tab.getAttribute('aria-controls')); });
+    tab.addEventListener('keydown', function(e) {
+      var next = i;
+      if      (e.key === 'ArrowRight') next = (i + 1) % tabs.length;
+      else if (e.key === 'ArrowLeft')  next = (i - 1 + tabs.length) % tabs.length;
+      else if (e.key === 'Home')       next = 0;
+      else if (e.key === 'End')        next = tabs.length - 1;
+      else return;
+      e.preventDefault();
+      switchTab(tabs[next].getAttribute('aria-controls'));
+      tabs[next].focus();
+    });
+  });
+
+  /* ============================================================
+     INIT
+  ============================================================ */
+  // Set initial time inputs to current time for convenience
+  (function setDefaultTimes() {
+    var hhmm = nowHHMM();
+    document.getElementById('reminder-time').value = hhmm;
+    document.getElementById('med-time').value = hhmm;
+  })();
+
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  renderReminders();
+  renderMeds();
+  renderFaces();
+  renderToday();
+
+  // Ensure initial tab state is correct
+  switchTab('panel-today');
+
+}());
+</script>
+</body>
+</html>

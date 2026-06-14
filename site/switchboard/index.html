@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwitchBoard — Démo | LibreA11y</title>
+<meta name="description" content="Démonstration de pilotage par contacteur et balayage (switch scanning). Hors-ligne, aucune donnée envoyée.">
+<style>
+/* ===== VARIABLES & RESET ===== */
+:root {
+  --marine:    #0F4C81;
+  --marine-dk: #0A3A63;
+  --or:        #F4B81C;
+  --or-lt:     #FFD45E;
+  --encre:     #16202E;
+  --fond:      #F7F9FC;
+  --surface:   #FFFFFF;
+  --border:    #D0D9E8;
+  --focus-ring: #F4B81C;
+  --radius:    14px;
+  --radius-sm: 8px;
+  --shadow:    0 2px 8px rgba(15,76,129,0.13);
+  --shadow-hv: 0 4px 18px rgba(15,76,129,0.24);
+  --scan-clr:  #F4B81C;
+  --tr:        0.14s ease;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; }
+body {
+  min-height: 100%;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--fond);
+  color: var(--encre);
+  font-size: 16px;
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== SKIP LINK ===== */
+#skip-link {
+  position: absolute;
+  top: -99px;
+  left: 8px;
+  z-index: 9999;
+  background: var(--or);
+  color: var(--encre);
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: top 0.15s;
+}
+#skip-link:focus { top: 8px; }
+
+/* ===== FOCUS ===== */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* ===== HEADER ===== */
+#app-header {
+  background: var(--marine);
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 10px rgba(10,58,99,0.32);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  flex-shrink: 0;
+}
+#header-left { display: flex; align-items: center; gap: 16px; }
+#back-link {
+  color: var(--or-lt);
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  min-height: 44px;
+  transition: background var(--tr);
+}
+#back-link:hover, #back-link:focus-visible {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+}
+#app-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.2px;
+}
+#header-notice {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.62);
+  text-align: right;
+  line-height: 1.35;
+}
+
+/* ===== INFO BANNER ===== */
+#info-banner {
+  background: #fff8e1;
+  border-bottom: 2px solid var(--or);
+  padding: 10px 20px;
+  font-size: 0.88rem;
+  color: var(--encre);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+#info-banner span { font-weight: 600; color: var(--marine-dk); }
+
+/* ===== MAIN ===== */
+#app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ===== SCAN STATUS BAR ===== */
+#scan-status-bar {
+  background: var(--marine-dk);
+  color: #fff;
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 0.84rem;
+  flex-shrink: 0;
+}
+#scan-status-label {
+  display: flex; align-items: center; gap: 8px;
+}
+#scan-indicator {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #9ca3af;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+body.scan-running #scan-indicator { background: #4ade80; }
+#scan-status-text { font-weight: 600; }
+
+#scan-kbd-hints {
+  display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+  font-size: 0.8rem; color: rgba(255,255,255,0.78);
+}
+#scan-kbd-hints kbd {
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-family: monospace;
+}
+
+/* ===== SWITCH CONTROL BUTTONS ===== */
+#switch-controls {
+  display: flex;
+  gap: 10px;
+  padding: 12px 20px 8px;
+  background: var(--fond);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  align-items: center;
+}
+.switch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 24px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 56px;
+  min-width: 160px;
+  transition: transform var(--tr), box-shadow var(--tr), background var(--tr);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.switch-btn:active { transform: scale(0.95); }
+#btn-select {
+  background: var(--or);
+  color: var(--encre);
+  border: 3px solid var(--marine);
+  flex: 1;
+  min-width: 140px;
+}
+#btn-select:hover { background: var(--or-lt); box-shadow: var(--shadow-hv); }
+#btn-advance {
+  background: var(--marine);
+  color: #fff;
+  flex: 1;
+  min-width: 140px;
+}
+#btn-advance:hover { background: var(--marine-dk); box-shadow: var(--shadow-hv); }
+#btn-scan-toggle {
+  background: var(--surface);
+  color: var(--marine);
+  border: 2px solid var(--marine);
+  font-size: 0.9rem;
+  padding: 0 16px;
+  min-height: 48px;
+  min-width: 130px;
+}
+#btn-scan-toggle:hover { background: var(--marine); color: #fff; }
+#btn-scan-toggle[aria-pressed="true"] {
+  background: #dcfce7;
+  border-color: #16a34a;
+  color: #166534;
+}
+
+/* ===== SETTINGS BAR ===== */
+#settings-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.84rem;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.setting-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.setting-group label {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--encre);
+  white-space: nowrap;
+}
+.setting-group input[type="range"] {
+  width: 90px;
+  accent-color: var(--marine);
+  cursor: pointer;
+}
+.setting-group select {
+  padding: 5px 8px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.83rem;
+  background: var(--fond);
+  color: var(--encre);
+  cursor: pointer;
+  min-height: 36px;
+}
+.setting-group select:focus-visible { border-color: var(--marine); outline: none; }
+.setting-val {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--marine);
+  min-width: 34px;
+}
+
+/* Toggle */
+.toggle-wrap { display: flex; align-items: center; gap: 8px; }
+.toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track {
+  position: absolute; inset: 0;
+  background: #cdd5df;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.toggle input:checked + .toggle-track { background: var(--marine); }
+.toggle-thumb {
+  position: absolute; top: 3px; left: 3px;
+  width: 18px; height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.18s;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.toggle input:checked ~ .toggle-track .toggle-thumb { transform: translateX(20px); }
+.toggle-wrap span { font-size: 0.82rem; font-weight: 500; cursor: pointer; }
+@media (prefers-reduced-motion: reduce) {
+  .toggle-track, .toggle-thumb { transition: none; }
+}
+
+/* ===== GRID AREA ===== */
+#grid-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px 24px;
+}
+#action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+/* ===== GRID CELL ===== */
+.grid-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  padding: 14px 10px;
+  min-height: 110px;
+  min-width: 0;
+  text-align: center;
+  transition: border-color var(--tr), box-shadow var(--tr), background var(--tr), transform var(--tr);
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.grid-cell:hover {
+  border-color: var(--marine);
+  box-shadow: var(--shadow-hv);
+  background: #f0f6ff;
+}
+.grid-cell:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.grid-cell:active { transform: scale(0.94); }
+
+.cell-emoji {
+  font-size: 2.4rem;
+  line-height: 1;
+  pointer-events: none;
+}
+.cell-label {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--encre);
+  pointer-events: none;
+}
+
+/* ===== SCAN HIGHLIGHT ===== */
+.grid-cell.scan-row-active {
+  background: rgba(244,184,28,0.10);
+  border-color: var(--or);
+}
+.grid-cell.scan-focus {
+  background: rgba(244,184,28,0.18);
+  border-color: var(--or);
+  border-width: 3px;
+  box-shadow: 0 0 0 4px rgba(244,184,28,0.35), var(--shadow-hv);
+  z-index: 2;
+}
+/* No blinking — only smooth movement */
+@media (prefers-reduced-motion: reduce) {
+  .grid-cell, .grid-cell.scan-focus { transition: none; }
+  .cell-activate { animation: none !important; }
+}
+
+/* ===== CELL ACTIVATE FEEDBACK ===== */
+@keyframes cellActivate {
+  0%   { transform: scale(0.93); background: var(--or-lt); }
+  50%  { transform: scale(1.05); background: var(--or); }
+  100% { transform: scale(1); }
+}
+.cell-activate {
+  animation: cellActivate 0.25s ease forwards;
+}
+
+/* ===== LIGHT PANEL ===== */
+#light-panel {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.4s;
+}
+#light-panel.light-on {
+  background: rgba(255,240,100,0.38);
+  pointer-events: none;
+}
+#light-label {
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: #7d5000;
+  opacity: 0;
+  transition: opacity 0.3s;
+  text-shadow: 0 2px 8px rgba(255,220,0,0.7);
+  pointer-events: none;
+  user-select: none;
+}
+#light-panel.light-on #light-label { opacity: 1; }
+
+/* ===== MUSIC OVERLAY ===== */
+#music-overlay {
+  position: fixed;
+  bottom: 80px;
+  right: 24px;
+  font-size: 2.6rem;
+  pointer-events: none;
+  z-index: 210;
+  display: none;
+  user-select: none;
+}
+@keyframes musicFloat {
+  0%   { transform: translateY(0) rotate(-8deg); opacity: 1; }
+  100% { transform: translateY(-64px) rotate(8deg); opacity: 0; }
+}
+.music-note {
+  display: inline-block;
+  animation: musicFloat 1.6s ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .music-note { animation: none; opacity: 0; }
+}
+
+/* ===== FEEDBACK TOAST ===== */
+#feedback-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--marine-dk);
+  color: #fff;
+  padding: 12px 28px;
+  border-radius: 40px;
+  font-size: 1rem;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  z-index: 300;
+  white-space: nowrap;
+}
+#feedback-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ===== AIDE PANEL ===== */
+#aide-panel {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15,76,129,0.45);
+  z-index: 400;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#aide-panel.open { display: flex; }
+#aide-box {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+}
+#aide-box h2 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--marine);
+  margin-bottom: 14px;
+}
+#aide-box p, #aide-box li {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--encre);
+  margin-bottom: 8px;
+}
+#aide-box ul { padding-left: 1.2em; margin-bottom: 12px; }
+#aide-box kbd {
+  background: var(--encre);
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  font-family: monospace;
+}
+#btn-aide-close {
+  margin-top: 16px;
+  background: var(--marine);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 12px 28px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 48px;
+  width: 100%;
+}
+#btn-aide-close:hover { background: var(--marine-dk); }
+
+/* ===== ARIA LIVE ===== */
+#aria-live {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 540px) {
+  #action-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 9px;
+  }
+  .cell-emoji { font-size: 2rem; }
+  .grid-cell { min-height: 90px; }
+  .switch-btn { min-width: 100px; font-size: 0.9rem; }
+  #settings-bar { gap: 10px; }
+  .setting-group input[type="range"] { width: 70px; }
+}
+</style>
+</head>
+<body>
+
+<!-- SKIP LINK -->
+<a href="#action-grid" id="skip-link">Aller directement à la grille d'actions</a>
+
+<!-- ARIA LIVE -->
+<div id="aria-live" aria-live="polite" aria-atomic="true" role="status"></div>
+
+<!-- HEADER -->
+<header id="app-header" role="banner">
+  <div id="header-left">
+    <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y">← LibreA11y</a>
+    <h1 id="app-title">🕹️ SwitchBoard — démo</h1>
+  </div>
+  <div id="header-notice" aria-label="démo hors-ligne, aucune donnée envoyée">
+    démo · 100% hors-ligne<br>aucune donnée envoyée
+  </div>
+</header>
+
+<!-- INFO BANNER -->
+<div id="info-banner" role="note">
+  <span>Comment ça marche :</span> activez le balayage, puis utilisez votre contacteur (ou les boutons ci-dessous) pour avancer dans la grille et sélectionner une action.
+</div>
+
+<!-- MAIN -->
+<main id="app-main" role="main">
+
+  <!-- SCAN STATUS -->
+  <div id="scan-status-bar" role="status" aria-live="polite">
+    <div id="scan-status-label">
+      <div id="scan-indicator" aria-hidden="true"></div>
+      <span id="scan-status-text">Balayage arrêté</span>
+    </div>
+    <div id="scan-kbd-hints" aria-label="Raccourcis clavier : Espace pour sélectionner, Entrée pour avancer">
+      <kbd aria-label="touche Espace">Espace</kbd> Sélectionner &nbsp;
+      <kbd aria-label="touche Entrée">Entrée</kbd> Avancer
+    </div>
+  </div>
+
+  <!-- SWITCH CONTROL BUTTONS -->
+  <div id="switch-controls" role="toolbar" aria-label="Contrôles contacteur">
+    <button id="btn-select" class="switch-btn" aria-label="Sélectionner l'action en cours (contacteur 1 / Espace)">
+      ✅ Sélectionner
+    </button>
+    <button id="btn-advance" class="switch-btn" aria-label="Avancer vers la prochaine cellule (contacteur 2 / Entrée)">
+      ➡️ Avancer
+    </button>
+    <button id="btn-scan-toggle" class="switch-btn" aria-pressed="false" aria-label="Activer ou désactiver le balayage automatique">
+      ▶ Balayage auto
+    </button>
+  </div>
+
+  <!-- SETTINGS BAR -->
+  <div id="settings-bar" role="group" aria-label="Réglages du balayage">
+    <div class="setting-group">
+      <label for="speed-range">Vitesse :</label>
+      <input type="range" id="speed-range" min="500" max="3000" step="100" value="1500"
+             aria-valuemin="0.5" aria-valuemax="3" aria-label="Durée entre chaque pas (millisecondes)">
+      <span class="setting-val" id="speed-val" aria-live="polite">1,5 s</span>
+    </div>
+    <div class="setting-group">
+      <label for="dwell-range">Temps d'acceptation :</label>
+      <input type="range" id="dwell-range" min="0" max="800" step="50" value="0"
+             aria-label="Délai anti-faux-contact en millisecondes">
+      <span class="setting-val" id="dwell-val" aria-live="polite">0 ms</span>
+    </div>
+    <div class="setting-group">
+      <label for="mode-select">Mode :</label>
+      <select id="mode-select" aria-label="Mode de balayage">
+        <option value="auto">Automatique</option>
+        <option value="step">Par étapes</option>
+      </select>
+    </div>
+    <div class="setting-group">
+      <div class="toggle-wrap">
+        <label class="toggle" for="linemode-toggle">
+          <input type="checkbox" id="linemode-toggle" aria-label="Activer le mode ligne-colonne">
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        </label>
+        <span id="linemode-label">Ligne-colonne</span>
+      </div>
+    </div>
+    <div class="setting-group">
+      <div class="toggle-wrap">
+        <label class="toggle" for="sound-toggle">
+          <input type="checkbox" id="sound-toggle" checked aria-label="Activer le retour sonore">
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        </label>
+        <span>Son</span>
+      </div>
+    </div>
+    <div class="setting-group">
+      <div class="toggle-wrap">
+        <label class="toggle" for="voice-toggle">
+          <input type="checkbox" id="voice-toggle" checked aria-label="Activer la lecture vocale">
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        </label>
+        <span>Voix</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTION GRID -->
+  <div id="grid-wrapper">
+    <div id="action-grid" role="grid" aria-label="Grille d'actions" aria-rowcount="3">
+    </div>
+  </div>
+
+</main>
+
+<!-- LIGHT PANEL (Lumière) -->
+<div id="light-panel" aria-hidden="true">
+  <div id="light-label">💡 Lumière allumée</div>
+</div>
+
+<!-- MUSIC OVERLAY -->
+<div id="music-overlay" aria-hidden="true"></div>
+
+<!-- FEEDBACK TOAST -->
+<div id="feedback-toast" role="status" aria-live="polite"></div>
+
+<!-- AIDE PANEL -->
+<div id="aide-panel" role="dialog" aria-modal="true" aria-labelledby="aide-titre">
+  <div id="aide-box">
+    <h2 id="aide-titre">🆘 Aide — Comment utiliser SwitchBoard</h2>
+    <p>SwitchBoard permet de piloter des actions à l'écran avec un ou deux contacteurs physiques (boutons adaptés).</p>
+    <ul>
+      <li><strong>Balayage automatique</strong> : le surlignage avance seul de case en case. Appuyez sur votre contacteur (ou <kbd>Espace</kbd>) pour sélectionner la case en surbrillance.</li>
+      <li><strong>Par étapes</strong> : appuyez sur <kbd>Entrée</kbd> (ou le bouton Avancer) pour avancer manuellement, puis <kbd>Espace</kbd> (ou Sélectionner) pour valider.</li>
+      <li><strong>Mode ligne-colonne</strong> : activez-le pour d'abord sélectionner une ligne entière, puis une colonne dans cette ligne.</li>
+      <li><strong>Temps d'acceptation</strong> : délai avant qu'une pression soit prise en compte (évite les faux-contacts).</li>
+    </ul>
+    <p>Les boutons à l'écran (Sélectionner / Avancer) remplacent les contacteurs physiques pour la démonstration.</p>
+    <button id="btn-aide-close" autofocus>Fermer</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ========================================================
+     DONNÉES : GRILLE D'ACTIONS
+     ======================================================== */
+  const ACTIONS = [
+    { emoji:'👋', label:'Bonjour',   action:'say',    value:'Bonjour !' },
+    { emoji:'✅', label:'Oui',       action:'say',    value:'Oui.' },
+    { emoji:'❌', label:'Non',       action:'say',    value:'Non.' },
+    { emoji:'🍽️', label:'J\'ai faim', action:'say',   value:'J\'ai faim.' },
+    { emoji:'💧', label:'J\'ai soif', action:'say',   value:'J\'ai soif.' },
+    { emoji:'💡', label:'Lumière',   action:'light',  value:'Lumière' },
+    { emoji:'🎵', label:'Musique',   action:'music',  value:'Musique' },
+    { emoji:'🆘', label:'Aide',      action:'aide',   value:'Aide' },
+    { emoji:'📺', label:'Télé',      action:'say',    value:'Allumer la télé, s\'il vous plaît.' },
+    { emoji:'🌡️', label:'Chaud',     action:'say',    value:'J\'ai chaud.' },
+    { emoji:'🥶', label:'Froid',     action:'say',    value:'J\'ai froid.' },
+    { emoji:'😴', label:'Fatigué',   action:'say',    value:'Je suis fatigué.' },
+    { emoji:'😣', label:'Douleur',   action:'say',    value:'J\'ai mal.' },
+    { emoji:'🚶', label:'Sortir',    action:'say',    value:'Je voudrais sortir.' },
+    { emoji:'😊', label:'Merci',     action:'say',    value:'Merci !' },
+  ];
+
+  /* ========================================================
+     STATE
+     ======================================================== */
+  let scanIndex   = 0;   // index de la cellule actuellement surlignée
+  let scanRunning = false;
+  let scanTimer   = null;
+  let scanMode    = 'auto';   // 'auto' | 'step'
+  let lineMode    = false;
+  let scanSpeed   = 1500;
+  let dwellTime   = 0;
+  let dwellTimer  = null;
+  let dwellPending = false;
+  let lightOn     = false;
+  let soundEnabled = true;
+  let voiceEnabled = true;
+  let ttsVoice    = null;
+  let activeFocusTrap = null;
+
+  // Ligne-colonne state
+  let lcPhase     = 'row'; // 'row' | 'col'
+  let lcRowIndex  = 0;
+  let lcColIndex  = 0;
+  let cols        = 1;
+  let rows        = 1;
+
+  /* ========================================================
+     AUDIO CONTEXT
+     ======================================================== */
+  let audioCtx = null;
+  function getAudio() {
+    if (!audioCtx) {
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+    }
+    return audioCtx;
+  }
+
+  function beep(freq, dur, vol, type) {
+    if (!soundEnabled) return;
+    const ctx = getAudio();
+    if (!ctx) return;
+    try {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(vol || 0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + dur);
+    } catch(e) {}
+  }
+
+  function beepStep()   { beep(440, 0.06, 0.06, 'sine'); }
+  function beepSelect() { beep(660, 0.18, 0.12, 'triangle'); }
+  function beepRowSel() { beep(550, 0.10, 0.09, 'sine'); }
+
+  /* ========================================================
+     TTS
+     ======================================================== */
+  function initVoices() {
+    const voices = window.speechSynthesis.getVoices();
+    ttsVoice = voices.find(v => v.lang.startsWith('fr')) || voices[0] || null;
+  }
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.addEventListener('voiceschanged', initVoices);
+    initVoices();
+  }
+
+  function speak(text) {
+    if (!voiceEnabled) return;
+    if (!('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      if (ttsVoice) u.voice = ttsVoice;
+      u.lang = 'fr-FR';
+      u.rate = 1.1;
+      window.speechSynthesis.speak(u);
+    } catch(e) {}
+  }
+
+  /* ========================================================
+     ARIA LIVE
+     ======================================================== */
+  const ariaLive = document.getElementById('aria-live');
+  function announce(msg) {
+    ariaLive.textContent = '';
+    requestAnimationFrame(() => { ariaLive.textContent = msg; });
+  }
+
+  /* ========================================================
+     TOAST
+     ======================================================== */
+  const toast = document.getElementById('feedback-toast');
+  let toastTimer = null;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+
+  /* ========================================================
+     BUILD GRID
+     ======================================================== */
+  const grid = document.getElementById('action-grid');
+  let cells = [];
+
+  function buildGrid() {
+    grid.innerHTML = '';
+    cells = [];
+    ACTIONS.forEach((a, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'grid-cell';
+      btn.setAttribute('role', 'gridcell');
+      btn.setAttribute('tabindex', '0');
+      btn.setAttribute('aria-label', a.label + (a.action === 'light' ? ' — basculer la lumière' : a.action === 'music' ? ' — jouer de la musique' : a.action === 'aide' ? ' — ouvrir l\'aide' : ''));
+      btn.dataset.index = i;
+      btn.innerHTML =
+        '<span class="cell-emoji" aria-hidden="true">' + a.emoji + '</span>' +
+        '<span class="cell-label">' + a.label + '</span>';
+      btn.addEventListener('click', () => onCellClick(i));
+      btn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onCellClick(i);
+        }
+      });
+      grid.appendChild(btn);
+      cells.push(btn);
+    });
+    updateGridDimensions();
+  }
+
+  function updateGridDimensions() {
+    if (!cells.length) return;
+    const containerWidth = grid.getBoundingClientRect().width || 900;
+    const cellWidth = 142; // minmax(130px,1fr) approx
+    cols = Math.max(1, Math.floor(containerWidth / cellWidth));
+    rows = Math.ceil(cells.length / cols);
+  }
+
+  /* ========================================================
+     SCAN HIGHLIGHT
+     ======================================================== */
+  function clearHighlight() {
+    cells.forEach(c => { c.classList.remove('scan-focus', 'scan-row-active'); });
+  }
+
+  function highlightIndex(idx) {
+    clearHighlight();
+    if (idx < 0 || idx >= cells.length) return;
+    cells[idx].classList.add('scan-focus');
+    // announce cell label for screen reader
+    announce(ACTIONS[idx].label);
+    beepStep();
+  }
+
+  function highlightRow(rowIdx) {
+    clearHighlight();
+    const start = rowIdx * cols;
+    for (let c = 0; c < cols && start + c < cells.length; c++) {
+      cells[start + c].classList.add('scan-row-active');
+    }
+    announce('Ligne ' + (rowIdx + 1));
+    beepStep();
+  }
+
+  /* ========================================================
+     SCAN ENGINE
+     ======================================================== */
+  function startScan() {
+    if (scanRunning) return;
+    scanRunning = true;
+    scanIndex = 0;
+    lcPhase = 'row'; lcRowIndex = 0; lcColIndex = 0;
+    document.body.classList.add('scan-running');
+    updateScanStatus();
+    if (scanMode === 'auto') {
+      doAutoStep();
+    } else {
+      // step mode — just highlight first
+      if (lineMode) {
+        highlightRow(lcRowIndex);
+      } else {
+        highlightIndex(scanIndex);
+      }
+    }
+  }
+
+  function stopScan() {
+    scanRunning = false;
+    clearTimeout(scanTimer);
+    clearHighlight();
+    document.body.classList.remove('scan-running');
+    updateScanStatus();
+  }
+
+  function doAutoStep() {
+    if (!scanRunning || scanMode !== 'auto') return;
+    if (lineMode) {
+      highlightRow(lcRowIndex);
+    } else {
+      highlightIndex(scanIndex);
+    }
+    scanTimer = setTimeout(() => {
+      advanceScan();
+      if (scanRunning) doAutoStep();
+    }, scanSpeed);
+  }
+
+  function advanceScan() {
+    if (!scanRunning) return;
+    if (lineMode) {
+      if (lcPhase === 'row') {
+        lcRowIndex = (lcRowIndex + 1) % rows;
+      } else {
+        lcColIndex = (lcColIndex + 1) % Math.min(cols, cells.length - lcRowIndex * cols);
+      }
+    } else {
+      scanIndex = (scanIndex + 1) % cells.length;
+    }
+    if (scanMode === 'step') {
+      if (lineMode) {
+        if (lcPhase === 'row') highlightRow(lcRowIndex);
+        else highlightIndex(lcRowIndex * cols + lcColIndex);
+      } else {
+        highlightIndex(scanIndex);
+      }
+    }
+  }
+
+  function doSelect() {
+    if (!scanRunning) return;
+
+    if (dwellTime > 0) {
+      if (dwellPending) return;
+      dwellPending = true;
+      // show visual indicator (border pulse) without blinking
+      dwellTimer = setTimeout(() => {
+        dwellPending = false;
+        doSelectNow();
+      }, dwellTime);
+      return;
+    }
+    doSelectNow();
+  }
+
+  function doSelectNow() {
+    if (!scanRunning) return;
+    if (lineMode && lcPhase === 'row') {
+      // Select the row, switch to col phase
+      lcPhase = 'col';
+      lcColIndex = 0;
+      beepRowSel();
+      announce('Ligne ' + (lcRowIndex + 1) + ' sélectionnée — choisissez une colonne');
+      clearHighlight();
+      highlightIndex(lcRowIndex * cols + lcColIndex);
+      if (scanMode === 'auto') {
+        clearTimeout(scanTimer);
+        scanTimer = setTimeout(() => {
+          advanceScan();
+          if (scanRunning) doAutoStep();
+        }, scanSpeed);
+      }
+      return;
+    }
+
+    // Actual cell activation
+    let cellIdx;
+    if (lineMode && lcPhase === 'col') {
+      cellIdx = lcRowIndex * cols + lcColIndex;
+      lcPhase = 'row'; // reset
+    } else {
+      cellIdx = scanIndex;
+    }
+
+    if (cellIdx >= 0 && cellIdx < cells.length) {
+      activateCell(cellIdx);
+    }
+  }
+
+  /* ========================================================
+     CELL ACTIVATION
+     ======================================================== */
+  function activateCell(idx) {
+    const cell = cells[idx];
+    const act = ACTIONS[idx];
+    beepSelect();
+
+    // Visual flash
+    cell.classList.remove('cell-activate');
+    void cell.offsetWidth; // reflow
+    cell.classList.add('cell-activate');
+    setTimeout(() => cell.classList.remove('cell-activate'), 300);
+
+    switch (act.action) {
+      case 'say':
+        speak(act.value);
+        announce(act.label + ' : ' + act.value);
+        showToast('💬 ' + act.value);
+        break;
+      case 'light':
+        lightOn = !lightOn;
+        const lp = document.getElementById('light-panel');
+        lp.classList.toggle('light-on', lightOn);
+        const msg = lightOn ? 'Lumière allumée' : 'Lumière éteinte';
+        speak(msg);
+        announce(msg);
+        showToast('💡 ' + msg);
+        break;
+      case 'music':
+        showMusicNotes();
+        speak('Musique');
+        announce('Musique');
+        showToast('🎵 Musique !');
+        break;
+      case 'aide':
+        openAide();
+        break;
+    }
+  }
+
+  function onCellClick(idx) {
+    activateCell(idx);
+  }
+
+  /* ========================================================
+     MUSIC ANIMATION
+     ======================================================== */
+  function showMusicNotes() {
+    const ov = document.getElementById('music-overlay');
+    ov.style.display = 'block';
+    ov.innerHTML = '';
+    const notes = ['♪','♫','♩','♬'];
+    for (let i = 0; i < 5; i++) {
+      const span = document.createElement('span');
+      span.className = 'music-note';
+      span.textContent = notes[i % notes.length];
+      span.style.marginLeft = (i * 14) + 'px';
+      span.style.animationDelay = (i * 0.18) + 's';
+      span.style.fontSize = (2 + i * 0.15) + 'rem';
+      span.style.color = i % 2 === 0 ? '#F4B81C' : '#0F4C81';
+      ov.appendChild(span);
+    }
+    // play a little melody
+    if (soundEnabled && audioCtx) {
+      const melody = [523, 587, 659, 698, 784];
+      melody.forEach((f, i) => {
+        setTimeout(() => beep(f, 0.25, 0.08, 'triangle'), i * 120);
+      });
+    } else if (soundEnabled) {
+      getAudio();
+      const melody = [523, 587, 659, 698, 784];
+      melody.forEach((f, i) => {
+        setTimeout(() => beep(f, 0.25, 0.08, 'triangle'), i * 120);
+      });
+    }
+    setTimeout(() => { ov.style.display = 'none'; ov.innerHTML = ''; }, 2200);
+  }
+
+  /* ========================================================
+     AIDE MODAL
+     ======================================================== */
+  function openAide() {
+    const panel = document.getElementById('aide-panel');
+    panel.classList.add('open');
+    panel.querySelector('#btn-aide-close').focus();
+    const prevFocus = document.activeElement;
+    activeFocusTrap = { panel, prevFocus };
+    panel.addEventListener('keydown', trapFocus);
+    panel.addEventListener('keydown', aideEsc);
+    if (scanRunning) stopScan();
+  }
+
+  function closeAide() {
+    const panel = document.getElementById('aide-panel');
+    panel.classList.remove('open');
+    panel.removeEventListener('keydown', trapFocus);
+    panel.removeEventListener('keydown', aideEsc);
+    if (activeFocusTrap && activeFocusTrap.prevFocus) {
+      activeFocusTrap.prevFocus.focus();
+    }
+    activeFocusTrap = null;
+  }
+
+  function trapFocus(e) {
+    if (e.key !== 'Tab') return;
+    const focusable = [...document.getElementById('aide-box').querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')];
+    if (!focusable.length) return;
+    const first = focusable[0], last = focusable[focusable.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  }
+
+  function aideEsc(e) {
+    if (e.key === 'Escape') { e.preventDefault(); closeAide(); }
+  }
+
+  document.getElementById('btn-aide-close').addEventListener('click', closeAide);
+  document.getElementById('aide-panel').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('aide-panel')) closeAide();
+  });
+
+  /* ========================================================
+     STATUS BAR
+     ======================================================== */
+  function updateScanStatus() {
+    const txt = document.getElementById('scan-status-text');
+    const btn = document.getElementById('btn-scan-toggle');
+    if (scanRunning) {
+      txt.textContent = scanMode === 'auto' ? 'Balayage automatique en cours…' : 'Balayage par étapes actif';
+      btn.setAttribute('aria-pressed', 'true');
+      btn.textContent = '⏹ Arrêter';
+    } else {
+      txt.textContent = 'Balayage arrêté';
+      btn.setAttribute('aria-pressed', 'false');
+      btn.textContent = '▶ Balayage auto';
+    }
+  }
+
+  /* ========================================================
+     CONTROLS
+     ======================================================== */
+  document.getElementById('btn-scan-toggle').addEventListener('click', () => {
+    getAudio(); // unlock audio on user gesture
+    if (scanRunning) {
+      stopScan();
+    } else {
+      startScan();
+    }
+  });
+
+  document.getElementById('btn-advance').addEventListener('click', () => {
+    getAudio();
+    if (!scanRunning) { startScan(); return; }
+    clearTimeout(scanTimer);
+    advanceScan();
+    if (scanMode === 'auto') {
+      doAutoStep();
+    }
+  });
+
+  document.getElementById('btn-select').addEventListener('click', () => {
+    getAudio();
+    if (!scanRunning) return;
+    doSelect();
+  });
+
+  /* ========================================================
+     KEYBOARD
+     ======================================================== */
+  document.addEventListener('keydown', (e) => {
+    // Don't intercept inside settings controls or modal
+    if (activeFocusTrap) return;
+    const tag = document.activeElement ? document.activeElement.tagName : '';
+    if (['INPUT','SELECT','TEXTAREA'].includes(tag)) return;
+
+    if (e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault();
+      getAudio();
+      if (!scanRunning) return;
+      doSelect();
+    } else if (e.key === 'Enter') {
+      // Only intercept Enter for scan advance if not on a button/grid-cell
+      if (document.activeElement && document.activeElement.classList.contains('grid-cell')) return;
+      if (document.activeElement && document.activeElement.tagName === 'BUTTON' && !document.activeElement.id.startsWith('btn-select') && !document.activeElement.id.startsWith('btn-advance')) return;
+      e.preventDefault();
+      getAudio();
+      if (!scanRunning) { startScan(); return; }
+      clearTimeout(scanTimer);
+      advanceScan();
+      if (scanMode === 'auto') doAutoStep();
+    }
+  });
+
+  /* ========================================================
+     SETTINGS
+     ======================================================== */
+  const speedRange = document.getElementById('speed-range');
+  const speedVal   = document.getElementById('speed-val');
+  speedRange.addEventListener('input', () => {
+    scanSpeed = parseInt(speedRange.value);
+    const s = (scanSpeed / 1000).toFixed(1).replace('.', ',');
+    speedVal.textContent = s + ' s';
+  });
+
+  const dwellRange = document.getElementById('dwell-range');
+  const dwellVal   = document.getElementById('dwell-val');
+  dwellRange.addEventListener('input', () => {
+    dwellTime = parseInt(dwellRange.value);
+    dwellVal.textContent = dwellTime + ' ms';
+  });
+
+  const modeSelect = document.getElementById('mode-select');
+  modeSelect.addEventListener('change', () => {
+    scanMode = modeSelect.value;
+    if (scanRunning) {
+      stopScan();
+      startScan();
+    }
+    document.getElementById('btn-scan-toggle').textContent = scanMode === 'auto' ? '▶ Balayage auto' : '▶ Par étapes';
+  });
+
+  const linemodeToggle = document.getElementById('linemode-toggle');
+  linemodeToggle.addEventListener('change', () => {
+    lineMode = linemodeToggle.checked;
+    if (scanRunning) { stopScan(); startScan(); }
+  });
+
+  const soundToggle = document.getElementById('sound-toggle');
+  soundToggle.addEventListener('change', () => {
+    soundEnabled = soundToggle.checked;
+    getAudio();
+  });
+
+  const voiceToggle = document.getElementById('voice-toggle');
+  voiceToggle.addEventListener('change', () => {
+    voiceEnabled = voiceToggle.checked;
+  });
+
+  /* ========================================================
+     RESIZE
+     ======================================================== */
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      updateGridDimensions();
+      if (scanRunning) {
+        stopScan();
+        startScan();
+      }
+    }, 250);
+  });
+
+  /* ========================================================
+     INIT
+     ======================================================== */
+  buildGrid();
+  updateScanStatus();
+
+  // Accessibility: grid cells should not receive default tab focus when scan is active
+  // (they're operated by scan, not tab)
+  // But we keep tabindex=0 so keyboard users without scan can still use them directly.
+
+})();
+</script>
+</body>
+</html>

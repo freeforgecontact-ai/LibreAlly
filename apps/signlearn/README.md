@@ -5,6 +5,9 @@
 
 **Statut :** 📋 Spécification complète ✓ · 💻 Code à venir
 
+
+▶ **Démo en ligne** : https://freeforgecontact-ai.github.io/LibreAlly/signlearn/ · **Démo locale** : [../../site/signlearn/](../../site/signlearn/)
+
 ---
 
 ## Spécification

@@ -327,6 +327,63 @@
       border-color: var(--c-primary);
     }
 
+    /* Lien démo de chaque carte */
+    .app-demo-link {
+      display: inline-flex;
+      align-items: center;
+      font-size: .88rem;
+      font-weight: 700;
+      text-decoration: none;
+      align-self: flex-start;
+      background: #F4B81C;
+      color: #0A3A63;
+      padding: 8px 16px;
+      border-radius: var(--radius-pill);
+      min-height: 44px;
+      min-width: 44px;
+      border: 2px solid transparent;
+      transition: background .15s ease, border-color .15s ease;
+    }
+    .app-demo-link:hover,
+    .app-demo-link:focus-visible {
+      background: #FFD45E;
+      border-color: #0A3A63;
+      outline: 2px solid #0A3A63;
+      outline-offset: 2px;
+    }
+
+    .app-card-actions {
+      display: flex;
+      gap: var(--sp-3);
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: auto;
+    }
+
+    /* Thème sombre — bouton démo */
+    [data-theme="dark"] .app-demo-link {
+      background: #F4B81C;
+      color: #16202E;
+    }
+    [data-theme="dark"] .app-demo-link:hover,
+    [data-theme="dark"] .app-demo-link:focus-visible {
+      background: #FFD45E;
+      border-color: #16202E;
+      outline-color: #FFD45E;
+    }
+
+    /* Thème fort contraste */
+    [data-theme="contrast"] .app-demo-link {
+      background: #F4B81C;
+      color: #000;
+      border-color: #000;
+    }
+    [data-theme="contrast"] .app-demo-link:hover,
+    [data-theme="contrast"] .app-demo-link:focus-visible {
+      background: #FFD45E;
+      outline-color: #000;
+    }
+
     /* =========================================================
        SECTION CONTRIBUER
        ========================================================= */
@@ -653,6 +710,7 @@
     <div class="section-wrap">
       <div class="apps-section" id="apps">
         <h2 data-fr="Les 15 applications" data-en="The 15 applications">Les 15 applications</h2>
+        <p style="text-align:center;margin:-1.5rem 0 2rem;font-size:1.05rem;color:var(--c-muted);font-weight:600;" data-fr="15 démos fonctionnelles, gratuites et hors-ligne" data-en="15 functional demos, free and offline">15 démos fonctionnelles, gratuites et hors-ligne</p>
 
         <!-- === COMMUNICATION === -->
         <section class="domain-section" aria-labelledby="domain-communication">
@@ -676,14 +734,22 @@
               <p class="app-phrase" data-fr="Tableau de symboles + texte qui parle à votre place" data-en="Symbol board and text-to-speech that speaks for you">
                 Tableau de symboles + texte qui parle à votre place
               </p>
-              <a
-                class="app-spec-link"
-                href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/01-parlo-aac.md"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-fr="Spécification →" data-en="Specification →"
-                aria-label="Spécification de Parlo (ouvre dans un nouvel onglet)"
-              >Spécification →</a>
+              <div class="app-card-actions">
+                <a
+                  class="app-demo-link"
+                  href="./parlo/"
+                  data-fr="▶ Démo" data-en="▶ Demo"
+                  aria-label="Ouvrir la démo de Parlo"
+                >▶ Démo</a>
+                <a
+                  class="app-spec-link"
+                  href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/01-parlo-aac.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-fr="Spécification →" data-en="Specification →"
+                  aria-label="Spécification de Parlo (ouvre dans un nouvel onglet)"
+                >Spécification →</a>
+              </div>
             </article>
 
           </div>
@@ -711,14 +777,22 @@
               <p class="app-phrase" data-fr="Loupe d'écran, contrastes et thèmes adaptés" data-en="Screen magnifier, contrast adjustment and adapted themes">
                 Loupe d'écran, contrastes et thèmes adaptés
               </p>
-              <a
-                class="app-spec-link"
-                href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/02-lumen-malvoyance.md"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-fr="Spécification →" data-en="Specification →"
-                aria-label="Spécification de Lumen (ouvre dans un nouvel onglet)"
-              >Spécification →</a>
+              <div class="app-card-actions">
+                <a
+                  class="app-demo-link"
+                  href="./lumen/"
+                  data-fr="▶ Démo" data-en="▶ Demo"
+                  aria-label="Ouvrir la démo de Lumen"
+                >▶ Démo</a>
+                <a
+                  class="app-spec-link"
+                  href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/02-lumen-malvoyance.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-fr="Spécification →" data-en="Specification →"
+                  aria-label="Spécification de Lumen (ouvre dans un nouvel onglet)"
+                >Spécification →</a>
+              </div>
             </article>
 
             <article class="app-card" aria-labelledby="app-voxread-name">
@@ -735,14 +809,22 @@
               <p class="app-phrase" data-fr="Lit à voix haute documents et texte capté à la caméra (OCR)" data-en="Reads documents and camera-captured text aloud with OCR">
                 Lit à voix haute documents et texte capté à la caméra (OCR)
               </p>
-              <a
-                class="app-spec-link"
-                href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/03-voxread-lecture.md"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-fr="Spécification →" data-en="Specification →"
-                aria-label="Spécification de VoxRead (ouvre dans un nouvel onglet)"
-              >Spécification →</a>
+              <div class="app-card-actions">
+                <a
+                  class="app-demo-link"
+                  href="./voxread/"
+                  data-fr="▶ Démo" data-en="▶ Demo"
+                  aria-label="Ouvrir la démo de VoxRead"
+                >▶ Démo</a>
+                <a
+                  class="app-spec-link"
+                  href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/03-voxread-lecture.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-fr="Spécification →" data-en="Specification →"
+                  aria-label="Spécification de VoxRead (ouvre dans un nouvel onglet)"
+                >Spécification →</a>
+              </div>
             </article>
 
             <article class="app-card" aria-labelledby="app-coloraide-name">
@@ -759,14 +841,22 @@
               <p class="app-phrase" data-fr="Corrige les couleurs et identifie une teinte à la demande" data-en="Corrects colours and identifies any hue on demand">
                 Corrige les couleurs et identifie une teinte à la demande
               </p>
-              <a
-                class="app-spec-link"
-                href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/04-coloraide-daltonisme.md"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-fr="Spécification →" data-en="Specification →"
-                aria-label="Spécification de ColorAide (ouvre dans un nouvel onglet)"
-              >Spécification →</a>
+              <div class="app-card-actions">
+                <a
+                  class="app-demo-link"
+                  href="./coloraide/"
+                  data-fr="▶ Démo" data-en="▶ Demo"
+                  aria-label="Ouvrir la démo de ColorAide"
+                >▶ Démo</a>
+                <a
+                  class="app-spec-link"
+                  href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/04-coloraide-daltonisme.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-fr="Spécification →" data-en="Specification →"
+                  aria-label="Spécification de ColorAide (ouvre dans un nouvel onglet)"
+                >Spécification →</a>
+              </div>
             </article>
 
           </div>
@@ -794,14 +884,22 @@
               <p class="app-phrase" data-fr="Sous-titres en direct, calculés sur l'appareil" data-en="Real-time captions, computed entirely on-device">
                 Sous-titres en direct, calculés sur l'appareil
               </p>
-              <a
-                class="app-spec-link"
-                href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/05-captilive-soustitres.md"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-fr="Spécification →" data-en="Specification →"
-                aria-label="Spécification de CaptiLive (ouvre dans un nouvel onglet)"
-              >Spécification →</a>
+              <div class="app-card-actions">
+                <a
+                  class="app-demo-link"
+                  href="./captilive/"
+                  data-fr="▶ Démo" data-en="▶ Demo"
+                  aria-label="Ouvrir la démo de CaptiLive"
+                >▶ Démo</a>
+                <a
+                  class="app-spec-link"
+                  href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/05-captilive-soustitres.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-fr="Spécification →" data-en="Specification →"
+                  aria-label="Spécification de CaptiLive (ouvre dans un nouvel onglet)"
+                >Spécification →</a>
+              </div>
             </article>
 
             <article class="app-card" aria-labelledby="app-soundwatch-name">
@@ -818,14 +916,22 @@
               <p class="app-phrase" data-fr="Reconnaît les sons importants → alerte visuelle/vibrante" data-en="Recognises important sounds and triggers visual or vibration alerts">
                 Reconnaît les sons importants → alerte visuelle/vibrante
               </p>
-              <a
-                class="app-spec-link"
-                href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/06-soundwatch-alertes.md"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-fr="Spécification →" data-en="Specification →"
-                aria-label="Spécification de SoundWatch (ouvre dans un nouvel onglet)"
-              >Spécification →</a>
+              <div class="app-card-actions">
+                <a
+                  class="app-demo-link"
+                  href="./soundwatch/"
+                  data-fr="▶ Démo" data-en="▶ Demo"
+                  aria-label="Ouvrir la démo de SoundWatch"
+                >▶ Démo</a>
+                <a
+                  class="app-spec-link"
+                  href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/06-soundwatch-alertes.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-fr="Spécification →" data-en="Specification →"
+                  aria-label="Spécification de SoundWatch (ouvre dans un nouvel onglet)"
+                >Spécification →</a>
+              </div>
             </article>
 
             <article class="app-card" aria-labelledby="app-signlearn-name">
@@ -842,14 +948,22 @@
               <p class="app-phrase" data-fr="Apprentissage et dictionnaire de langue des signes" data-en="Sign language learning tool and dictionary">
                 Apprentissage et dictionnaire de langue des signes
               </p>
-              <a
-                class="app-spec-link"
-                href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/07-signlearn-langue-signes.md"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-fr="Spécification →" data-en="Specification →"
-                aria-label="Spécification de SignLearn (ouvre dans un nouvel onglet)"
-              >Spécification →</a>
+              <div class="app-card-actions">
+                <a
+                  class="app-demo-link"
+                  href="./signlearn/"
+                  data-fr="▶ Démo" data-en="▶ Demo"
+                  aria-label="Ouvrir la démo de SignLearn"
+                >▶ Démo</a>
+                <a
+                  class="app-spec-link"
+                  href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/07-signlearn-langue-signes.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-fr="Spécification →" data-en="Specification →"
+                  aria-label="Spécification de SignLearn (ouvre dans un nouvel onglet)"
+                >Spécification →</a>
+              </div>
             </article>
 
           </div>
@@ -877,14 +991,22 @@
               <p class="app-phrase" data-fr="Pilotage par contacteur et balayage (scanning)" data-en="Switch-access and scanning control for the entire device">
                 Pilotage par contacteur et balayage (scanning)
               </p>
-              <a
-                class="app-spec-link"
-                href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/08-switchboard-contacteur.md"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-fr="Spécification →" data-en="Specification →"
-                aria-label="Spécification de SwitchBoard (ouvre dans un nouvel onglet)"
-              >Spécification →</a>
+              <div class="app-card-actions">
+                <a
+                  class="app-demo-link"
+                  href="./switchboard/"
+                  data-fr="▶ Démo" data-en="▶ Demo"
+                  aria-label="Ouvrir la démo de SwitchBoard"
+                >▶ Démo</a>
+                <a
+                  class="app-spec-link"
+                  href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/08-switchboard-contacteur.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-fr="Spécification →" data-en="Specification →"
+                  aria-label="Spécification de SwitchBoard (ouvre dans un nouvel onglet)"
+                >Spécification →</a>
+              </div>
             </article>
 
             <article class="app-card" aria-labelledby="app-gazetype-name">
@@ -901,14 +1023,22 @@
               <p class="app-phrase" data-fr="Clavier piloté au regard ou à la tête, par webcam" data-en="Keyboard controlled by gaze or head movement via webcam">
                 Clavier piloté au regard ou à la tête, par webcam
               </p>
-              <a
-                class="app-spec-link"
-                href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/09-gazetype-occulaire.md"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-fr="Spécification →" data-en="Specification →"
-                aria-label="Spécification de GazeType (ouvre dans un nouvel onglet)"
-              >Spécification →</a>
+              <div class="app-card-actions">
+                <a
+                  class="app-demo-link"
+                  href="./gazetype/"
+                  data-fr="▶ Démo" data-en="▶ Demo"
+                  aria-label="Ouvrir la démo de GazeType"
+                >▶ Démo</a>
+                <a
+                  class="app-spec-link"
+                  href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/09-gazetype-occulaire.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-fr="Spécification →" data-en="Specification →"
+                  aria-label="Spécification de GazeType (ouvre dans un nouvel onglet)"
+                >Spécification →</a>
+              </div>
             </article>
 
             <article class="app-card" aria-labelledby="app-steadytouch-name">
@@ -925,14 +1055,22 @@
               <p class="app-phrase" data-fr="Lisse les tremblements, agrandit les cibles" data-en="Smooths tremors and enlarges touch targets">
                 Lisse les tremblements, agrandit les cibles
               </p>
-              <a
-                class="app-spec-link"
-                href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/10-steadytouch-tremblements.md"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-fr="Spécification →" data-en="Specification →"
-                aria-label="Spécification de SteadyTouch (ouvre dans un nouvel onglet)"
-              >Spécification →</a>
+              <div class="app-card-actions">
+                <a
+                  class="app-demo-link"
+                  href="./steadytouch/"
+                  data-fr="▶ Démo" data-en="▶ Demo"
+                  aria-label="Ouvrir la démo de SteadyTouch"
+                >▶ Démo</a>
+                <a
+                  class="app-spec-link"
+                  href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/10-steadytouch-tremblements.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-fr="Spécification →" data-en="Specification →"
+                  aria-label="Spécification de SteadyTouch (ouvre dans un nouvel onglet)"
+                >Spécification →</a>
+              </div>
             </article>
 
           </div>
@@ -960,14 +1098,22 @@
               <p class="app-phrase" data-fr="Lecture adaptée : police, espacement, syllabes, lecture vocale" data-en="Adapted reading: custom font, spacing, syllable highlighting, text-to-speech">
                 Lecture adaptée : police, espacement, syllabes, lecture vocale
               </p>
-              <a
-                class="app-spec-link"
-                href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/11-dysreader-dyslexie.md"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-fr="Spécification →" data-en="Specification →"
-                aria-label="Spécification de DysReader (ouvre dans un nouvel onglet)"
-              >Spécification →</a>
+              <div class="app-card-actions">
+                <a
+                  class="app-demo-link"
+                  href="./dysreader/"
+                  data-fr="▶ Démo" data-en="▶ Demo"
+                  aria-label="Ouvrir la démo de DysReader"
+                >▶ Démo</a>
+                <a
+                  class="app-spec-link"
+                  href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/11-dysreader-dyslexie.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-fr="Spécification →" data-en="Specification →"
+                  aria-label="Spécification de DysReader (ouvre dans un nouvel onglet)"
+                >Spécification →</a>
+              </div>
             </article>
 
             <article class="app-card" aria-labelledby="app-mathease-name">
@@ -984,14 +1130,22 @@
               <p class="app-phrase" data-fr="Maths visuelles, étape par étape, objets manipulables" data-en="Visual maths, step-by-step, with manipulable objects">
                 Maths visuelles, étape par étape, objets manipulables
               </p>
-              <a
-                class="app-spec-link"
-                href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/12-mathease-dyscalculie.md"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-fr="Spécification →" data-en="Specification →"
-                aria-label="Spécification de MathEase (ouvre dans un nouvel onglet)"
-              >Spécification →</a>
+              <div class="app-card-actions">
+                <a
+                  class="app-demo-link"
+                  href="./mathease/"
+                  data-fr="▶ Démo" data-en="▶ Demo"
+                  aria-label="Ouvrir la démo de MathEase"
+                >▶ Démo</a>
+                <a
+                  class="app-spec-link"
+                  href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/12-mathease-dyscalculie.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-fr="Spécification →" data-en="Specification →"
+                  aria-label="Spécification de MathEase (ouvre dans un nouvel onglet)"
+                >Spécification →</a>
+              </div>
             </article>
 
             <article class="app-card" aria-labelledby="app-dayflow-name">
@@ -1008,14 +1162,22 @@
               <p class="app-phrase" data-fr="Emploi du temps visuel et découpage des tâches" data-en="Visual daily schedule and step-by-step task breakdown">
                 Emploi du temps visuel et découpage des tâches
               </p>
-              <a
-                class="app-spec-link"
-                href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/13-dayflow-routines.md"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-fr="Spécification →" data-en="Specification →"
-                aria-label="Spécification de DayFlow (ouvre dans un nouvel onglet)"
-              >Spécification →</a>
+              <div class="app-card-actions">
+                <a
+                  class="app-demo-link"
+                  href="./dayflow/"
+                  data-fr="▶ Démo" data-en="▶ Demo"
+                  aria-label="Ouvrir la démo de DayFlow"
+                >▶ Démo</a>
+                <a
+                  class="app-spec-link"
+                  href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/13-dayflow-routines.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-fr="Spécification →" data-en="Specification →"
+                  aria-label="Spécification de DayFlow (ouvre dans un nouvel onglet)"
+                >Spécification →</a>
+              </div>
             </article>
 
             <article class="app-card" aria-labelledby="app-calmspace-name">
@@ -1032,14 +1194,22 @@
               <p class="app-phrase" data-fr="Régulation sensorielle et émotionnelle" data-en="Sensory and emotional self-regulation">
                 Régulation sensorielle et émotionnelle
               </p>
-              <a
-                class="app-spec-link"
-                href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/14-calmspace-sensoriel.md"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-fr="Spécification →" data-en="Specification →"
-                aria-label="Spécification de CalmSpace (ouvre dans un nouvel onglet)"
-              >Spécification →</a>
+              <div class="app-card-actions">
+                <a
+                  class="app-demo-link"
+                  href="./calmspace/"
+                  data-fr="▶ Démo" data-en="▶ Demo"
+                  aria-label="Ouvrir la démo de CalmSpace"
+                >▶ Démo</a>
+                <a
+                  class="app-spec-link"
+                  href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/14-calmspace-sensoriel.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-fr="Spécification →" data-en="Specification →"
+                  aria-label="Spécification de CalmSpace (ouvre dans un nouvel onglet)"
+                >Spécification →</a>
+              </div>
             </article>
 
           </div>
@@ -1067,14 +1237,22 @@
               <p class="app-phrase" data-fr="Rappels, médicaments, aide-mémoire visages et noms" data-en="Reminders, medication tracking, face and name memory aid">
                 Rappels, médicaments, aide-mémoire visages et noms
               </p>
-              <a
-                class="app-spec-link"
-                href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/15-remindwell-memoire.md"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-fr="Spécification →" data-en="Specification →"
-                aria-label="Spécification de RemindWell (ouvre dans un nouvel onglet)"
-              >Spécification →</a>
+              <div class="app-card-actions">
+                <a
+                  class="app-demo-link"
+                  href="./remindwell/"
+                  data-fr="▶ Démo" data-en="▶ Demo"
+                  aria-label="Ouvrir la démo de RemindWell"
+                >▶ Démo</a>
+                <a
+                  class="app-spec-link"
+                  href="https://github.com/freeforgecontact-ai/LibreAlly/blob/main/docs/apps/15-remindwell-memoire.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-fr="Spécification →" data-en="Specification →"
+                  aria-label="Spécification de RemindWell (ouvre dans un nouvel onglet)"
+                >Spécification →</a>
+              </div>
             </article>
 
           </div>

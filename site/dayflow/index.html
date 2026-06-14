@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DayFlow — Emploi du temps visuel | LibreA11y</title>
+<meta name="description" content="DayFlow : organisez votre journée étape par étape, avec minuteur et lecture vocale. Démo hors-ligne, aucune donnée envoyée.">
+<style>
+/* ===== VARIABLES ===== */
+:root {
+  --marine:    #0F4C81;
+  --marine-dk: #0A3A63;
+  --marine-lt: #1E63C7;
+  --or:        #F4B81C;
+  --or-lt:     #FFD45E;
+  --or-dk:     #7D5A00;
+  --encre:     #16202E;
+  --encre-soft:#3A4659;
+  --muted:     #5B6678;
+  --fond:      #F7F9FC;
+  --surface:   #FFFFFF;
+  --border:    #D0D9E8;
+  --success:   #1E7F4F;
+  --success-bg:#E8F7EF;
+  --focus:     3px solid #1E63C7;
+  --radius:    14px;
+  --radius-sm: 8px;
+  --radius-pill:999px;
+  --shadow:    0 2px 10px rgba(15,76,129,0.12);
+  --shadow-md: 0 4px 20px rgba(15,76,129,0.18);
+  --tr:        0.18s ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--fond);
+  color: var(--encre);
+  font-size: 18px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ===== SKIP LINK ===== */
+.skip-link {
+  position: absolute; left: -9999px; top: 0;
+  background: var(--marine); color: #fff;
+  padding: 10px 20px; z-index: 9999;
+  border-radius: 0 0 var(--radius-sm) 0;
+  font-weight: 700;
+  text-decoration: none;
+}
+.skip-link:focus { left: 0; outline: none; }
+
+/* ===== FOCUS ===== */
+:focus-visible {
+  outline: var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ===== HEADER ===== */
+#app-header {
+  background: var(--marine);
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 10px rgba(10,58,99,0.3);
+  position: sticky; top: 0; z-index: 100;
+  flex-wrap: wrap;
+}
+#header-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+#back-link {
+  color: var(--or-lt);
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  min-height: 48px;
+  white-space: nowrap;
+  transition: background var(--tr);
+}
+#back-link:hover, #back-link:focus-visible { background: rgba(255,255,255,0.15); }
+#app-title { font-size: 1.35rem; font-weight: 800; }
+#header-notice {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.3;
+  text-align: right;
+}
+
+/* ===== MAIN ===== */
+#main-content {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 16px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* ===== PANNEAU MAINTENANT / ENSUITE ===== */
+#panel-now {
+  background: var(--marine);
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 540px) { #panel-now { grid-template-columns: 1fr; } }
+
+.now-block { display: flex; flex-direction: column; gap: 6px; }
+.now-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  opacity: .75;
+}
+.now-emoji { font-size: 2.4rem; line-height: 1; }
+.now-text { font-size: 1.2rem; font-weight: 700; }
+.now-time { font-size: 0.9rem; opacity: .8; }
+
+#block-current { border-right: 1px solid rgba(255,255,255,0.2); padding-right: 16px; }
+@media (max-width: 540px) { #block-current { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.2); padding-right: 0; padding-bottom: 14px; } }
+
+.now-speak-btn {
+  margin-top: 10px;
+  background: var(--or);
+  color: var(--marine-dk);
+  border: none; border-radius: var(--radius-pill);
+  font: inherit; font-size: 0.9rem; font-weight: 700;
+  padding: 10px 18px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 48px;
+  align-self: flex-start;
+  transition: background var(--tr);
+}
+.now-speak-btn:hover { background: var(--or-lt); }
+
+.none-msg { opacity: .7; font-style: italic; font-size: 1rem; }
+
+/* ===== MINUTEUR ===== */
+#timer-section {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+#timer-section h2 { font-size: 1rem; font-weight: 700; color: var(--marine); }
+
+#timer-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+#timer-controls label { font-size: 0.9rem; color: var(--encre-soft); }
+#timer-minutes {
+  width: 72px; padding: 8px 10px;
+  border: 2px solid var(--border); border-radius: var(--radius-sm);
+  font: inherit; font-size: 1rem;
+  color: var(--encre);
+  background: var(--fond);
+  min-height: 48px;
+  text-align: center;
+}
+#timer-minutes:focus { border-color: var(--marine-lt); }
+
+.btn-timer {
+  background: var(--marine);
+  color: #fff;
+  border: none; border-radius: var(--radius-pill);
+  font: inherit; font-size: 0.9rem; font-weight: 700;
+  padding: 10px 18px;
+  cursor: pointer;
+  min-height: 48px;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: background var(--tr);
+}
+.btn-timer:hover { background: var(--marine-dk); }
+.btn-timer:disabled { opacity: .5; cursor: not-allowed; }
+.btn-timer-stop {
+  background: transparent;
+  color: var(--marine);
+  border: 2px solid var(--marine);
+  border-radius: var(--radius-pill);
+  font: inherit; font-size: 0.9rem; font-weight: 700;
+  padding: 10px 18px;
+  cursor: pointer;
+  min-height: 48px;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: background var(--tr);
+}
+.btn-timer-stop:hover { background: var(--marine); color: #fff; }
+
+/* Cercle SVG */
+#timer-visual { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+#timer-svg-wrap { position: relative; width: 120px; height: 120px; flex-shrink: 0; }
+#timer-svg-wrap svg { transform: rotate(-90deg); }
+#circle-bg { fill: none; stroke: var(--border); stroke-width: 10; }
+#circle-prog { fill: none; stroke: var(--or); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+@media (prefers-reduced-motion: reduce) {
+  #circle-prog { transition: none; }
+}
+#timer-countdown-text {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-size: 1.35rem; font-weight: 800; color: var(--encre);
+  line-height: 1;
+}
+#timer-label { font-size: 0.9rem; color: var(--muted); }
+#timer-status { font-size: 1rem; font-weight: 700; color: var(--success); min-height: 1.5em; }
+
+/* Compte à rebours numérique seul (reduced-motion) */
+#timer-numeric-only {
+  font-size: 2rem; font-weight: 800; color: var(--encre);
+  display: none;
+}
+
+/* ===== AJOUTER UNE ÉTAPE ===== */
+#add-section {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  box-shadow: var(--shadow);
+}
+#add-section h2 { font-size: 1rem; font-weight: 700; color: var(--marine); margin-bottom: 14px; }
+
+/* Palette emoji */
+#emoji-palette {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;
+}
+.emoji-btn {
+  background: var(--fond);
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: 1.6rem;
+  cursor: pointer;
+  width: 52px; height: 52px;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color var(--tr), background var(--tr);
+  line-height: 1;
+}
+.emoji-btn:hover { background: var(--or-lt); border-color: var(--or); }
+.emoji-btn.selected { border-color: var(--marine); background: var(--marine); color: #fff; }
+.emoji-btn:focus-visible { outline: var(--focus); }
+
+#add-form { display: flex; flex-direction: column; gap: 12px; }
+#add-form .field-row { display: flex; flex-direction: column; gap: 4px; }
+#add-form label { font-size: 0.9rem; font-weight: 600; color: var(--encre-soft); }
+#add-form input[type="text"],
+#add-form input[type="time"] {
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  font: inherit; font-size: 1rem;
+  color: var(--encre);
+  background: var(--fond);
+  min-height: 52px;
+  transition: border-color var(--tr);
+}
+#add-form input:focus { border-color: var(--marine-lt); }
+#add-form .form-actions { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
+
+.btn-add {
+  background: var(--or);
+  color: var(--marine-dk);
+  border: none; border-radius: var(--radius-pill);
+  font: inherit; font-size: 1rem; font-weight: 700;
+  padding: 12px 24px;
+  cursor: pointer;
+  min-height: 56px;
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: background var(--tr);
+}
+.btn-add:hover { background: var(--or-lt); }
+
+/* ===== LISTE DES ÉTAPES ===== */
+#steps-section h2 { font-size: 1rem; font-weight: 700; color: var(--marine); margin-bottom: 14px; }
+
+#steps-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+
+.step-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+  display: flex; align-items: center; gap: 14px;
+  border: 2px solid transparent;
+  transition: border-color var(--tr), opacity var(--tr);
+}
+.step-card.is-current {
+  border-color: var(--or);
+  box-shadow: 0 0 0 3px rgba(244,184,28,0.25);
+}
+.step-card.is-done {
+  opacity: .65;
+}
+.step-card.is-done .step-label { text-decoration: line-through; color: var(--muted); }
+
+.step-emoji-big { font-size: 2rem; flex-shrink: 0; line-height: 1; }
+.step-info { flex: 1; min-width: 0; }
+.step-label { font-size: 1rem; font-weight: 600; word-break: break-word; }
+.step-time { font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+
+.step-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
+
+.step-cb-label {
+  display: flex; align-items: center; gap: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+}
+.step-cb-label:hover { background: var(--fond); }
+.step-cb {
+  width: 24px; height: 24px;
+  accent-color: var(--success);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.btn-icon {
+  background: var(--fond);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 1.1rem;
+  width: 48px; height: 48px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--tr), border-color var(--tr);
+  color: var(--encre);
+}
+.btn-icon:hover { background: var(--marine); color: #fff; border-color: var(--marine); }
+.btn-icon:disabled { opacity: .3; cursor: not-allowed; }
+.btn-icon-del { border-color: transparent; }
+.btn-icon-del:hover { background: #fdecea; border-color: #c0392b; color: #c0392b; }
+
+/* ===== EMPTY STATE ===== */
+#empty-msg {
+  text-align: center; color: var(--muted);
+  padding: 32px; background: var(--surface);
+  border-radius: var(--radius); font-size: 1rem;
+  box-shadow: var(--shadow);
+}
+
+/* ===== LIVE REGION ===== */
+#live-region {
+  position: absolute; left: -9999px; top: auto;
+  width: 1px; height: 1px;
+  overflow: hidden;
+}
+</style>
+</head>
+<body>
+
+<!-- LIEN D'ÉVITEMENT -->
+<a href="#main-content" class="skip-link">Aller au contenu principal</a>
+
+<!-- RÉGION LIVE POUR LECTEURS D'ÉCRAN -->
+<div id="live-region" aria-live="polite" aria-atomic="true" role="status"></div>
+
+<!-- EN-TÊTE -->
+<header id="app-header" role="banner">
+  <div id="header-left">
+    <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y">← LibreA11y</a>
+    <span id="app-title">🗓️ DayFlow — démo</span>
+  </div>
+  <div id="header-notice" aria-label="Informations sur la démo">
+    démo · 100&nbsp;% hors-ligne<br>aucune donnée envoyée
+  </div>
+</header>
+
+<!-- CONTENU PRINCIPAL -->
+<main id="main-content">
+
+  <!-- ── MAINTENANT / ENSUITE ── -->
+  <section aria-labelledby="h-panel" style="margin-bottom:0">
+    <h1 id="h-panel" class="sr-only">Ma journée</h1>
+    <div id="panel-now" role="region" aria-label="Étape actuelle et suivante">
+      <div class="now-block" id="block-current">
+        <span class="now-label">Maintenant</span>
+        <div id="now-emoji" class="now-emoji" aria-hidden="true">—</div>
+        <div id="now-text" class="now-text">
+          <span class="none-msg">Aucune étape en cours</span>
+        </div>
+        <div id="now-time" class="now-time"></div>
+        <button class="now-speak-btn" id="btn-speak-now" aria-label="Lire l'étape actuelle à voix haute">
+          🔊 Lire
+        </button>
+      </div>
+      <div class="now-block" id="block-next" style="padding-left:16px">
+        <span class="now-label">Ensuite</span>
+        <div id="next-emoji" class="now-emoji" aria-hidden="true">—</div>
+        <div id="next-text" class="now-text">
+          <span class="none-msg">Rien de prévu</span>
+        </div>
+        <div id="next-time" class="now-time"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── MINUTEUR ── -->
+  <section aria-labelledby="h-timer" id="timer-section">
+    <h2 id="h-timer">⏱ Minuteur pour cette étape</h2>
+    <div id="timer-controls">
+      <label for="timer-minutes">Durée (minutes)</label>
+      <input type="number" id="timer-minutes" value="5" min="1" max="180" aria-label="Durée en minutes">
+      <button class="btn-timer" id="btn-timer-start" aria-label="Démarrer le minuteur">▶ Démarrer</button>
+      <button class="btn-timer-stop" id="btn-timer-stop" aria-label="Arrêter le minuteur" disabled>■ Arrêter</button>
+    </div>
+    <!-- Visuel normal -->
+    <div id="timer-visual" aria-hidden="true">
+      <div id="timer-svg-wrap">
+        <svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle id="circle-bg" cx="60" cy="60" r="50"/>
+          <circle id="circle-prog" cx="60" cy="60" r="50" stroke-dasharray="314.16" stroke-dashoffset="0"/>
+        </svg>
+        <div id="timer-countdown-text" aria-hidden="true">—</div>
+      </div>
+      <div>
+        <div id="timer-label">Minuteur arrêté</div>
+        <div id="timer-status" aria-live="polite" aria-atomic="true"></div>
+      </div>
+    </div>
+    <!-- Compte à rebours numérique (reduced-motion) -->
+    <div id="timer-numeric-only" aria-live="polite" aria-atomic="true" role="timer"></div>
+  </section>
+
+  <!-- ── AJOUTER UNE ÉTAPE ── -->
+  <section aria-labelledby="h-add" id="add-section">
+    <h2 id="h-add">➕ Ajouter une étape</h2>
+
+    <div id="emoji-palette" role="group" aria-label="Choisir un emoji pour l'étape">
+      <!-- rempli par JS -->
+    </div>
+
+    <form id="add-form" novalidate>
+      <div class="field-row">
+        <label for="input-label">Libellé de l'étape <span aria-hidden="true">*</span></label>
+        <input type="text" id="input-label" placeholder="Ex. : Prendre mon sac" maxlength="80" required autocomplete="off">
+      </div>
+      <div class="field-row">
+        <label for="input-time">Heure (facultatif)</label>
+        <input type="time" id="input-time" aria-label="Heure de l'étape, facultatif">
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-add" aria-label="Ajouter cette étape à ma journée">
+          ✅ Ajouter l'étape
+        </button>
+      </div>
+      <div id="form-error" role="alert" aria-live="assertive" style="color:#c0392b;font-size:0.9rem;min-height:1.4em;margin-top:4px;"></div>
+    </form>
+  </section>
+
+  <!-- ── LISTE DES ÉTAPES ── -->
+  <section aria-labelledby="h-steps" id="steps-section">
+    <h2 id="h-steps">📋 Mes étapes du jour</h2>
+    <div id="empty-msg" hidden>
+      Aucune étape pour l'instant. Ajoutez votre première étape ci-dessus !
+    </div>
+    <ol id="steps-list" aria-label="Liste des étapes de la journée">
+      <!-- rempli par JS -->
+    </ol>
+  </section>
+
+</main>
+
+<!-- ▓▓▓ SCRIPT ▓▓▓ -->
+<script>
+'use strict';
+
+/* ── ÉTAT ── */
+const DEFAULT_STEPS = [
+  { id: uid(), emoji: '⏰', label: 'Se lever', time: '07:00', done: false },
+  { id: uid(), emoji: '🍳', label: 'Petit-déjeuner', time: '07:15', done: false },
+  { id: uid(), emoji: '🪥', label: 'Brosser les dents', time: '07:40', done: false },
+  { id: uid(), emoji: '👕', label: 'S\'habiller', time: '07:50', done: false },
+  { id: uid(), emoji: '🎒', label: 'Partir à l\'école', time: '08:10', done: false },
+];
+
+let steps = load() || DEFAULT_STEPS.map(s => ({ ...s, id: uid() }));
+let selectedEmoji = '⭐';
+let timerInterval = null;
+let timerEnd = 0;
+let timerTotal = 0;
+let reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* Écouter les changements de préférence */
+window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', e => {
+  reducedMotion = e.matches;
+  applyTimerDisplay();
+});
+
+/* ── EMOJIS PALETTE ── */
+const EMOJIS = [
+  '⏰','😴','🍳','🥣','🧃','🪥','🛁','👕','👟','🎒',
+  '🚌','🏫','📚','✏️','🎨','🎮','🍎','🍽️','🛏️','💊',
+  '🧹','🛒','🏃','🧘','📖','💻','🎵','🌙'
+];
+
+/* ── UTILITAIRES ── */
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function save() {
+  try { localStorage.setItem('dayflow-steps', JSON.stringify(steps)); } catch(e) {}
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem('dayflow-steps');
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+function announce(msg) {
+  const el = document.getElementById('live-region');
+  el.textContent = '';
+  requestAnimationFrame(() => { el.textContent = msg; });
+}
+
+function fmt(time) {
+  if (!time) return '';
+  const [h, m] = time.split(':');
+  return h + 'h' + m;
+}
+
+function padTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return m + ':' + String(sec).padStart(2, '0');
+}
+
+/* ── TTS ── */
+let voices = [];
+function loadVoices() {
+  voices = speechSynthesis.getVoices();
+}
+if (typeof speechSynthesis !== 'undefined') {
+  loadVoices();
+  speechSynthesis.addEventListener('voiceschanged', loadVoices);
+}
+
+function speak(text) {
+  if (typeof speechSynthesis === 'undefined') return;
+  speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'fr-FR';
+  const frVoice = voices.find(v => v.lang.startsWith('fr'));
+  if (frVoice) utt.voice = frVoice;
+  utt.rate = 0.92;
+  speechSynthesis.speak(utt);
+}
+
+/* ── RENDU PANNEAU MAINTENANT / ENSUITE ── */
+function getCurrentNext() {
+  const notDone = steps.filter(s => !s.done);
+  return { current: notDone[0] || null, next: notDone[1] || null };
+}
+
+function renderPanel() {
+  const { current, next } = getCurrentNext();
+
+  const nowEmoji = document.getElementById('now-emoji');
+  const nowText  = document.getElementById('now-text');
+  const nowTime  = document.getElementById('now-time');
+
+  if (current) {
+    nowEmoji.textContent = current.emoji;
+    nowText.innerHTML = '<strong>' + esc(current.label) + '</strong>';
+    nowTime.textContent = current.time ? fmt(current.time) : '';
+  } else {
+    nowEmoji.textContent = '🎉';
+    nowText.innerHTML = '<strong>Toutes les étapes sont faites !</strong>';
+    nowTime.textContent = '';
+  }
+
+  const nextEmoji = document.getElementById('next-emoji');
+  const nextText  = document.getElementById('next-text');
+  const nextTime  = document.getElementById('next-time');
+
+  if (next) {
+    nextEmoji.textContent = next.emoji;
+    nextText.innerHTML = '<strong>' + esc(next.label) + '</strong>';
+    nextTime.textContent = next.time ? fmt(next.time) : '';
+  } else {
+    nextEmoji.textContent = '—';
+    nextText.innerHTML = '<span class="none-msg">Rien de prévu</span>';
+    nextTime.textContent = '';
+  }
+}
+
+/* ── RENDU LISTE ── */
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderSteps() {
+  const list = document.getElementById('steps-list');
+  const emptyMsg = document.getElementById('empty-msg');
+  const { current } = getCurrentNext();
+
+  if (steps.length === 0) {
+    list.innerHTML = '';
+    emptyMsg.hidden = false;
+    return;
+  }
+  emptyMsg.hidden = true;
+
+  list.innerHTML = steps.map((step, i) => {
+    const isCurrent = current && current.id === step.id;
+    const isDone = step.done;
+    return `
+      <li class="step-card${isCurrent ? ' is-current' : ''}${isDone ? ' is-done' : ''}"
+          role="listitem"
+          aria-label="${esc(step.label)}${isDone ? ', fait' : ''}${isCurrent ? ', étape en cours' : ''}">
+        <span class="step-emoji-big" aria-hidden="true">${esc(step.emoji)}</span>
+        <div class="step-info">
+          <div class="step-label">${esc(step.label)}</div>
+          ${step.time ? `<div class="step-time">${fmt(step.time)}</div>` : ''}
+        </div>
+        <div class="step-actions">
+          <label class="step-cb-label" title="Marquer comme fait">
+            <input type="checkbox" class="step-cb" data-id="${step.id}" ${isDone ? 'checked' : ''}
+              aria-label="${isDone ? 'Annuler' : 'Marquer comme fait'} : ${esc(step.label)}">
+            <span aria-hidden="true">${isDone ? '✅' : '⬜'}</span>
+          </label>
+          <button class="btn-icon" data-action="up" data-id="${step.id}"
+            aria-label="Monter l'étape : ${esc(step.label)}"
+            ${i === 0 ? 'disabled aria-disabled="true"' : ''}>↑</button>
+          <button class="btn-icon" data-action="down" data-id="${step.id}"
+            aria-label="Descendre l'étape : ${esc(step.label)}"
+            ${i === steps.length - 1 ? 'disabled aria-disabled="true"' : ''}>↓</button>
+          <button class="btn-icon btn-icon-del" data-action="del" data-id="${step.id}"
+            aria-label="Supprimer l'étape : ${esc(step.label)}">🗑</button>
+        </div>
+      </li>`;
+  }).join('');
+
+  /* Délégation d'événements sur la liste */
+  list.querySelectorAll('[data-action]').forEach(btn => {
+    btn.addEventListener('click', onStepAction);
+  });
+  list.querySelectorAll('.step-cb').forEach(cb => {
+    cb.addEventListener('change', onStepCheck);
+  });
+}
+
+function onStepAction(e) {
+  const btn = e.currentTarget;
+  const action = btn.dataset.action;
+  const id = btn.dataset.id;
+  const idx = steps.findIndex(s => s.id === id);
+  if (idx < 0) return;
+
+  if (action === 'up' && idx > 0) {
+    [steps[idx - 1], steps[idx]] = [steps[idx], steps[idx - 1]];
+    announce('Étape remontée : ' + steps[idx - 1].label);
+  } else if (action === 'down' && idx < steps.length - 1) {
+    [steps[idx + 1], steps[idx]] = [steps[idx], steps[idx + 1]];
+    announce('Étape descendue : ' + steps[idx + 1].label);
+  } else if (action === 'del') {
+    const label = steps[idx].label;
+    if (confirm('Supprimer l\'étape « ' + label + ' » ?')) {
+      steps.splice(idx, 1);
+      announce('Étape supprimée : ' + label);
+    }
+  }
+  save(); render();
+}
+
+function onStepCheck(e) {
+  const id = e.currentTarget.dataset.id;
+  const step = steps.find(s => s.id === id);
+  if (!step) return;
+  step.done = e.currentTarget.checked;
+  announce(step.done ? 'Fait : ' + step.label : 'Non fait : ' + step.label);
+  save(); render();
+}
+
+/* ── RENDU GLOBAL ── */
+function render() {
+  renderPanel();
+  renderSteps();
+}
+
+/* ── PALETTE EMOJI ── */
+function renderPalette() {
+  const palette = document.getElementById('emoji-palette');
+  palette.innerHTML = EMOJIS.map(em => `
+    <button type="button" class="emoji-btn${em === selectedEmoji ? ' selected' : ''}"
+      data-emoji="${em}"
+      aria-label="${em}"
+      aria-pressed="${em === selectedEmoji}"
+      title="${em}">
+      ${em}
+    </button>`).join('');
+
+  palette.querySelectorAll('.emoji-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedEmoji = btn.dataset.emoji;
+      renderPalette();
+    });
+  });
+}
+
+/* ── FORMULAIRE ── */
+document.getElementById('add-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const labelInput = document.getElementById('input-label');
+  const timeInput  = document.getElementById('input-time');
+  const errEl      = document.getElementById('form-error');
+  const label = labelInput.value.trim();
+
+  if (!label) {
+    errEl.textContent = 'Le libellé est obligatoire.';
+    labelInput.focus();
+    return;
+  }
+  errEl.textContent = '';
+
+  const step = { id: uid(), emoji: selectedEmoji, label, time: timeInput.value || '', done: false };
+  steps.push(step);
+  save();
+  announce('Étape ajoutée : ' + label);
+  labelInput.value = '';
+  timeInput.value  = '';
+  render();
+  /* Scroll vers la liste */
+  document.getElementById('steps-list').lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+});
+
+/* ── BOUTON LIRE ── */
+document.getElementById('btn-speak-now').addEventListener('click', () => {
+  const { current } = getCurrentNext();
+  if (!current) { speak('Toutes les étapes sont faites !'); return; }
+  const msg = 'Maintenant : ' + current.label + (current.time ? ', à ' + fmt(current.time) : '');
+  speak(msg);
+});
+
+/* ── MINUTEUR ── */
+function applyTimerDisplay() {
+  const svgWrap = document.getElementById('timer-svg-wrap');
+  const numOnly = document.getElementById('timer-numeric-only');
+  if (reducedMotion) {
+    svgWrap.style.display = 'none';
+    numOnly.style.display = 'block';
+  } else {
+    svgWrap.style.display = '';
+    numOnly.style.display = 'none';
+  }
+}
+
+function startTimer() {
+  const minVal = parseInt(document.getElementById('timer-minutes').value, 10);
+  if (!minVal || minVal < 1) return;
+
+  clearInterval(timerInterval);
+  timerTotal = minVal * 60;
+  timerEnd = Date.now() + timerTotal * 1000;
+
+  document.getElementById('btn-timer-start').disabled = true;
+  document.getElementById('btn-timer-stop').disabled = false;
+  document.getElementById('timer-label').textContent = 'Minuteur en cours…';
+  document.getElementById('timer-status').textContent = '';
+
+  const CIRCUM = 314.16; /* 2π × 50 */
+  const prog = document.getElementById('circle-prog');
+
+  timerInterval = setInterval(() => {
+    const remaining = Math.max(0, Math.round((timerEnd - Date.now()) / 1000));
+    const ratio = remaining / timerTotal;
+    const offset = CIRCUM * (1 - ratio);
+
+    /* Affichage SVG */
+    prog.style.strokeDashoffset = offset;
+    document.getElementById('timer-countdown-text').textContent = padTime(remaining);
+
+    /* Affichage numérique (reduced-motion) */
+    document.getElementById('timer-numeric-only').textContent = padTime(remaining);
+
+    /* Label */
+    document.getElementById('timer-label').textContent = padTime(remaining) + ' restante' + (remaining <= 60 ? 's' : '');
+
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      document.getElementById('timer-status').textContent = '✅ Temps écoulé !';
+      document.getElementById('timer-label').textContent = 'Temps écoulé';
+      document.getElementById('btn-timer-start').disabled = false;
+      document.getElementById('btn-timer-stop').disabled = true;
+      document.getElementById('timer-countdown-text').textContent = '0:00';
+      document.getElementById('timer-numeric-only').textContent = '0:00';
+
+      /* Annonce vocale — pas de son strident */
+      const { current } = getCurrentNext();
+      const stepLabel = current ? current.label : 'l\'étape';
+      speak('Le temps est écoulé pour ' + stepLabel + '. Bravo !');
+      announce('Temps écoulé pour ' + stepLabel);
+    }
+  }, 500);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  document.getElementById('btn-timer-start').disabled = false;
+  document.getElementById('btn-timer-stop').disabled = true;
+  document.getElementById('timer-label').textContent = 'Minuteur arrêté';
+  document.getElementById('timer-status').textContent = '';
+  document.getElementById('timer-countdown-text').textContent = '—';
+  document.getElementById('timer-numeric-only').textContent = '';
+  announce('Minuteur arrêté');
+}
+
+document.getElementById('btn-timer-start').addEventListener('click', startTimer);
+document.getElementById('btn-timer-stop').addEventListener('click', stopTimer);
+
+/* ── INIT ── */
+renderPalette();
+applyTimerDisplay();
+render();
+</script>
+
+<!-- sr-only helper inline (sans dépendance) -->
+<style>
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+</style>
+
+</body>
+</html>

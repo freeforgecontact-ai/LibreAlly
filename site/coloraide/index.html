@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColorAide — Démo | LibreA11y</title>
+<meta name="description" content="Assistance au daltonisme : simulation, filtres de correction et identification de couleurs. Démo hors-ligne, aucune donnée envoyée.">
+<style>
+/* ===== VARIABLES & RESET ===== */
+:root {
+  --marine:    #0F4C81;
+  --marine-dk: #0A3A63;
+  --or:        #F4B81C;
+  --or-lt:     #FFD45E;
+  --encre:     #16202E;
+  --fond:      #F7F9FC;
+  --surface:   #FFFFFF;
+  --border:    #D0D9E8;
+  --focus-ring: #F4B81C;
+  --radius:    12px;
+  --radius-sm: 8px;
+  --shadow:    0 2px 8px rgba(15,76,129,0.12);
+  --shadow-hv: 0 4px 16px rgba(15,76,129,0.22);
+  --tr:        0.18s ease;
+  --success:   #1A7A1A;
+  --danger:    #C0392B;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  min-height: 100%;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--fond);
+  color: var(--encre);
+  font-size: 16px;
+  line-height: 1.5;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+
+/* ===== SKIP LINK ===== */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 8px;
+  background: var(--or);
+  color: var(--encre);
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  z-index: 9999;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+.skip-link:focus { left: 8px; }
+
+/* ===== FOCUS ===== */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ===== HEADER ===== */
+#app-header {
+  background: var(--marine);
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(10,58,99,0.3);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-wrap: wrap;
+}
+#header-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+#back-link {
+  color: var(--or-lt);
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  transition: background var(--tr);
+  min-height: 48px;
+}
+#back-link:hover, #back-link:focus-visible { background: rgba(255,255,255,0.15); color: #fff; }
+#app-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#header-notice {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.70);
+  background: rgba(0,0,0,0.18);
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* ===== MAIN ===== */
+#main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 20px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+/* ===== SECTION CARD ===== */
+.section-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  box-shadow: var(--shadow);
+}
+.section-card h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--marine);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-desc {
+  font-size: 0.88rem;
+  color: #4a5568;
+  margin-bottom: 18px;
+  line-height: 1.55;
+}
+
+/* ===== FILTER CONTROLS ===== */
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  min-height: 48px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--encre);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--tr), border-color var(--tr), color var(--tr);
+}
+.filter-btn .icon-shape {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+.filter-btn:hover { border-color: var(--marine); background: var(--fond); }
+.filter-btn.active {
+  background: var(--marine);
+  color: #fff;
+  border-color: var(--marine);
+}
+.filter-btn.active .btn-label-abbr { display: none; }
+
+.simulate-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 12px 16px;
+  background: var(--fond);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.toggle-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.toggle-switch {
+  position: relative;
+  width: 48px; height: 26px;
+  flex-shrink: 0;
+}
+.toggle-switch input {
+  opacity: 0; width: 0; height: 0; position: absolute;
+}
+.toggle-track {
+  position: absolute; inset: 0;
+  background: #ccc;
+  border-radius: 13px;
+  transition: background var(--tr);
+  cursor: pointer;
+}
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  width: 20px; height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  top: 3px; left: 3px;
+  transition: transform var(--tr);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+}
+.toggle-switch input:checked + .toggle-track { background: var(--marine); }
+.toggle-switch input:checked + .toggle-track::after { transform: translateX(22px); }
+.toggle-switch input:focus-visible + .toggle-track {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.simulate-desc {
+  font-size: 0.82rem;
+  color: #555;
+  flex: 1;
+}
+
+/* ===== MODE DESCRIPTION ===== */
+#mode-description {
+  padding: 10px 14px;
+  background: #EFF4FB;
+  border-left: 4px solid var(--marine);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.87rem;
+  color: var(--encre);
+  line-height: 1.55;
+  margin-bottom: 18px;
+}
+
+/* ===== SCENE SVG ===== */
+#scene-wrapper {
+  position: relative;
+  background: #fff;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+#scene-svg {
+  width: 100%;
+  display: block;
+  max-height: 420px;
+}
+
+/* ===== COLOR ID SECTION ===== */
+.swatch-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.swatch-btn {
+  width: 56px; height: 56px;
+  border-radius: var(--radius-sm);
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: border-color var(--tr), transform var(--tr), box-shadow var(--tr);
+  position: relative;
+  overflow: hidden;
+}
+.swatch-btn:hover {
+  border-color: var(--marine);
+  transform: scale(1.08);
+  box-shadow: var(--shadow-hv);
+}
+.swatch-btn.selected {
+  border-color: var(--marine);
+  box-shadow: 0 0 0 3px var(--or);
+}
+.swatch-btn .swatch-pattern {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+/* cross-hatch pattern for colorblind-safe identification */
+.swatch-btn::after {
+  content: attr(data-symbol);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: rgba(0,0,0,0.55);
+  text-shadow: 0 0 3px rgba(255,255,255,0.7);
+}
+
+.color-input-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.color-input-row label {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+#color-picker {
+  width: 56px; height: 56px;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  cursor: pointer;
+  background: none;
+}
+#color-picker:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+#color-result {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  background: var(--fond);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  flex-wrap: wrap;
+}
+#result-swatch {
+  width: 56px; height: 56px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+}
+#result-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--encre);
+}
+#result-hex {
+  font-size: 0.9rem;
+  color: #555;
+  font-family: monospace;
+}
+#result-dist {
+  font-size: 0.82rem;
+  color: #777;
+}
+#speak-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 16px;
+  min-height: 48px;
+  background: var(--marine);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--tr);
+}
+#speak-btn:hover { background: var(--marine-dk); }
+#speak-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ===== SAFE PALETTE ===== */
+.palette-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+.palette-item {
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.palette-color {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+}
+.palette-info {
+  padding: 8px 10px;
+  background: var(--surface);
+}
+.palette-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--encre);
+}
+.palette-hex {
+  font-size: 0.78rem;
+  color: #555;
+  font-family: monospace;
+}
+.palette-why {
+  font-size: 0.74rem;
+  color: #666;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+/* ===== LIVE REGION ===== */
+#aria-live {
+  position: absolute;
+  left: -9999px;
+  width: 1px; height: 1px;
+  overflow: hidden;
+}
+
+/* ===== LEGEND ===== */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: #444;
+}
+.legend-dot {
+  width: 14px; height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0,0,0,0.15);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 640px) {
+  .section-card { padding: 18px; }
+  #main { padding: 16px 12px 48px; gap: 24px; }
+  .palette-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+}
+</style>
+</head>
+<body>
+
+<!-- SKIP LINK -->
+<a class="skip-link" href="#main">Aller au contenu principal</a>
+
+<!-- LIVE REGION pour les annonces vocales -->
+<div id="aria-live" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<!-- SVG DEFS : filtres daltonisme (cachés, référencés par #scene-svg) -->
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true" focusable="false">
+  <defs>
+    <!-- PROTANOPIE (absence cônes rouges) — correction (aide) -->
+    <filter id="f-proto-correct" color-interpolation-filters="linearRGB">
+      <feColorMatrix type="matrix" values="
+        0.566 0.434 0     0 0
+        0.055 0.945 0     0 0
+        0     0.018 0.982 0 0
+        0     0     0     1 0"/>
+    </filter>
+    <!-- DEUTÉRANOPIE (absence cônes verts) — correction (aide) -->
+    <filter id="f-deut-correct" color-interpolation-filters="linearRGB">
+      <feColorMatrix type="matrix" values="
+        0.625 0.375 0     0 0
+        0.7   0.3   0     0 0
+        0     0.3   0.7   0 0
+        0     0     0     1 0"/>
+    </filter>
+    <!-- TRITANOPIE (absence cônes bleus) — correction (aide) -->
+    <filter id="f-trit-correct" color-interpolation-filters="linearRGB">
+      <feColorMatrix type="matrix" values="
+        0.95  0.05  0     0 0
+        0     0.433 0.567 0 0
+        0     0.475 0.525 0 0
+        0     0     0     1 0"/>
+    </filter>
+
+    <!-- PROTANOPIE — SIMULATION (comment le daltonien voit) -->
+    <filter id="f-proto-sim" color-interpolation-filters="linearRGB">
+      <feColorMatrix type="matrix" values="
+        0.1126 0.8874 0      0 0
+        0.1126 0.8874 0      0 0
+        0.0042 -0.0042 1     0 0
+        0      0      0      1 0"/>
+    </filter>
+    <!-- DEUTÉRANOPIE — SIMULATION -->
+    <filter id="f-deut-sim" color-interpolation-filters="linearRGB">
+      <feColorMatrix type="matrix" values="
+        0.2126 0.7874 0     0 0
+        0.2126 0.7874 0     0 0
+        -0.0196 0.0196 1   0 0
+        0      0      0    1 0"/>
+    </filter>
+    <!-- TRITANOPIE — SIMULATION -->
+    <filter id="f-trit-sim" color-interpolation-filters="linearRGB">
+      <feColorMatrix type="matrix" values="
+        0.2126 0.7874  0      0 0
+        0      0.2126  0.7874 0 0
+        0      0.2126  0.7874 0 0
+        0      0       0      1 0"/>
+    </filter>
+  </defs>
+</svg>
+
+<!-- EN-TÊTE -->
+<header id="app-header" role="banner">
+  <div id="header-left">
+    <a id="back-link" href="../index.html" aria-label="Retour à la page d'accueil LibreA11y">← LibreA11y</a>
+    <span id="app-title" aria-label="ColorAide — démo">🎨 ColorAide — démo</span>
+  </div>
+  <div id="header-notice" aria-label="Informations">démo · 100 % hors-ligne · aucune donnée envoyée</div>
+</header>
+
+<!-- CONTENU PRINCIPAL -->
+<main id="main" role="main">
+
+  <!-- SECTION 1 : INTRO -->
+  <section class="section-card" aria-labelledby="h-intro">
+    <h1 id="h-intro" style="font-size:1.3rem;font-weight:800;color:var(--marine);margin-bottom:8px;">
+      🎨 Assistance au daltonisme
+    </h1>
+    <p class="section-desc">
+      ColorAide aide les personnes daltoniennes à percevoir et identifier les couleurs.
+      Appliquez des <strong>filtres de correction</strong> sur la scène d'exemple ou simulez
+      la vision daltonienne. Identifiez n'importe quelle couleur par son nom en français.
+      Tout fonctionne <strong>entièrement hors-ligne</strong>.
+    </p>
+  </section>
+
+  <!-- SECTION 2 : SCÈNE + FILTRES -->
+  <section class="section-card" aria-labelledby="h-scene">
+    <h2 id="h-scene"><span aria-hidden="true">👁️</span> Scène d'exemple avec filtres</h2>
+    <p class="section-desc">
+      La scène ci-dessous contient des éléments habituellement difficiles pour les daltoniens :
+      un graphique rouge/vert, un feu tricolore, et des pastilles de couleurs.
+      Les boutons appliquent soit une <em>correction</em> (aide à distinguer les couleurs)
+      soit une <em>simulation</em> (voir comme un daltonien).
+    </p>
+
+    <!-- FILTRES -->
+    <div role="group" aria-labelledby="filter-group-label">
+      <p id="filter-group-label" style="font-size:0.9rem;font-weight:700;margin-bottom:10px;">
+        Type de vision — correction :
+      </p>
+      <div class="filter-row" role="radiogroup" aria-label="Correction du filtre de couleur">
+        <button class="filter-btn active" data-mode="none" aria-pressed="true" title="Vision normale, sans filtre">
+          <span class="icon-shape" style="background:linear-gradient(135deg,#e74c3c 50%,#2ecc71 50%)" aria-hidden="true"></span>
+          Aucun filtre
+        </button>
+        <button class="filter-btn" data-mode="proto" aria-pressed="false" title="Filtre de correction pour la protanopie">
+          <span class="icon-shape" style="background:linear-gradient(135deg,#8B4513 50%,#4CAF50 50%)" aria-hidden="true"></span>
+          Protanopie
+        </button>
+        <button class="filter-btn" data-mode="deut" aria-pressed="false" title="Filtre de correction pour la deutéranopie">
+          <span class="icon-shape" style="background:linear-gradient(135deg,#CD7F32 50%,#3498DB 50%)" aria-hidden="true"></span>
+          Deutéranopie
+        </button>
+        <button class="filter-btn" data-mode="trit" aria-pressed="false" title="Filtre de correction pour la tritanopie">
+          <span class="icon-shape" style="background:linear-gradient(135deg,#E91E63 50%,#009688 50%)" aria-hidden="true"></span>
+          Tritanopie
+        </button>
+      </div>
+    </div>
+
+    <!-- BASCULE SIMULATION -->
+    <div class="simulate-row">
+      <label class="toggle-label" for="toggle-simulate">
+        <span class="toggle-switch">
+          <input type="checkbox" id="toggle-simulate" role="switch" aria-checked="false"
+                 aria-describedby="simulate-desc-text">
+          <span class="toggle-track" aria-hidden="true"></span>
+        </span>
+        Simuler la vision daltonienne
+      </label>
+      <span id="simulate-desc-text" class="simulate-desc">
+        Activé : montre comment une personne daltonienne perçoit la scène (sans aide).
+        Désactivé : applique un filtre de <em>correction</em>.
+      </span>
+    </div>
+
+    <!-- DESCRIPTION DU MODE ACTIF -->
+    <div id="mode-description" role="status" aria-live="polite" aria-atomic="true">
+      <strong>Mode actuel :</strong> Vision normale — aucun filtre appliqué.
+      La scène est affichée telle qu'une personne avec une vision normale des couleurs la verrait.
+    </div>
+
+    <!-- SCÈNE SVG -->
+    <figure id="scene-wrapper">
+      <svg id="scene-svg" viewBox="0 0 680 380" xmlns="http://www.w3.org/2000/svg"
+           role="img" aria-labelledby="scene-title scene-desc">
+        <title id="scene-title">Scène d'exemple : graphique à barres, feu tricolore et pastilles de couleurs</title>
+        <desc id="scene-desc">
+          Mini-graphique à barres avec des barres rouge et verte représentant deux séries de données ;
+          un feu de circulation avec trois feux (rouge, orange, vert) ;
+          et six pastilles de couleurs nommées avec symboles distinctifs.
+        </desc>
+
+        <!-- Fond -->
+        <rect width="680" height="380" fill="#F7F9FC"/>
+
+        <!-- ===== GRAPHIQUE À BARRES ===== -->
+        <g id="chart-group">
+          <text x="60" y="26" font-size="13" font-weight="700" fill="#16202E" font-family="system-ui,sans-serif">Graphique à barres (problème rouge/vert)</text>
+
+          <!-- Grille -->
+          <line x1="68" y1="40" x2="68" y2="175" stroke="#ccc" stroke-width="1"/>
+          <line x1="68" y1="175" x2="310" y2="175" stroke="#ccc" stroke-width="1"/>
+          <line x1="68" y1="138" x2="310" y2="138" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4 3"/>
+          <line x1="68" y1="102" x2="310" y2="102" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4 3"/>
+          <line x1="68" y1="66" x2="310" y2="66" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4 3"/>
+
+          <!-- Labels axe Y -->
+          <text x="60" y="178" font-size="10" fill="#666" text-anchor="end" font-family="system-ui">0</text>
+          <text x="60" y="142" font-size="10" fill="#666" text-anchor="end" font-family="system-ui">25</text>
+          <text x="60" y="106" font-size="10" fill="#666" text-anchor="end" font-family="system-ui">50</text>
+          <text x="60" y="70" font-size="10" fill="#666" text-anchor="end" font-family="system-ui">75</text>
+
+          <!-- Groupe A (rouge) — barres + motif hachuré -->
+          <rect x="80" y="80" width="30" height="95" fill="#e74c3c"/>
+          <rect x="80" y="80" width="30" height="95" fill="url(#hatch-a)" opacity="0.35"/>
+          <!-- Motif visible sans couleur -->
+          <text x="95" y="73" font-size="11" text-anchor="middle" font-family="system-ui" fill="#c0392b" font-weight="700">▲</text>
+
+          <rect x="150" y="100" width="30" height="75" fill="#e74c3c"/>
+          <rect x="150" y="100" width="30" height="75" fill="url(#hatch-a)" opacity="0.35"/>
+          <text x="165" y="93" font-size="11" text-anchor="middle" font-family="system-ui" fill="#c0392b" font-weight="700">▲</text>
+
+          <rect x="220" y="55" width="30" height="120" fill="#e74c3c"/>
+          <rect x="220" y="55" width="30" height="120" fill="url(#hatch-a)" opacity="0.35"/>
+          <text x="235" y="48" font-size="11" text-anchor="middle" font-family="system-ui" fill="#c0392b" font-weight="700">▲</text>
+
+          <!-- Groupe B (vert) -->
+          <rect x="113" y="115" width="30" height="60" fill="#27ae60"/>
+          <rect x="113" y="115" width="30" height="60" fill="url(#hatch-b)" opacity="0.4"/>
+          <text x="128" y="108" font-size="11" text-anchor="middle" font-family="system-ui" fill="#1a7a40" font-weight="700">●</text>
+
+          <rect x="183" y="90" width="30" height="85" fill="#27ae60"/>
+          <rect x="183" y="90" width="30" height="85" fill="url(#hatch-b)" opacity="0.4"/>
+          <text x="198" y="83" font-size="11" text-anchor="middle" font-family="system-ui" fill="#1a7a40" font-weight="700">●</text>
+
+          <rect x="253" y="130" width="30" height="45" fill="#27ae60"/>
+          <rect x="253" y="130" width="30" height="45" fill="url(#hatch-b)" opacity="0.4"/>
+          <text x="268" y="123" font-size="11" text-anchor="middle" font-family="system-ui" fill="#1a7a40" font-weight="700">●</text>
+
+          <!-- Légende graphique -->
+          <rect x="80" y="188" width="12" height="12" fill="#e74c3c"/>
+          <rect x="80" y="188" width="12" height="12" fill="url(#hatch-a)" opacity="0.35"/>
+          <text x="97" y="199" font-size="10" fill="#444" font-family="system-ui">Série A ▲</text>
+          <rect x="160" y="188" width="12" height="12" fill="#27ae60"/>
+          <rect x="160" y="188" width="12" height="12" fill="url(#hatch-b)" opacity="0.4"/>
+          <text x="177" y="199" font-size="10" fill="#444" font-family="system-ui">Série B ●</text>
+        </g>
+
+        <!-- Motifs hachures définis -->
+        <defs>
+          <pattern id="hatch-a" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+            <line x1="0" y1="0" x2="0" y2="8" stroke="#fff" stroke-width="3"/>
+          </pattern>
+          <pattern id="hatch-b" patternUnits="userSpaceOnUse" width="8" height="8">
+            <line x1="0" y1="0" x2="8" y2="8" stroke="#fff" stroke-width="2"/>
+            <line x1="8" y1="0" x2="0" y2="8" stroke="#fff" stroke-width="2"/>
+          </pattern>
+        </defs>
+
+        <!-- Séparateur vertical -->
+        <line x1="330" y1="20" x2="330" y2="360" stroke="#D0D9E8" stroke-width="1.5"/>
+
+        <!-- ===== FEU TRICOLORE ===== -->
+        <g id="traffic-group">
+          <text x="360" y="26" font-size="13" font-weight="700" fill="#16202E" font-family="system-ui,sans-serif">Feu tricolore</text>
+
+          <!-- Corps du feu -->
+          <rect x="380" y="38" width="70" height="175" rx="14" fill="#1a1a2e"/>
+
+          <!-- Feu ROUGE (haut) -->
+          <circle cx="415" cy="78" r="25" fill="#e74c3c"/>
+          <!-- Symbole forme : croix -->
+          <line x1="405" y1="68" x2="425" y2="88" stroke="rgba(255,255,255,0.6)" stroke-width="3" stroke-linecap="round"/>
+          <line x1="425" y1="68" x2="405" y2="88" stroke="rgba(255,255,255,0.6)" stroke-width="3" stroke-linecap="round"/>
+          <text x="415" y="83" text-anchor="middle" font-size="11" fill="rgba(255,255,255,0.85)" font-weight="700" font-family="system-ui">✕</text>
+
+          <!-- Feu ORANGE (milieu) -->
+          <circle cx="415" cy="130" r="25" fill="#F39C12"/>
+          <!-- Symbole forme : triangle -->
+          <text x="415" y="136" text-anchor="middle" font-size="16" fill="rgba(255,255,255,0.85)" font-weight="700" font-family="system-ui">▲</text>
+
+          <!-- Feu VERT (bas) -->
+          <circle cx="415" cy="182" r="25" fill="#27ae60"/>
+          <!-- Symbole forme : cercle plein -->
+          <circle cx="415" cy="182" r="10" fill="rgba(255,255,255,0.5)"/>
+          <text x="415" y="187" text-anchor="middle" font-size="11" fill="rgba(0,0,0,0.6)" font-weight="700" font-family="system-ui">●</text>
+
+          <!-- Légende feu -->
+          <text x="460" y="83" font-size="11" fill="#444" font-family="system-ui" dominant-baseline="middle">STOP ✕</text>
+          <text x="460" y="130" font-size="11" fill="#444" font-family="system-ui" dominant-baseline="middle">ATTENTE ▲</text>
+          <text x="460" y="182" font-size="11" fill="#444" font-family="system-ui" dominant-baseline="middle">GO ●</text>
+
+          <!-- Pied -->
+          <rect x="400" y="213" width="30" height="30" fill="#555"/>
+          <rect x="390" y="240" width="50" height="10" rx="4" fill="#444"/>
+        </g>
+
+        <!-- ===== PASTILLES NOMMÉES ===== -->
+        <g id="swatches-group">
+          <text x="60" y="228" font-size="13" font-weight="700" fill="#16202E" font-family="system-ui,sans-serif">Pastilles de couleurs nommées</text>
+          <text x="60" y="244" font-size="10" fill="#666" font-family="system-ui">Chaque pastille porte un symbole distinctif (indépendant de la couleur)</text>
+
+          <!-- Rouge -->
+          <rect x="60" y="253" width="55" height="55" rx="10" fill="#e74c3c"/>
+          <text x="87" y="283" text-anchor="middle" font-size="22" fill="rgba(255,255,255,0.85)" font-family="system-ui">✕</text>
+          <text x="87" y="318" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Rouge</text>
+
+          <!-- Vert -->
+          <rect x="130" y="253" width="55" height="55" rx="10" fill="#27ae60"/>
+          <text x="157" y="283" text-anchor="middle" font-size="22" fill="rgba(255,255,255,0.85)" font-family="system-ui">●</text>
+          <text x="157" y="318" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Vert</text>
+
+          <!-- Bleu -->
+          <rect x="200" y="253" width="55" height="55" rx="10" fill="#2980b9"/>
+          <text x="227" y="283" text-anchor="middle" font-size="22" fill="rgba(255,255,255,0.85)" font-family="system-ui">▲</text>
+          <text x="227" y="318" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Bleu</text>
+
+          <!-- Jaune -->
+          <rect x="270" y="253" width="55" height="55" rx="10" fill="#F4B81C"/>
+          <text x="297" y="283" text-anchor="middle" font-size="22" fill="rgba(0,0,0,0.65)" font-family="system-ui">■</text>
+          <text x="297" y="318" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Jaune</text>
+
+          <!-- Violet -->
+          <rect x="340" y="253" width="55" height="55" rx="10" fill="#8e44ad"/>
+          <text x="367" y="283" text-anchor="middle" font-size="22" fill="rgba(255,255,255,0.85)" font-family="system-ui">◆</text>
+          <text x="367" y="318" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Violet</text>
+
+          <!-- Orange -->
+          <rect x="410" y="253" width="55" height="55" rx="10" fill="#e67e22"/>
+          <text x="437" y="283" text-anchor="middle" font-size="22" fill="rgba(255,255,255,0.85)" font-family="system-ui">★</text>
+          <text x="437" y="318" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Orange</text>
+
+          <!-- Cyan -->
+          <rect x="480" y="253" width="55" height="55" rx="10" fill="#16a085"/>
+          <text x="507" y="283" text-anchor="middle" font-size="22" fill="rgba(255,255,255,0.85)" font-family="system-ui">♦</text>
+          <text x="507" y="318" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Cyan</text>
+
+          <!-- Rose -->
+          <rect x="550" y="253" width="55" height="55" rx="10" fill="#e91e8c"/>
+          <text x="577" y="283" text-anchor="middle" font-size="22" fill="rgba(255,255,255,0.85)" font-family="system-ui">⬟</text>
+          <text x="577" y="318" text-anchor="middle" font-size="10" fill="#444" font-family="system-ui" font-weight="600">Rose</text>
+        </g>
+
+        <!-- Note de bas de scène -->
+        <text x="60" y="365" font-size="10" fill="#888" font-family="system-ui">
+          Les formes et symboles permettent d'identifier chaque couleur sans dépendre uniquement des teintes.
+        </text>
+      </svg>
+      <figcaption style="font-size:0.8rem;color:#555;padding:8px 12px;border-top:1px solid var(--border);background:var(--fond);">
+        Scène de démonstration. Les symboles (✕ ● ▲ ■ ◆ ★ ♦) identifient les couleurs indépendamment de la teinte.
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- SECTION 3 : IDENTIFICATEUR DE COULEUR -->
+  <section class="section-card" aria-labelledby="h-identify">
+    <h2 id="h-identify"><span aria-hidden="true">🔍</span> Identificateur de couleur</h2>
+    <p class="section-desc">
+      Cliquez sur une pastille ou choisissez une couleur personnalisée pour obtenir son
+      <strong>nom en français</strong> (distance euclidienne RVB sur ~30 couleurs nommées)
+      et entendre sa lecture vocale.
+    </p>
+
+    <!-- PASTILLES RAPIDES -->
+    <div class="swatch-grid" role="list" aria-label="Pastilles de couleurs rapides">
+      <!-- Les pastilles sont générées par JS -->
+    </div>
+
+    <!-- CHOIX LIBRE -->
+    <div class="color-input-row">
+      <label for="color-picker" style="font-size:0.92rem;font-weight:600;">Choisir une couleur :</label>
+      <input type="color" id="color-picker" value="#3498db" aria-describedby="color-picker-desc">
+      <span id="color-picker-desc" style="font-size:0.82rem;color:#555;">Sélectionnez n'importe quelle couleur pour l'identifier</span>
+    </div>
+
+    <!-- RÉSULTAT -->
+    <div id="color-result" aria-live="polite" aria-atomic="true" aria-label="Résultat de l'identification de couleur">
+      <div id="result-swatch" aria-hidden="true" style="background:#3498db"></div>
+      <div>
+        <div id="result-name" style="font-size:1.1rem;font-weight:700;">Bleu acier</div>
+        <div id="result-hex" style="font-family:monospace;font-size:0.88rem;color:#555;">#3498db</div>
+        <div id="result-dist" style="font-size:0.78rem;color:#777;"></div>
+      </div>
+      <button id="speak-btn" aria-label="Lire le nom de la couleur à voix haute" title="Lecture vocale du nom de la couleur">
+        <span aria-hidden="true">🔊</span> Écouter
+      </button>
+    </div>
+  </section>
+
+  <!-- SECTION 4 : PALETTE SÛRE -->
+  <section class="section-card" aria-labelledby="h-safe">
+    <h2 id="h-safe"><span aria-hidden="true">✅</span> Palette sûre pour daltoniens</h2>
+    <p class="section-desc">
+      Ces couleurs sont <strong>distinguables</strong> par la grande majorité des personnes
+      daltoniennes (protanopes, deutéranopes, tritanopes). Elles ont été choisies pour
+      leur contraste en luminosité et leur séparation dans les différents espaces perceptuels.
+    </p>
+    <div class="palette-grid" role="list" aria-label="Palette de couleurs sûres pour daltoniens">
+      <!-- Généré par JS -->
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ================================================================
+   DONNÉES : ~30 noms de couleurs FR avec valeurs RVB
+   ================================================================ */
+const COLORS_FR = [
+  { name: 'Noir',          hex: '#000000', r:   0, g:   0, b:   0 },
+  { name: 'Blanc',         hex: '#FFFFFF', r: 255, g: 255, b: 255 },
+  { name: 'Rouge',         hex: '#E74C3C', r: 231, g:  76, b:  60 },
+  { name: 'Rouge foncé',   hex: '#C0392B', r: 192, g:  57, b:  43 },
+  { name: 'Vert',          hex: '#27AE60', r:  39, g: 174, b:  96 },
+  { name: 'Vert clair',    hex: '#2ECC71', r:  46, g: 204, b: 113 },
+  { name: 'Vert foncé',    hex: '#1E8449', r:  30, g: 132, b:  73 },
+  { name: 'Bleu',          hex: '#2980B9', r:  41, g: 128, b: 185 },
+  { name: 'Bleu ciel',     hex: '#3498DB', r:  52, g: 152, b: 219 },
+  { name: 'Bleu marine',   hex: '#1A5276', r:  26, g:  82, b: 118 },
+  { name: 'Bleu nuit',     hex: '#0F4C81', r:  15, g:  76, b: 129 },
+  { name: 'Jaune',         hex: '#F4D03F', r: 244, g: 208, b:  63 },
+  { name: 'Jaune doré',    hex: '#F4B81C', r: 244, g: 184, b:  28 },
+  { name: 'Orange',        hex: '#E67E22', r: 230, g: 126, b:  34 },
+  { name: 'Orange vif',    hex: '#F39C12', r: 243, g: 156, b:  18 },
+  { name: 'Violet',        hex: '#8E44AD', r: 142, g:  68, b: 173 },
+  { name: 'Violet clair',  hex: '#9B59B6', r: 155, g:  89, b: 182 },
+  { name: 'Rose',          hex: '#E91E8C', r: 233, g:  30, b: 140 },
+  { name: 'Rose pâle',     hex: '#F8BBD9', r: 248, g: 187, b: 217 },
+  { name: 'Cyan',          hex: '#16A085', r:  22, g: 160, b: 133 },
+  { name: 'Turquoise',     hex: '#1ABC9C', r:  26, g: 188, b: 156 },
+  { name: 'Brun',          hex: '#7F4E1E', r: 127, g:  78, b:  30 },
+  { name: 'Marron',        hex: '#6D4C41', r: 109, g:  76, b:  65 },
+  { name: 'Gris clair',    hex: '#BDC3C7', r: 189, g: 195, b: 199 },
+  { name: 'Gris',          hex: '#95A5A6', r: 149, g: 165, b: 166 },
+  { name: 'Gris foncé',    hex: '#566573', r:  86, g: 101, b: 115 },
+  { name: 'Ardoise',       hex: '#2C3E50', r:  44, g:  62, b:  80 },
+  { name: 'Beige',         hex: '#FAD7A0', r: 250, g: 215, b: 160 },
+  { name: 'Crème',         hex: '#FDFEFE', r: 253, g: 254, b: 254 },
+  { name: 'Doré',          hex: '#D4AC0D', r: 212, g: 172, b:  13 },
+  { name: 'Magenta',       hex: '#C0392B', r: 192, g:  57, b:  43 },
+  { name: 'Indigo',        hex: '#283593', r:  40, g:  53, b: 147 },
+  { name: 'Bordeaux',      hex: '#7B241C', r: 123, g:  36, b:  28 },
+  { name: 'Kaki',          hex: '#7D6608', r: 125, g: 102, b:   8 },
+  { name: 'Lavande',       hex: '#7B68EE', r: 123, g: 104, b: 238 }
+];
+
+/* ================================================================
+   PALETTE SÛRE pour daltoniens
+   ================================================================ */
+const SAFE_PALETTE = [
+  { name: 'Bleu',          hex: '#0072B2', why: 'Distinguable par les 3 types de daltonisme' },
+  { name: 'Orange doré',   hex: '#E69F00', why: 'Contraste fort avec bleu et noir' },
+  { name: 'Vert-cyan',     hex: '#009E73', why: 'Séparation nette en vision protanope' },
+  { name: 'Rose magenta',  hex: '#CC79A7', why: 'Perçu distinctement en deutéranopie' },
+  { name: 'Bleu ciel',     hex: '#56B4E9', why: 'Clair, distinguable du bleu foncé' },
+  { name: 'Jaune citron',  hex: '#F0E442', why: 'Contraste lumineux, visible en tritanopie' },
+  { name: 'Vermillon',     hex: '#D55E00', why: 'Orange-rouge perçu par les protanopes' },
+  { name: 'Noir',          hex: '#000000', why: 'Référence universelle, contraste maximal' },
+];
+
+/* ================================================================
+   FILTRES SVG : mapping mode → filtre
+   ================================================================ */
+const FILTER_MAP = {
+  none:  { correct: '',               simulate: ''              },
+  proto: { correct: 'f-proto-correct', simulate: 'f-proto-sim' },
+  deut:  { correct: 'f-deut-correct',  simulate: 'f-deut-sim'  },
+  trit:  { correct: 'f-trit-correct',  simulate: 'f-trit-sim'  }
+};
+
+const MODE_DESC = {
+  none: {
+    correct: "Vision normale — aucun filtre appliqué. La scène est affichée telle qu'une personne avec une vision normale des couleurs la verrait.",
+    simulate: "Simulation de vision normale (identique à l'affichage standard)."
+  },
+  proto: {
+    correct: "Correction protanopie : filtre appliqué pour aider les personnes manquant de cônes rouges (protanopes) à distinguer rouge/vert. Les rouges sont amplifiés vers des teintes plus perceptibles.",
+    simulate: "Simulation protanopie : approximation de ce qu'une personne protanope voit SANS aide. Les rouges sont très atténués et peuvent sembler bruns ou verts."
+  },
+  deut: {
+    correct: "Correction deutéranopie : filtre aidant les personnes manquant de cônes verts (deutéranopes, forme la plus fréquente) à mieux différencier rouge et vert.",
+    simulate: "Simulation deutéranopie : approximation de la vision sans aide. Les verts et rouges se confondent, notamment dans les graphiques."
+  },
+  trit: {
+    correct: "Correction tritanopie : filtre pour les personnes manquant de cônes bleus (tritanopes, rare). Améliore la distinction bleu/jaune.",
+    simulate: "Simulation tritanopie : approximation de la vision sans aide. Les bleus apparaissent verdâtres, les jaunes et roses peuvent se confondre."
+  }
+};
+
+/* ================================================================
+   ÉTAT
+   ================================================================ */
+let currentMode = 'none';
+let currentSimulate = false;
+let lastColorHex = '#3498db';
+let lastColorName = 'Bleu acier';
+let speechAvailable = ('speechSynthesis' in window);
+
+/* ================================================================
+   UTILS : DISTANCE COULEUR
+   ================================================================ */
+function hexToRgb(hex) {
+  const h = hex.replace('#', '');
+  if (h.length === 3) {
+    return { r: parseInt(h[0]+h[0],16), g: parseInt(h[1]+h[1],16), b: parseInt(h[2]+h[2],16) };
+  }
+  return { r: parseInt(h.substring(0,2),16), g: parseInt(h.substring(2,4),16), b: parseInt(h.substring(4,6),16) };
+}
+
+function colorDistance(r1,g1,b1, r2,g2,b2) {
+  return Math.sqrt((r1-r2)**2 + (g1-g2)**2 + (b1-b2)**2);
+}
+
+function findClosestColor(hex) {
+  const { r, g, b } = hexToRgb(hex);
+  let best = null, bestDist = Infinity;
+  for (const c of COLORS_FR) {
+    const d = colorDistance(r, g, b, c.r, c.g, c.b);
+    if (d < bestDist) { bestDist = d; best = c; }
+  }
+  return { color: best, dist: Math.round(bestDist) };
+}
+
+/* ================================================================
+   APPLIQUER LE FILTRE SVG
+   ================================================================ */
+function applyFilter() {
+  const sceneSvg = document.getElementById('scene-svg');
+  const filters = FILTER_MAP[currentMode];
+  const filterId = currentSimulate ? filters.simulate : filters.correct;
+
+  if (filterId) {
+    sceneSvg.style.filter = `url(#${filterId})`;
+  } else {
+    sceneSvg.style.filter = 'none';
+  }
+
+  // Mise à jour description
+  const descEl = document.getElementById('mode-description');
+  const type = currentSimulate ? 'simulate' : 'correct';
+  descEl.innerHTML = '<strong>Mode actuel :</strong> ' + MODE_DESC[currentMode][type];
+
+  // Annonce accessible
+  announce(MODE_DESC[currentMode][type]);
+}
+
+/* ================================================================
+   FILTRES — BOUTONS
+   ================================================================ */
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentMode = btn.dataset.mode;
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.classList.remove('active');
+      b.setAttribute('aria-pressed', 'false');
+    });
+    btn.classList.add('active');
+    btn.setAttribute('aria-pressed', 'true');
+    applyFilter();
+  });
+});
+
+/* ================================================================
+   BASCULE SIMULATION
+   ================================================================ */
+const toggleSim = document.getElementById('toggle-simulate');
+toggleSim.addEventListener('change', () => {
+  currentSimulate = toggleSim.checked;
+  toggleSim.setAttribute('aria-checked', currentSimulate ? 'true' : 'false');
+  applyFilter();
+});
+
+/* ================================================================
+   IDENTIFICATION COULEUR — PASTILLES RAPIDES
+   ================================================================ */
+const quickSwatches = [
+  { hex: '#e74c3c', symbol: '✕', label: 'Rouge' },
+  { hex: '#27ae60', symbol: '●', label: 'Vert' },
+  { hex: '#2980b9', symbol: '▲', label: 'Bleu' },
+  { hex: '#F4B81C', symbol: '■', label: 'Jaune' },
+  { hex: '#8e44ad', symbol: '◆', label: 'Violet' },
+  { hex: '#e67e22', symbol: '★', label: 'Orange' },
+  { hex: '#16a085', symbol: '♦', label: 'Cyan' },
+  { hex: '#e91e8c', symbol: '⬟', label: 'Rose' },
+  { hex: '#7F4E1E', symbol: '⊕', label: 'Brun' },
+  { hex: '#BDC3C7', symbol: '○', label: 'Gris clair' },
+  { hex: '#2C3E50', symbol: '⬡', label: 'Ardoise' },
+  { hex: '#000000', symbol: '□', label: 'Noir' },
+];
+
+const swatchGrid = document.querySelector('.swatch-grid');
+quickSwatches.forEach(sw => {
+  const btn = document.createElement('button');
+  btn.className = 'swatch-btn';
+  btn.style.background = sw.hex;
+  btn.setAttribute('aria-label', `Identifier la couleur ${sw.label} (${sw.hex})`);
+  btn.setAttribute('role', 'listitem');
+  btn.setAttribute('data-symbol', sw.symbol);
+  btn.addEventListener('click', () => {
+    identifyColor(sw.hex);
+    document.querySelectorAll('.swatch-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  });
+  swatchGrid.appendChild(btn);
+});
+
+/* ================================================================
+   COLOR PICKER
+   ================================================================ */
+const colorPicker = document.getElementById('color-picker');
+colorPicker.addEventListener('input', () => {
+  identifyColor(colorPicker.value);
+  document.querySelectorAll('.swatch-btn').forEach(b => b.classList.remove('selected'));
+});
+
+/* ================================================================
+   IDENTIFICATION
+   ================================================================ */
+function identifyColor(hex) {
+  lastColorHex = hex;
+  const { color, dist } = findClosestColor(hex);
+  lastColorName = color ? color.name : '—';
+
+  document.getElementById('result-swatch').style.background = hex;
+  document.getElementById('result-name').textContent = lastColorName;
+  document.getElementById('result-hex').textContent = hex.toUpperCase();
+  document.getElementById('result-dist').textContent =
+    color ? `Distance : ${dist} (plus proche parmi ${COLORS_FR.length} noms)` : '';
+
+  // Annonce accessible (texte, pas vocale auto pour éviter spam)
+  announce(`Couleur identifiée : ${lastColorName}, ${hex.toUpperCase()}`);
+}
+
+// Initialisation
+identifyColor('#3498db');
+
+/* ================================================================
+   LECTURE VOCALE
+   ================================================================ */
+const speakBtn = document.getElementById('speak-btn');
+if (!speechAvailable) {
+  speakBtn.disabled = true;
+  speakBtn.title = 'Synthèse vocale non disponible dans ce navigateur';
+  speakBtn.setAttribute('aria-disabled', 'true');
+}
+
+speakBtn.addEventListener('click', () => {
+  if (!speechAvailable || !lastColorName) return;
+  speakColor(lastColorName, lastColorHex);
+});
+
+function speakColor(name, hex) {
+  if (!speechAvailable) return;
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(`La couleur est ${name}. Code hexadécimal : ${hex.toUpperCase()}`);
+  utterance.lang = 'fr-FR';
+  utterance.rate = 0.95;
+  utterance.pitch = 1.0;
+
+  // Chercher voix FR
+  const voices = window.speechSynthesis.getVoices();
+  const frVoice = voices.find(v => v.lang && v.lang.startsWith('fr'));
+  if (frVoice) utterance.voice = frVoice;
+
+  utterance.onerror = () => {};
+  window.speechSynthesis.speak(utterance);
+}
+
+// Charger les voix de manière asynchrone (certains navigateurs chargent tardivement)
+if (speechAvailable) {
+  window.speechSynthesis.onvoiceschanged = () => {};
+}
+
+/* ================================================================
+   PALETTE SÛRE
+   ================================================================ */
+const paletteGrid = document.querySelector('.palette-grid');
+SAFE_PALETTE.forEach(p => {
+  const { r, g, b } = hexToRgb(p.hex);
+  const luminance = (0.299*r + 0.587*g + 0.114*b) / 255;
+  const textColor = luminance > 0.5 ? '#16202E' : '#FFFFFF';
+
+  const item = document.createElement('div');
+  item.className = 'palette-item';
+  item.setAttribute('role', 'listitem');
+  item.innerHTML = `
+    <div class="palette-color" style="background:${p.hex};color:${textColor};" aria-hidden="true">
+      ${luminance > 0.5 ? '◉' : '○'}
+    </div>
+    <div class="palette-info">
+      <div class="palette-name">${p.name}</div>
+      <div class="palette-hex">${p.hex}</div>
+      <div class="palette-why">${p.why}</div>
+    </div>`;
+  paletteGrid.appendChild(item);
+});
+
+/* ================================================================
+   ARIA LIVE ANNOUNCE
+   ================================================================ */
+function announce(msg) {
+  const el = document.getElementById('aria-live');
+  el.textContent = '';
+  requestAnimationFrame(() => { el.textContent = msg; });
+}
+
+/* ================================================================
+   INITIALISATION FILTRE
+   ================================================================ */
+applyFilter();
+</script>
+</body>
+</html>

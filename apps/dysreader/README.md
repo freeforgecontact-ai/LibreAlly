@@ -5,6 +5,9 @@
 
 **Statut :** 📋 Spécification complète ✓ · 💻 Code à venir
 
+
+▶ **Démo en ligne** : https://freeforgecontact-ai.github.io/LibreAlly/dysreader/ · **Démo locale** : [../../site/dysreader/](../../site/dysreader/)
+
 ---
 
 ## Spécification

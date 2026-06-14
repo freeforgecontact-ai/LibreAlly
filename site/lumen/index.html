@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumen — Loupe d'écran | LibreA11y</title>
+<meta name="description" content="Loupe d'écran, contrastes et thèmes pour basse vision. Démo hors-ligne, aucune donnée envoyée.">
+<style>
+/* ===== VARIABLES & RESET ===== */
+:root {
+  --marine:    #0F4C81;
+  --marine-dk: #0A3A63;
+  --or:        #F4B81C;
+  --or-lt:     #FFD45E;
+  --encre:     #16202E;
+  --fond:      #F7F9FC;
+  --surface:   #FFFFFF;
+  --border:    #D0D9E8;
+  --focus-ring: #F4B81C;
+  --radius:    12px;
+  --radius-sm: 8px;
+  --shadow:    0 2px 8px rgba(15,76,129,0.12);
+  --shadow-hv: 0 4px 16px rgba(15,76,129,0.22);
+  --tr:        0.15s ease;
+
+  /* Content filter vars */
+  --content-brightness: 1;
+  --content-contrast: 1;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--fond);
+  color: var(--encre);
+  font-size: 16px;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+/* ===== SKIP LINK ===== */
+#skip-link {
+  position: fixed;
+  top: -100px;
+  left: 8px;
+  z-index: 9999;
+  background: var(--or);
+  color: var(--encre);
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-size: 1rem;
+  transition: top 0.1s;
+}
+#skip-link:focus { top: 8px; }
+
+/* ===== FOCUS ===== */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* ===== HEADER ===== */
+#app-header {
+  background: var(--marine);
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(10,58,99,0.3);
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  flex-wrap: wrap;
+}
+#header-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+#back-link {
+  color: var(--or-lt);
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  min-height: 56px;
+  transition: background var(--tr);
+  font-weight: 600;
+}
+#back-link:hover, #back-link:focus-visible { background: rgba(255,255,255,0.15); color: #fff; }
+#app-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.3px;
+}
+#header-notice {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.7);
+  text-align: right;
+  line-height: 1.4;
+}
+
+/* ===== LAYOUT ===== */
+#layout {
+  display: flex;
+  min-height: calc(100vh - 64px);
+  gap: 0;
+}
+
+/* ===== CONTROLS PANEL ===== */
+#controls-panel {
+  width: 340px;
+  min-width: 280px;
+  background: var(--surface);
+  border-right: 2px solid var(--border);
+  padding: 20px 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex-shrink: 0;
+}
+@media (max-width: 760px) {
+  #layout { flex-direction: column; }
+  #controls-panel { width: 100%; border-right: none; border-bottom: 2px solid var(--border); }
+}
+
+.ctrl-section {
+  background: var(--fond);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ctrl-section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--marine);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+  letter-spacing: 0.01em;
+}
+
+/* Slider rows */
+.slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.slider-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.slider-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--encre);
+}
+.slider-value {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--marine);
+  min-width: 44px;
+  text-align: right;
+}
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--border);
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"]:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--marine);
+  border: 3px solid var(--or);
+  cursor: pointer;
+  transition: background var(--tr);
+}
+input[type="range"]::-webkit-slider-thumb:hover { background: var(--marine-dk); }
+input[type="range"]::-moz-range-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--marine);
+  border: 3px solid var(--or);
+  cursor: pointer;
+}
+
+/* Buttons */
+.btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ctrl-btn {
+  background: var(--surface);
+  color: var(--marine);
+  border: 2px solid var(--marine);
+  border-radius: var(--radius-sm);
+  padding: 0 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  min-height: 56px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background var(--tr), color var(--tr), border-color var(--tr);
+  white-space: nowrap;
+}
+.ctrl-btn:hover { background: var(--fond); }
+.ctrl-btn.active {
+  background: var(--marine);
+  color: #fff;
+  border-color: var(--marine);
+}
+.ctrl-btn.active:hover { background: var(--marine-dk); }
+.ctrl-btn.btn-full { width: 100%; justify-content: center; }
+.ctrl-btn.btn-warn {
+  border-color: var(--or);
+  color: var(--encre);
+}
+.ctrl-btn.btn-warn.active, .ctrl-btn.btn-warn:hover { background: var(--or); color: var(--encre); }
+
+/* Toggle switches */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.toggle-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--encre);
+  flex: 1;
+}
+.toggle-btn {
+  position: relative;
+  width: 56px;
+  height: 30px;
+  background: var(--border);
+  border: 2px solid transparent;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: background var(--tr);
+  flex-shrink: 0;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.toggle-btn::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 22px;
+  height: 22px;
+  background: #fff;
+  border-radius: 50%;
+  transition: left var(--tr);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.toggle-btn[aria-checked="true"] {
+  background: var(--marine);
+}
+.toggle-btn[aria-checked="true"]::after { left: 28px; }
+.toggle-btn:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+
+/* Info box */
+.info-box {
+  background: rgba(15,76,129,0.07);
+  border-left: 3px solid var(--marine);
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  color: var(--encre);
+  line-height: 1.4;
+}
+.info-box.warn {
+  background: #fff8e1;
+  border-left-color: var(--or);
+}
+
+/* ===== CONTENT AREA ===== */
+#content-area {
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 24px;
+  position: relative;
+}
+
+/* The zoomable wrapper */
+#zoom-viewport {
+  width: 100%;
+  overflow-x: hidden;
+}
+#sample-content {
+  font-size: 1rem;
+  line-height: 1.7;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  max-width: 720px;
+  margin: 0 auto;
+  transition: filter 0.2s ease;
+}
+
+/* Zoom: scale transform approach with reflow text */
+/* We use font-size scaling for true reflow */
+
+/* ===== THEMES ON #sample-content ===== */
+#sample-content.theme-normal {
+  background: var(--surface);
+  color: var(--encre);
+  filter: brightness(var(--content-brightness)) contrast(var(--content-contrast));
+}
+#sample-content.theme-high-contrast {
+  background: #000000;
+  color: #ffffff;
+  border-color: #ffffff;
+  filter: brightness(var(--content-brightness)) contrast(var(--content-contrast));
+}
+#sample-content.theme-high-contrast h2,
+#sample-content.theme-high-contrast h3 { color: #ffff00; }
+#sample-content.theme-high-contrast a { color: #00ffff; }
+#sample-content.theme-high-contrast .stamp { background: #ffff00; color: #000; }
+
+#sample-content.theme-inverted {
+  filter: invert(1) brightness(var(--content-brightness)) contrast(var(--content-contrast));
+}
+#sample-content.theme-sepia {
+  background: #f8f0dc;
+  color: #3b2a1a;
+  filter: sepia(0.6) brightness(var(--content-brightness)) contrast(var(--content-contrast));
+}
+#sample-content.theme-sepia h2 { color: #5c3b1a; }
+#sample-content.theme-sepia .stamp { background: #c88a3a; color: #fff; }
+
+#sample-content.theme-yellow-black {
+  background: #000000;
+  color: #ffff00;
+  border-color: #ffff00;
+  filter: brightness(var(--content-brightness)) contrast(var(--content-contrast));
+}
+#sample-content.theme-yellow-black h2,
+#sample-content.theme-yellow-black h3 { color: #ffff00; border-color: #ffff00; }
+#sample-content.theme-yellow-black .stamp { background: #ffff00; color: #000; }
+#sample-content.theme-yellow-black a { color: #ffcc00; }
+#sample-content.theme-yellow-black hr { border-color: #ffff00; }
+#sample-content.theme-yellow-black .notice-box { border-color: #ffff00; background: #111; }
+#sample-content.theme-yellow-black .field-grid dt { color: #aaa; }
+
+/* Sample content styles */
+#sample-content h2 {
+  font-size: 1.5em;
+  font-weight: 800;
+  color: var(--marine);
+  margin-bottom: 0.3em;
+  border-bottom: 2px solid var(--or);
+  padding-bottom: 6px;
+  line-height: 1.2;
+}
+#sample-content h3 {
+  font-size: 1.15em;
+  font-weight: 700;
+  color: var(--marine-dk);
+  margin: 1em 0 0.3em;
+}
+#sample-content p {
+  margin-bottom: 0.8em;
+}
+#sample-content .stamp {
+  display: inline-block;
+  background: var(--or);
+  color: var(--encre);
+  font-weight: 800;
+  font-size: 0.75em;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+#sample-content .notice-box {
+  border: 2px solid var(--marine);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin: 14px 0;
+  font-size: 0.9em;
+}
+#sample-content .notice-box strong { color: var(--marine); }
+
+#sample-content .field-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 16px;
+  font-size: 0.9em;
+  margin: 10px 0;
+}
+#sample-content .field-grid dt { font-weight: 600; color: #555; white-space: nowrap; }
+#sample-content .field-grid dd { margin: 0; }
+#sample-content hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 16px 0;
+}
+#sample-content ul {
+  padding-left: 1.3em;
+  margin-bottom: 0.8em;
+}
+#sample-content li { margin-bottom: 0.3em; }
+#sample-content .small-print {
+  font-size: 0.78em;
+  color: #666;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  margin-top: 16px;
+}
+
+/* ===== MAGNIFYING LENS ===== */
+#lens {
+  position: fixed;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 4px solid var(--marine);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5), inset 0 0 0 2px var(--or);
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1000;
+  display: none;
+  background: white;
+  transition: none;
+}
+#lens-inner {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+#lens-crosshair {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 2;
+}
+#lens-crosshair::before, #lens-crosshair::after {
+  content: '';
+  position: absolute;
+  background: rgba(244,184,28,0.7);
+}
+#lens-crosshair::before {
+  width: 1px; height: 30px;
+  left: 0; top: -15px;
+}
+#lens-crosshair::after {
+  width: 30px; height: 1px;
+  top: 0; left: -15px;
+}
+
+/* ===== BIG CURSOR ===== */
+body.big-cursor, body.big-cursor * {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpolygon points='6,2 6,38 16,28 22,44 28,41 22,25 36,25' fill='%230F4C81' stroke='white' stroke-width='2'/%3E%3C/svg%3E") 6 2, auto !important;
+}
+
+/* ===== RETICLE ===== */
+#reticle-h, #reticle-v {
+  position: fixed;
+  background: rgba(15,76,129,0.35);
+  pointer-events: none;
+  z-index: 500;
+  display: none;
+  transition: none;
+}
+#reticle-h {
+  left: 0; right: 0;
+  height: 2px;
+  top: 0;
+}
+#reticle-v {
+  top: 0; bottom: 0;
+  width: 2px;
+  left: 0;
+}
+body.show-reticle #reticle-h,
+body.show-reticle #reticle-v { display: block; }
+
+/* ===== CAMERA OVERLAY ===== */
+#camera-section {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+}
+#camera-section.visible { display: flex; }
+#camera-video {
+  width: 100%;
+  max-width: 320px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--marine);
+  display: block;
+}
+#camera-msg {
+  font-size: 0.85rem;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  background: #fff3cd;
+  color: #7d5000;
+  display: none;
+}
+#camera-msg.visible { display: block; }
+
+/* ===== LIVE REGION ===== */
+#aria-live {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+}
+
+/* ===== LENS KEYBOARD HINT ===== */
+#lens-kbd-hint {
+  font-size: 0.78rem;
+  color: #555;
+  margin-top: 4px;
+  line-height: 1.3;
+}
+
+/* ===== FOOTER ===== */
+#app-footer {
+  background: var(--marine-dk);
+  color: rgba(255,255,255,0.7);
+  text-align: center;
+  padding: 12px 20px;
+  font-size: 0.78rem;
+}
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- Skip link -->
+<a href="#main-content" id="skip-link">Aller au contenu principal</a>
+
+<!-- Reticle overlays -->
+<div id="reticle-h" aria-hidden="true"></div>
+<div id="reticle-v" aria-hidden="true"></div>
+
+<!-- Magnifying lens -->
+<div id="lens" role="img" aria-hidden="true" aria-label="Loupe de grossissement">
+  <div id="lens-inner"></div>
+  <div id="lens-crosshair" aria-hidden="true"></div>
+</div>
+
+<!-- Live region -->
+<div id="aria-live" aria-live="polite" aria-atomic="true"></div>
+
+<!-- Header -->
+<header id="app-header" role="banner">
+  <div id="header-left">
+    <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y">← LibreA11y</a>
+    <div id="app-title" aria-hidden="true">🔍 Lumen — démo</div>
+  </div>
+  <div id="header-notice" aria-label="Application en ligne de démonstration, aucune donnée envoyée">
+    démo · 100% hors-ligne<br>aucune donnée envoyée
+  </div>
+</header>
+
+<!-- Main -->
+<main id="main-content" tabindex="-1">
+  <h1 class="sr-only">Lumen — Loupe d'écran et aide à la vision</h1>
+
+  <div id="layout">
+
+    <!-- Controls Panel -->
+    <aside id="controls-panel" aria-label="Panneau de contrôles Lumen" role="complementary">
+
+      <!-- ZOOM SECTION -->
+      <section class="ctrl-section" aria-labelledby="zoom-title">
+        <div class="ctrl-section-title" id="zoom-title">
+          <span aria-hidden="true">🔎</span> Agrandissement du texte
+        </div>
+        <div class="slider-row">
+          <div class="slider-label-row">
+            <label class="slider-label" for="zoom-slider">Taille du texte</label>
+            <span class="slider-value" id="zoom-value" aria-live="polite">100%</span>
+          </div>
+          <input type="range" id="zoom-slider" min="100" max="400" step="10" value="100"
+            aria-label="Agrandissement du texte de 100% à 400%" aria-valuemin="100" aria-valuemax="400" aria-valuenow="100">
+        </div>
+        <div class="info-box">Le texte se réagence automatiquement — pas de défilement horizontal.</div>
+        <div class="btn-group">
+          <button class="ctrl-btn" id="zoom-reset" type="button" aria-label="Remettre le zoom à 100%">Réinitialiser</button>
+        </div>
+      </section>
+
+      <!-- LENS SECTION -->
+      <section class="ctrl-section" aria-labelledby="lens-title">
+        <div class="ctrl-section-title" id="lens-title">
+          <span aria-hidden="true">🔬</span> Loupe-lentille
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label" id="lens-toggle-label">Activer la loupe</span>
+          <button class="toggle-btn" role="switch" aria-checked="false" id="lens-toggle"
+            aria-labelledby="lens-toggle-label" type="button"></button>
+        </div>
+        <div class="slider-row">
+          <div class="slider-label-row">
+            <label class="slider-label" for="lens-zoom-slider">Grossissement de la loupe</label>
+            <span class="slider-value" id="lens-zoom-value" aria-live="polite">×2</span>
+          </div>
+          <input type="range" id="lens-zoom-slider" min="1.5" max="6" step="0.5" value="2"
+            aria-label="Facteur de grossissement de la loupe de ×1.5 à ×6">
+        </div>
+        <div class="slider-row">
+          <div class="slider-label-row">
+            <label class="slider-label" for="lens-size-slider">Taille de la loupe</label>
+            <span class="slider-value" id="lens-size-value" aria-live="polite">200px</span>
+          </div>
+          <input type="range" id="lens-size-slider" min="100" max="350" step="10" value="200"
+            aria-label="Taille de la loupe en pixels de 100 à 350">
+        </div>
+        <div id="lens-kbd-hint" aria-live="off">
+          Clavier : <kbd>I</kbd><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd> ou flèches pour déplacer la loupe.
+        </div>
+      </section>
+
+      <!-- THEMES SECTION -->
+      <section class="ctrl-section" aria-labelledby="theme-title">
+        <div class="ctrl-section-title" id="theme-title">
+          <span aria-hidden="true">🎨</span> Filtres et thèmes
+        </div>
+        <div class="btn-group" role="group" aria-label="Choisir un thème visuel">
+          <button class="ctrl-btn active" id="theme-normal" type="button" data-theme="normal" aria-pressed="true">Normal</button>
+          <button class="ctrl-btn" id="theme-hc" type="button" data-theme="high-contrast" aria-pressed="false">Fort contraste</button>
+          <button class="ctrl-btn" id="theme-inv" type="button" data-theme="inverted" aria-pressed="false">Inversé</button>
+          <button class="ctrl-btn" id="theme-sepia" type="button" data-theme="sepia" aria-pressed="false">Sépia</button>
+          <button class="ctrl-btn" id="theme-yb" type="button" data-theme="yellow-black" aria-pressed="false">Jaune / noir</button>
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-label-row">
+            <label class="slider-label" for="brightness-slider">Luminosité</label>
+            <span class="slider-value" id="brightness-value" aria-live="polite">100%</span>
+          </div>
+          <input type="range" id="brightness-slider" min="40" max="180" step="5" value="100"
+            aria-label="Luminosité du contenu de 40% à 180%">
+        </div>
+        <div class="slider-row">
+          <div class="slider-label-row">
+            <label class="slider-label" for="contrast-slider">Contraste</label>
+            <span class="slider-value" id="contrast-value" aria-live="polite">100%</span>
+          </div>
+          <input type="range" id="contrast-slider" min="50" max="300" step="5" value="100"
+            aria-label="Contraste du contenu de 50% à 300%">
+        </div>
+        <button class="ctrl-btn btn-full" id="filter-reset" type="button">Réinitialiser luminosité et contraste</button>
+      </section>
+
+      <!-- CURSOR SECTION -->
+      <section class="ctrl-section" aria-labelledby="cursor-title">
+        <div class="ctrl-section-title" id="cursor-title">
+          <span aria-hidden="true">🖱</span> Pointeur et réticule
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label" id="bigcursor-label">Gros curseur</span>
+          <button class="toggle-btn" role="switch" aria-checked="false" id="bigcursor-toggle"
+            aria-labelledby="bigcursor-label" type="button"></button>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label" id="reticle-label">Réticule de localisation</span>
+          <button class="toggle-btn" role="switch" aria-checked="false" id="reticle-toggle"
+            aria-labelledby="reticle-label" type="button"></button>
+        </div>
+        <div class="info-box">Le réticule suit votre pointeur pour vous aider à localiser votre position à l'écran.</div>
+      </section>
+
+      <!-- TTS SECTION -->
+      <section class="ctrl-section" aria-labelledby="tts-title">
+        <div class="ctrl-section-title" id="tts-title">
+          <span aria-hidden="true">🔊</span> Lecture vocale
+        </div>
+        <button class="ctrl-btn btn-full" id="tts-play" type="button" aria-label="Lire le contenu du document à voix haute">
+          ▶ Lire le document
+        </button>
+        <button class="ctrl-btn btn-full" id="tts-stop" type="button" aria-label="Arrêter la lecture vocale" disabled>
+          ■ Arrêter
+        </button>
+        <div id="tts-msg" class="info-box" aria-live="polite" style="display:none;"></div>
+      </section>
+
+      <!-- CAMERA SECTION -->
+      <section class="ctrl-section" aria-labelledby="camera-title">
+        <div class="ctrl-section-title" id="camera-title">
+          <span aria-hidden="true">📷</span> Loupe caméra
+        </div>
+        <button class="ctrl-btn btn-full" id="camera-toggle" type="button"
+          aria-label="Activer la caméra comme loupe physique (demande permission)">
+          Utiliser la caméra comme loupe
+        </button>
+        <div id="camera-msg" class="info-box warn" aria-live="polite"></div>
+        <div id="camera-section">
+          <div class="slider-row">
+            <div class="slider-label-row">
+              <label class="slider-label" for="camera-zoom-slider">Zoom caméra</label>
+              <span class="slider-value" id="camera-zoom-value" aria-live="polite">×2</span>
+            </div>
+            <input type="range" id="camera-zoom-slider" min="1" max="6" step="0.5" value="2"
+              aria-label="Zoom de la caméra de ×1 à ×6">
+          </div>
+          <video id="camera-video" autoplay playsinline muted aria-label="Flux vidéo de la caméra en tant que loupe"></video>
+          <button class="ctrl-btn btn-full" id="camera-stop" type="button">Arrêter la caméra</button>
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- Content Area -->
+    <div id="content-area">
+      <div id="zoom-viewport">
+        <article id="sample-content" class="theme-normal" aria-label="Document exemple : Avis d'attribution de prestation">
+
+          <div class="stamp">Document officiel — exemple</div>
+
+          <h2>Avis d'attribution de prestation d'accessibilité</h2>
+
+          <p>Madame, Monsieur,</p>
+          <p>
+            Nous avons bien reçu votre demande de prestation d'aide à l'autonomie numérique,
+            déposée le <strong>3 juin 2026</strong>. Après examen de votre dossier par nos services,
+            nous avons le plaisir de vous informer que votre demande a été <strong>acceptée</strong>.
+          </p>
+
+          <div class="notice-box" role="note" aria-label="Informations importantes">
+            <strong>Informations importantes</strong><br>
+            Cette décision prend effet à compter du <strong>1er juillet 2026</strong>.
+            Veuillez conserver ce document. Il vous sera demandé lors de vos démarches.
+          </div>
+
+          <h3>Détails de votre dossier</h3>
+          <dl class="field-grid">
+            <dt>Numéro de dossier :</dt>
+            <dd>ACC-2026-00847-B</dd>
+            <dt>Bénéficiaire :</dt>
+            <dd>M. Jean-Claude Bernard</dd>
+            <dt>Date de naissance :</dt>
+            <dd>14 mars 1952</dd>
+            <dt>Type de prestation :</dt>
+            <dd>Aide technique — Vision</dd>
+            <dt>Montant accordé :</dt>
+            <dd><strong>420,00 € par trimestre</strong></dd>
+            <dt>Durée :</dt>
+            <dd>12 mois renouvelables</dd>
+          </dl>
+
+          <hr>
+
+          <h3>Pièces à fournir avant le 30 juin 2026</h3>
+          <ul>
+            <li>Photocopie de votre carte d'identité en cours de validité.</li>
+            <li>Attestation de votre médecin ophtalmologiste (moins de 6 mois).</li>
+            <li>Relevé d'identité bancaire (IBAN).</li>
+            <li>Formulaire de demande de virement signé (ci-joint).</li>
+          </ul>
+
+          <p>
+            Ces documents sont à envoyer à l'adresse suivante ou à déposer à l'accueil de
+            notre centre de service (ouvert du lundi au vendredi, 9h–12h et 14h–17h) :
+          </p>
+          <address>
+            Centre LibreA11y — Service Accessibilité<br>
+            12, avenue de l'Égalité Numérique<br>
+            75013 Paris
+          </address>
+
+          <h3>Voies de recours</h3>
+          <p>
+            Si vous estimez que cette décision ne correspond pas à votre situation,
+            vous pouvez formuler un recours gracieux dans un délai de <strong>deux mois</strong>
+            à compter de la date de notification du présent courrier.
+            Pour toute question, notre ligne d'aide est disponible au <strong>01 23 45 67 89</strong>
+            (appel gratuit, du lundi au vendredi, 9h–17h).
+          </p>
+
+          <p class="small-print">
+            Ce document est un exemple fictif créé pour la démonstration de Lumen — LibreA11y.
+            Toute ressemblance avec des données réelles est purement fortuite.
+            Lumen est une application 100% hors-ligne : aucune donnée n'est transmise ni stockée.
+          </p>
+
+        </article>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer id="app-footer" role="contentinfo">
+  Lumen fait partie de <a href="../index.html" style="color:var(--or-lt)">LibreA11y</a> —
+  logiciel libre, 100% hors-ligne, aucune donnée collectée.
+</footer>
+
+<style>
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+}
+</style>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ======================================================
+     UTILS
+  ====================================================== */
+  function announce(msg) {
+    var el = document.getElementById('aria-live');
+    el.textContent = '';
+    setTimeout(function() { el.textContent = msg; }, 50);
+  }
+
+  /* ======================================================
+     1. ZOOM / AGRANDISSEMENT (reflow via font-size)
+  ====================================================== */
+  var zoomSlider = document.getElementById('zoom-slider');
+  var zoomValue  = document.getElementById('zoom-value');
+  var sampleContent = document.getElementById('sample-content');
+  var baseSize = 16; // px
+
+  function applyZoom(pct) {
+    var size = (baseSize * pct / 100).toFixed(2);
+    sampleContent.style.fontSize = size + 'px';
+    zoomValue.textContent = pct + '%';
+    zoomSlider.setAttribute('aria-valuenow', pct);
+  }
+
+  zoomSlider.addEventListener('input', function() {
+    applyZoom(parseInt(this.value, 10));
+  });
+  zoomSlider.addEventListener('change', function() {
+    announce('Zoom ' + this.value + '%');
+  });
+
+  document.getElementById('zoom-reset').addEventListener('click', function() {
+    zoomSlider.value = 100;
+    applyZoom(100);
+    announce('Zoom réinitialisé à 100%');
+  });
+
+  /* ======================================================
+     2. MAGNIFYING LENS
+  ====================================================== */
+  var lensEl        = document.getElementById('lens');
+  var lensInner     = document.getElementById('lens-inner');
+  var lensToggle    = document.getElementById('lens-toggle');
+  var lensZoomSlider= document.getElementById('lens-zoom-slider');
+  var lensZoomVal   = document.getElementById('lens-zoom-value');
+  var lensSizeSlider= document.getElementById('lens-size-slider');
+  var lensSizeVal   = document.getElementById('lens-size-value');
+
+  var lensActive = false;
+  var lensX = 400;
+  var lensY = 300;
+  var lensZoom = 2;
+  var lensSize = 200;
+  var lensStep = 20; // keyboard step in px
+
+  function updateLensSize() {
+    lensSize = parseInt(lensSizeSlider.value, 10);
+    lensEl.style.width  = lensSize + 'px';
+    lensEl.style.height = lensSize + 'px';
+    lensSizeVal.textContent = lensSize + 'px';
+    placeLens(lensX, lensY);
+  }
+
+  function placeLens(x, y) {
+    lensX = x;
+    lensY = y;
+    var half = lensSize / 2;
+    lensEl.style.left = (x - half) + 'px';
+    lensEl.style.top  = (y - half) + 'px';
+    updateLensContent(x, y);
+  }
+
+  function updateLensContent(mx, my) {
+    // Clone the page by using a CSS scale transform on a body copy inside the lens.
+    // We use the background approach: show a zoomed screenshot-like view of the page
+    // by scaling a clone of the document body inside the lens iframe.
+    // Since we are in a single HTML file, we use a simpler CSS trick:
+    // scale a hidden copy of the document using CSS.
+    // --- Practical approach: use a <canvas> + drawWindow (Firefox only) or the
+    //     transform magnification of a cloned element (cross-browser feasible).
+    // We use the transform approach on a cloned element inside the lens.
+    renderLens(mx, my);
+  }
+
+  // Build lens content: scale the viewport to show the area under cursor
+  function renderLens(mx, my) {
+    if (!lensActive) return;
+    var half = lensSize / 2;
+    // We use a CSS transform on the lens-inner that contains a scaled viewport copy
+    // offset so that the area around (mx, my) is centred.
+    var scale = lensZoom;
+    // The inner should be scrolled so that (mx, my) maps to centre of lens
+    var tx = -(mx * scale - half);
+    var ty = -(my * scale - half);
+    lensInner.style.transform = 'scale(' + scale + ')';
+    lensInner.style.transformOrigin = '0 0';
+    lensInner.style.left = tx + 'px';
+    lensInner.style.top  = ty + 'px';
+  }
+
+  // We need actual content inside lensInner — use a canvas approach
+  // Build an iframe inside the lens that shows the same page scaled
+  var lensCanvas = null;
+
+  function buildLens() {
+    // Instead of cloning DOM (which is complex), we use the CSS background-image trick:
+    // The lens shows a magnified snapshot of the area under it.
+    // Best cross-browser approach without canvas API access limitations:
+    // Use a second hidden clone of the content div, scaled and translated.
+    var clone = document.getElementById('lens-page-clone');
+    if (!clone) {
+      clone = document.createElement('div');
+      clone.id = 'lens-page-clone';
+      clone.setAttribute('aria-hidden', 'true');
+      clone.style.cssText = [
+        'position:fixed',
+        'top:0', 'left:0',
+        'width:' + document.documentElement.scrollWidth + 'px',
+        'height:' + document.documentElement.scrollHeight + 'px',
+        'pointer-events:none',
+        'z-index:-1',
+        'overflow:hidden'
+      ].join(';');
+      // clone page HTML
+      clone.innerHTML = document.documentElement.outerHTML;
+      // We won't actually do this (too heavy); instead we use body as transform source
+    }
+
+    // PRACTICAL APPROACH: use CSS perspective + scale on lensInner
+    // and position it so the page area is shown magnified.
+    // We insert the real body's screenshot via html2canvas — but that's external.
+    // Fallback: use the native CSS zoom on a copy of the content.
+    //
+    // BEST OFFLINE APPROACH: Create a second copy of #sample-content inside the lens,
+    // sync its state, and position it so the right section is visible.
+    setupLensClone();
+  }
+
+  var lensClone = null;
+
+  function setupLensClone() {
+    if (lensClone) { lensInner.innerHTML = ''; }
+    lensClone = sampleContent.cloneNode(true);
+    lensClone.id = '';
+    lensClone.removeAttribute('aria-label');
+    lensClone.setAttribute('aria-hidden', 'true');
+    lensClone.style.cssText = [
+      'position:absolute',
+      'top:0', 'left:0',
+      'width:' + (sampleContent.offsetWidth || 600) + 'px',
+      'max-width:none',
+      'margin:0',
+      'border:none',
+      'box-shadow:none',
+      'transform-origin:0 0',
+      'pointer-events:none',
+      'font-size:' + (sampleContent.style.fontSize || '16px')
+    ].join(';');
+    lensInner.innerHTML = '';
+    lensInner.appendChild(lensClone);
+    lensInner.style.position = 'absolute';
+    lensInner.style.overflow = 'hidden';
+  }
+
+  function renderLensAt(mx, my) {
+    if (!lensActive || !lensClone) return;
+
+    // Get the content area scroll offset and position
+    var contentArea = document.getElementById('content-area');
+    var rect = contentArea.getBoundingClientRect();
+    var scrollX = contentArea.scrollLeft;
+    var scrollY = contentArea.scrollTop;
+
+    // Position within contentArea
+    var relX = mx - rect.left + scrollX;
+    var relY = my - rect.top  + scrollY;
+
+    var scale = lensZoom;
+    var half  = lensSize / 2;
+
+    // Translate so (relX, relY) of clone maps to centre of lens
+    var tx = half - relX * scale;
+    var ty = half - relY * scale;
+
+    // Sync clone font-size and classes with real content
+    lensClone.className = sampleContent.className;
+    lensClone.style.fontSize = sampleContent.style.fontSize || '16px';
+    lensClone.style.filter = sampleContent.style.filter || '';
+    lensClone.style.background = getComputedStyle(sampleContent).background;
+    lensClone.style.color = getComputedStyle(sampleContent).color;
+    lensClone.style.transform = 'scale(' + scale + ') translate(' + (tx/scale) + 'px, ' + (ty/scale) + 'px)';
+    lensInner.style.width  = lensSize + 'px';
+    lensInner.style.height = lensSize + 'px';
+    lensInner.style.overflow = 'hidden';
+    lensInner.style.position = 'absolute';
+    lensInner.style.top = '0';
+    lensInner.style.left = '0';
+  }
+
+  function showLens() {
+    lensActive = true;
+    lensEl.style.display = 'block';
+    buildLens();
+    renderLensAt(lensX, lensY);
+    lensToggle.setAttribute('aria-checked', 'true');
+    announce('Loupe activée. Utilisez I J K L ou les flèches pour la déplacer.');
+  }
+
+  function hideLens() {
+    lensActive = false;
+    lensEl.style.display = 'none';
+    lensToggle.setAttribute('aria-checked', 'false');
+    announce('Loupe désactivée');
+  }
+
+  lensToggle.addEventListener('click', function() {
+    if (lensActive) { hideLens(); } else { showLens(); }
+  });
+
+  // Mouse tracking
+  document.addEventListener('mousemove', function(e) {
+    if (!lensActive) return;
+    placeLensAt(e.clientX, e.clientY);
+  });
+
+  function placeLensAt(cx, cy) {
+    lensX = cx;
+    lensY = cy;
+    var half = lensSize / 2;
+    lensEl.style.left = (cx - half) + 'px';
+    lensEl.style.top  = (cy - half) + 'px';
+    renderLensAt(cx, cy);
+  }
+
+  // Keyboard movement for lens: Arrow keys or I/J/K/L
+  document.addEventListener('keydown', function(e) {
+    if (!lensActive) return;
+    var dx = 0, dy = 0;
+    switch(e.key) {
+      case 'ArrowLeft':  case 'j': case 'J': dx = -lensStep; break;
+      case 'ArrowRight': case 'l': case 'L': dx =  lensStep; break;
+      case 'ArrowUp':    case 'i': case 'I': dy = -lensStep; break;
+      case 'ArrowDown':  case 'k': case 'K': dy =  lensStep; break;
+      default: return;
+    }
+    // Only intercept if not in an input
+    if (document.activeElement && (document.activeElement.tagName === 'INPUT' ||
+        document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT')) return;
+    e.preventDefault();
+    placeLensAt(lensX + dx, lensY + dy);
+  });
+
+  lensZoomSlider.addEventListener('input', function() {
+    lensZoom = parseFloat(this.value);
+    lensZoomVal.textContent = '×' + lensZoom;
+    if (lensActive) renderLensAt(lensX, lensY);
+  });
+  lensZoomSlider.addEventListener('change', function() {
+    announce('Grossissement loupe ×' + this.value);
+  });
+
+  lensSizeSlider.addEventListener('input', function() {
+    lensSize = parseInt(this.value, 10);
+    lensSizeVal.textContent = lensSize + 'px';
+    lensEl.style.width  = lensSize + 'px';
+    lensEl.style.height = lensSize + 'px';
+    lensEl.style.borderRadius = (lensSize/2) + 'px';
+    if (lensActive) {
+      placeLensAt(lensX, lensY);
+      setupLensClone();
+    }
+  });
+  lensSizeSlider.addEventListener('change', function() {
+    announce('Taille loupe ' + this.value + ' pixels');
+  });
+
+  /* ======================================================
+     3. THEMES
+  ====================================================== */
+  var currentTheme = 'normal';
+  var themeButtons = document.querySelectorAll('[data-theme]');
+  var THEMES = ['normal','high-contrast','inverted','sepia','yellow-black'];
+  var THEME_LABELS = {
+    'normal': 'Thème normal',
+    'high-contrast': 'Fort contraste',
+    'inverted': 'Inversé',
+    'sepia': 'Sépia',
+    'yellow-black': 'Jaune sur noir'
+  };
+
+  function applyTheme(theme) {
+    THEMES.forEach(function(t) {
+      sampleContent.classList.remove('theme-' + t);
+    });
+    sampleContent.classList.add('theme-' + theme);
+    currentTheme = theme;
+
+    themeButtons.forEach(function(btn) {
+      var isActive = btn.dataset.theme === theme;
+      btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      if (isActive) { btn.classList.add('active'); }
+      else { btn.classList.remove('active'); }
+    });
+
+    announce(THEME_LABELS[theme] + ' activé');
+    // Re-sync lens clone
+    if (lensActive && lensClone) {
+      lensClone.className = sampleContent.className;
+      lensClone.style.background = getComputedStyle(sampleContent).background;
+      lensClone.style.color = getComputedStyle(sampleContent).color;
+    }
+  }
+
+  themeButtons.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      applyTheme(this.dataset.theme);
+    });
+  });
+
+  /* ======================================================
+     4. BRIGHTNESS / CONTRAST FILTERS
+  ====================================================== */
+  var brightnessSlider = document.getElementById('brightness-slider');
+  var brightnessValue  = document.getElementById('brightness-value');
+  var contrastSlider   = document.getElementById('contrast-slider');
+  var contrastValue    = document.getElementById('contrast-value');
+
+  function applyFilters() {
+    var b = brightnessSlider.value / 100;
+    var c = contrastSlider.value   / 100;
+    // We store as CSS vars and apply via inline style
+    sampleContent.style.setProperty('--content-brightness', b);
+    sampleContent.style.setProperty('--content-contrast', c);
+    // Force recompute for non-var-aware: rebuild filter
+    updateFilterStyle();
+  }
+
+  function updateFilterStyle() {
+    var b   = brightnessSlider.value;
+    var con = contrastSlider.value;
+    brightnessValue.textContent = b + '%';
+    contrastValue.textContent   = con + '%';
+
+    // Build filter string based on active theme
+    var baseFilter = '';
+    if (currentTheme === 'inverted') {
+      baseFilter = 'invert(1) ';
+    } else if (currentTheme === 'sepia') {
+      baseFilter = 'sepia(0.6) ';
+    }
+    // Remove the theme's own filter override and apply combined
+    sampleContent.style.filter = baseFilter + 'brightness(' + b/100 + ') contrast(' + con/100 + ')';
+  }
+
+  brightnessSlider.addEventListener('input', updateFilterStyle);
+  brightnessSlider.addEventListener('change', function() {
+    announce('Luminosité ' + this.value + '%');
+  });
+  contrastSlider.addEventListener('input', updateFilterStyle);
+  contrastSlider.addEventListener('change', function() {
+    announce('Contraste ' + this.value + '%');
+  });
+
+  document.getElementById('filter-reset').addEventListener('click', function() {
+    brightnessSlider.value = 100;
+    contrastSlider.value   = 100;
+    updateFilterStyle();
+    announce('Luminosité et contraste réinitialisés');
+  });
+
+  /* ======================================================
+     5. BIG CURSOR
+  ====================================================== */
+  var bigCursorToggle = document.getElementById('bigcursor-toggle');
+  var bigCursorActive = false;
+
+  bigCursorToggle.addEventListener('click', function() {
+    bigCursorActive = !bigCursorActive;
+    this.setAttribute('aria-checked', bigCursorActive ? 'true' : 'false');
+    document.body.classList.toggle('big-cursor', bigCursorActive);
+    announce(bigCursorActive ? 'Grand curseur activé' : 'Grand curseur désactivé');
+  });
+
+  /* ======================================================
+     6. RETICLE
+  ====================================================== */
+  var reticleToggle = document.getElementById('reticle-toggle');
+  var reticleActive = false;
+  var reticleH = document.getElementById('reticle-h');
+  var reticleV = document.getElementById('reticle-v');
+
+  reticleToggle.addEventListener('click', function() {
+    reticleActive = !reticleActive;
+    this.setAttribute('aria-checked', reticleActive ? 'true' : 'false');
+    document.body.classList.toggle('show-reticle', reticleActive);
+    announce(reticleActive ? 'Réticule activé' : 'Réticule désactivé');
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!reticleActive) return;
+    reticleH.style.top  = e.clientY + 'px';
+    reticleV.style.left = e.clientX + 'px';
+  });
+
+  /* ======================================================
+     7. TEXT-TO-SPEECH
+  ====================================================== */
+  var ttsPlay  = document.getElementById('tts-play');
+  var ttsStop  = document.getElementById('tts-stop');
+  var ttsMsg   = document.getElementById('tts-msg');
+  var ttsUtter = null;
+  var ttsSupported = ('speechSynthesis' in window);
+
+  function getDocumentText() {
+    // Extract text from sample content, skipping UI elements
+    var el = document.getElementById('sample-content');
+    return el ? el.innerText || el.textContent : '';
+  }
+
+  ttsPlay.addEventListener('click', function() {
+    if (!ttsSupported) {
+      ttsMsg.textContent = 'La synthèse vocale n\'est pas disponible dans votre navigateur.';
+      ttsMsg.style.display = 'block';
+      return;
+    }
+    window.speechSynthesis.cancel();
+    var text = getDocumentText();
+    ttsUtter = new SpeechSynthesisUtterance(text);
+    ttsUtter.lang = 'fr-FR';
+    ttsUtter.rate = 0.9;
+
+    // Pick French voice if available
+    var voices = window.speechSynthesis.getVoices();
+    var frVoice = voices.find(function(v) { return v.lang.startsWith('fr'); });
+    if (frVoice) { ttsUtter.voice = frVoice; }
+
+    ttsUtter.onstart = function() {
+      ttsPlay.disabled = true;
+      ttsStop.disabled = false;
+      ttsMsg.textContent = 'Lecture en cours…';
+      ttsMsg.style.display = 'block';
+    };
+    ttsUtter.onend = function() {
+      ttsPlay.disabled = false;
+      ttsStop.disabled = true;
+      ttsMsg.textContent = 'Lecture terminée.';
+      setTimeout(function() { ttsMsg.style.display = 'none'; }, 3000);
+    };
+    ttsUtter.onerror = function(e) {
+      ttsPlay.disabled = false;
+      ttsStop.disabled = true;
+      ttsMsg.textContent = 'Erreur de lecture : ' + (e.error || 'inconnue');
+    };
+
+    window.speechSynthesis.speak(ttsUtter);
+  });
+
+  ttsStop.addEventListener('click', function() {
+    window.speechSynthesis.cancel();
+    ttsPlay.disabled = false;
+    ttsStop.disabled = true;
+    ttsMsg.textContent = 'Lecture arrêtée.';
+    setTimeout(function() { ttsMsg.style.display = 'none'; }, 2000);
+    announce('Lecture arrêtée');
+  });
+
+  // Voice list loads async
+  if (ttsSupported && window.speechSynthesis.onvoiceschanged !== undefined) {
+    window.speechSynthesis.onvoiceschanged = function() { /* voices now loaded */ };
+  }
+
+  /* ======================================================
+     8. CAMERA LOUPE
+  ====================================================== */
+  var cameraToggleBtn  = document.getElementById('camera-toggle');
+  var cameraSectionEl  = document.getElementById('camera-section');
+  var cameraVideo      = document.getElementById('camera-video');
+  var cameraMsgEl      = document.getElementById('camera-msg');
+  var cameraStopBtn    = document.getElementById('camera-stop');
+  var cameraZoomSlider = document.getElementById('camera-zoom-slider');
+  var cameraZoomVal    = document.getElementById('camera-zoom-value');
+  var cameraStream     = null;
+
+  cameraToggleBtn.addEventListener('click', function() {
+    if (cameraStream) {
+      stopCamera();
+      return;
+    }
+    startCamera();
+  });
+
+  function startCamera() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      showCameraMsg('Votre navigateur ne supporte pas l\'accès à la caméra. Toutes les autres fonctionnalités de Lumen restent disponibles.', true);
+      return;
+    }
+    // Request camera
+    var constraints = { video: { facingMode: 'environment' } };
+    navigator.mediaDevices.getUserMedia(constraints)
+      .then(function(stream) {
+        cameraStream = stream;
+        cameraVideo.srcObject = stream;
+        cameraSectionEl.classList.add('visible');
+        cameraToggleBtn.textContent = 'Désactiver la caméra';
+        cameraToggleBtn.setAttribute('aria-label', 'Désactiver la caméra loupe');
+        hideCameraMsg();
+        applyCameraZoom(parseFloat(cameraZoomSlider.value));
+        announce('Caméra activée comme loupe');
+      })
+      .catch(function(err) {
+        var msg = '';
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          msg = 'Permission refusée. Vous pouvez activer la caméra dans les paramètres de votre navigateur. Toutes les autres fonctionnalités de Lumen restent disponibles.';
+        } else if (err.name === 'NotFoundError') {
+          msg = 'Aucune caméra trouvée sur cet appareil. Toutes les autres fonctionnalités de Lumen restent disponibles.';
+        } else if (err.name === 'NotReadableError') {
+          msg = 'La caméra est déjà utilisée par une autre application. Fermez-la et réessayez.';
+        } else {
+          msg = 'La caméra est indisponible (' + err.message + '). Toutes les autres fonctionnalités de Lumen restent disponibles.';
+        }
+        showCameraMsg(msg, true);
+      });
+  }
+
+  function stopCamera() {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(function(t) { t.stop(); });
+      cameraStream = null;
+    }
+    cameraVideo.srcObject = null;
+    cameraSectionEl.classList.remove('visible');
+    cameraToggleBtn.textContent = 'Utiliser la caméra comme loupe';
+    cameraToggleBtn.setAttribute('aria-label', 'Activer la caméra comme loupe physique');
+    announce('Caméra désactivée');
+  }
+
+  function showCameraMsg(msg, isWarn) {
+    cameraMsgEl.textContent = msg;
+    cameraMsgEl.className = 'info-box' + (isWarn ? ' warn' : '');
+    cameraMsgEl.classList.add('visible');
+  }
+  function hideCameraMsg() {
+    cameraMsgEl.classList.remove('visible');
+    cameraMsgEl.style.display = '';
+  }
+
+  cameraStopBtn.addEventListener('click', function() { stopCamera(); });
+
+  function applyCameraZoom(z) {
+    // Attempt to use camera native zoom if supported
+    if (cameraStream) {
+      var track = cameraStream.getVideoTracks()[0];
+      if (track && track.getCapabilities) {
+        var caps = track.getCapabilities();
+        if (caps.zoom) {
+          var clampedZ = Math.min(Math.max(z, caps.zoom.min), caps.zoom.max);
+          track.applyConstraints({ advanced: [{ zoom: clampedZ }] }).catch(function(){});
+        }
+      }
+    }
+    // CSS zoom fallback on video element
+    cameraVideo.style.transform = 'scale(' + z + ')';
+    cameraVideo.style.transformOrigin = 'center center';
+    cameraVideo.parentElement && (cameraVideo.parentElement.style.overflow = 'hidden');
+  }
+
+  cameraZoomSlider.addEventListener('input', function() {
+    var z = parseFloat(this.value);
+    cameraZoomVal.textContent = '×' + z;
+    applyCameraZoom(z);
+  });
+  cameraZoomSlider.addEventListener('change', function() {
+    announce('Zoom caméra ×' + this.value);
+  });
+
+  /* ======================================================
+     9. INIT
+  ====================================================== */
+  // Set initial lens position to centre of viewport
+  lensX = Math.floor(window.innerWidth  / 2);
+  lensY = Math.floor(window.innerHeight / 2);
+  placeLensAt(lensX, lensY);
+
+  // Announce app ready
+  announce('Lumen chargé. Utilisez le panneau à gauche pour ajuster la vision.');
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CalmSpace — Démo | LibreA11y</title>
+<meta name="description" content="Régulation sensorielle et émotionnelle. Démo hors-ligne, aucune donnée envoyée.">
+<style>
+/* ===== VARIABLES & RESET ===== */
+:root {
+  --marine:    #0F4C81;
+  --marine-dk: #0A3A63;
+  --or:        #F4B81C;
+  --or-lt:     #FFD45E;
+  --encre:     #16202E;
+  --fond:      #F7F9FC;
+  --surface:   #FFFFFF;
+  --border:    #D0D9E8;
+  --focus-ring:#F4B81C;
+  --radius:    14px;
+  --radius-sm: 8px;
+  --shadow:    0 2px 8px rgba(15,76,129,0.10);
+  --shadow-hv: 0 4px 18px rgba(15,76,129,0.18);
+  --tr:        0.18s ease;
+
+  /* Tons apaisants supplémentaires */
+  --lavande:   #EEF0FA;
+  --sauge:     #EAF4EF;
+  --pêche:     #FDF3EC;
+  --bleu-ciel: #E8F4FD;
+  --violet-doux: #7B6EA6;
+  --vert-doux:   #3D8B6A;
+  --orange-doux: #C8661A;
+  --rouge-doux:  #C0392B;
+  --jaune-doux:  #B8860B;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  min-height: 100%;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  background: var(--fond);
+  color: var(--encre);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* ===== LIEN D'ÉVITEMENT ===== */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 8px;
+  background: var(--marine);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  z-index: 9999;
+  text-decoration: none;
+  transition: top 0.1s;
+}
+.skip-link:focus { top: 8px; }
+
+/* ===== FOCUS GLOBAL ===== */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* ===== HEADER ===== */
+#app-header {
+  background: var(--marine);
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(10,58,99,0.30);
+  position: relative;
+  z-index: 10;
+}
+#header-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+#back-link {
+  color: var(--or-lt);
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  transition: background var(--tr);
+  min-height: 44px;
+}
+#back-link:hover, #back-link:focus-visible { background: rgba(255,255,255,0.15); color: #fff; }
+#app-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.3px;
+}
+#header-notice {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.65);
+  text-align: right;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+/* ===== TTS WARNING ===== */
+#tts-warning {
+  background: #fff8e1;
+  color: #6d4c00;
+  padding: 8px 20px;
+  font-size: 0.85rem;
+  border-bottom: 2px solid #ffe082;
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+#tts-warning.visible { display: flex; }
+
+/* ===== DISCLAIMER ===== */
+#disclaimer {
+  background: var(--bleu-ciel);
+  border-left: 4px solid var(--marine);
+  padding: 10px 18px;
+  font-size: 0.82rem;
+  color: var(--marine-dk);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ===== MAIN ===== */
+#main-content {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* ===== NAV ONGLETS ===== */
+#nav-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0;
+}
+.tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--marine);
+  cursor: pointer;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition: background var(--tr), color var(--tr), border-color var(--tr);
+  min-height: 48px;
+  min-width: 80px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  margin-bottom: -2px;
+}
+.tab-btn:hover { background: var(--lavande); }
+.tab-btn[aria-selected="true"] {
+  border-bottom-color: var(--marine);
+  background: var(--surface);
+  color: var(--marine-dk);
+}
+
+/* ===== SECTIONS ===== */
+.section-panel {
+  display: none;
+}
+.section-panel.active {
+  display: block;
+}
+
+/* ===== TITRES DE SECTION ===== */
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--marine);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ===== CARTE ÉMOTION ===== */
+.emotions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+}
+.emotion-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color var(--tr), background var(--tr), transform 0.12s ease, box-shadow var(--tr);
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: var(--shadow);
+}
+.emotion-card:hover {
+  border-color: var(--marine);
+  background: var(--lavande);
+  box-shadow: var(--shadow-hv);
+}
+.emotion-card:active {
+  transform: scale(0.96);
+}
+.emotion-card[aria-pressed="true"] {
+  border-color: var(--marine);
+  background: var(--marine);
+  color: #fff;
+  box-shadow: 0 0 0 3px var(--or-lt);
+}
+.emotion-icon { font-size: 2rem; line-height: 1; }
+.emotion-label { font-size: 0.8rem; font-weight: 600; }
+
+/* ===== AFFICHAGE ÉMOTION CHOISIE ===== */
+#emotion-display {
+  background: var(--surface);
+  border: 2px solid var(--marine);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  display: none;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--shadow);
+  margin-top: 14px;
+}
+#emotion-display.visible { display: flex; flex-wrap: wrap; }
+#emotion-chosen-text {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--marine);
+  flex: 1;
+}
+#btn-speak-emotion {
+  background: var(--marine);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 48px;
+  transition: background var(--tr);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#btn-speak-emotion:hover { background: var(--marine-dk); }
+
+/* ===== ÉCHELLE DE STRESS ===== */
+.stress-scale {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.stress-btn {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 10px;
+  min-width: 120px;
+  min-height: 72px;
+  cursor: pointer;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--encre);
+  transition: border-color var(--tr), background var(--tr), box-shadow var(--tr);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-shadow: var(--shadow);
+  flex: 1;
+}
+.stress-btn:hover { border-color: var(--marine); background: var(--lavande); }
+.stress-btn[aria-pressed="true"] {
+  border-color: var(--marine);
+  background: var(--marine);
+  color: #fff;
+  box-shadow: 0 0 0 3px var(--or-lt);
+}
+.stress-emoji { font-size: 1.5rem; }
+.stress-label { font-size: 0.78rem; }
+
+#stress-strategy {
+  background: var(--sauge);
+  border: 1.5px solid #a8d5ba;
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-top: 14px;
+  display: none;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+#stress-strategy.visible { display: block; }
+#stress-strategy strong { color: var(--vert-doux); }
+
+/* ===== RESPIRATION ===== */
+#breath-section { }
+.breath-choices {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.breath-choice-btn {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--marine);
+  cursor: pointer;
+  min-height: 48px;
+  transition: border-color var(--tr), background var(--tr);
+}
+.breath-choice-btn:hover { background: var(--lavande); border-color: var(--marine); }
+.breath-choice-btn[aria-pressed="true"] {
+  background: var(--marine);
+  color: #fff;
+  border-color: var(--marine);
+}
+
+#breath-arena {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 10px 0 20px;
+}
+
+#breath-circle-wrap {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#breath-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 38%, #c7e0f8, var(--marine));
+  transition: width 0.0s linear, height 0.0s linear;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 8px rgba(15,76,129,0.08);
+}
+
+/* Animation désactivée si prefers-reduced-motion */
+@media (prefers-reduced-motion: no-preference) {
+  #breath-circle.animating {
+    transition: width 1s linear, height 1s linear;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #breath-circle { display: none !important; }
+  #breath-circle-wrap { display: none !important; }
+}
+
+#breath-text {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--marine);
+  text-align: center;
+  min-height: 2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#breath-timer-display {
+  font-size: 1rem;
+  color: var(--marine-dk);
+  font-variant-numeric: tabular-nums;
+  min-height: 1.5em;
+  text-align: center;
+}
+
+#breath-count-display {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.breath-controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: var(--marine);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 52px;
+  transition: background var(--tr);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary:hover { background: var(--marine-dk); }
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--marine);
+  border: 2px solid var(--marine);
+  border-radius: var(--radius-sm);
+  padding: 12px 20px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 52px;
+  transition: background var(--tr);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-secondary:hover { background: var(--lavande); }
+
+/* ===== MINUTEUR ===== */
+#timer-section { }
+
+.timer-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.timer-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#timer-minutes-input {
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 1rem;
+  width: 80px;
+  text-align: center;
+  color: var(--encre);
+  min-height: 48px;
+  transition: border-color var(--tr);
+}
+#timer-minutes-input:focus { border-color: var(--marine); }
+
+#timer-display {
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: var(--marine);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  letter-spacing: 2px;
+  min-height: 1.5em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 280px;
+}
+
+#timer-finished-msg {
+  display: none;
+  background: var(--sauge);
+  border: 2px solid #a8d5ba;
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--vert-doux);
+  align-items: center;
+  gap: 8px;
+}
+#timer-finished-msg.visible { display: flex; }
+
+/* ===== BOÎTE À OUTILS ===== */
+.tools-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tool-item {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  box-shadow: var(--shadow);
+  transition: border-color var(--tr);
+}
+.tool-item:hover { border-color: var(--marine); }
+.tool-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 1px; }
+.tool-body { flex: 1; }
+.tool-name {
+  font-weight: 700;
+  color: var(--marine);
+  margin-bottom: 3px;
+  font-size: 0.95rem;
+}
+.tool-desc {
+  font-size: 0.85rem;
+  color: #4a5568;
+  line-height: 1.5;
+}
+.btn-fav {
+  background: none;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  transition: border-color var(--tr), background var(--tr);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+.btn-fav:hover { border-color: var(--or); background: #fffbea; }
+.btn-fav[aria-pressed="true"] { border-color: var(--or); background: #fffbea; }
+.btn-fav[aria-pressed="true"]::after { content: '★'; color: var(--or); }
+.btn-fav[aria-pressed="false"]::after { content: '☆'; color: #aaa; }
+
+#fav-section { margin-bottom: 8px; }
+#fav-section h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--marine);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#fav-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.fav-chip {
+  background: var(--or);
+  color: var(--encre);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ===== ARIA LIVE ===== */
+#aria-live-region {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+}
+
+/* ===== FOOTER ===== */
+#app-footer {
+  text-align: center;
+  padding: 20px 16px;
+  font-size: 0.78rem;
+  color: #6b7a8d;
+  border-top: 1px solid var(--border);
+  margin-top: 10px;
+  line-height: 1.6;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .emotions-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+  .stress-scale { flex-direction: column; }
+  .stress-btn { min-width: 0; width: 100%; flex-direction: row; justify-content: flex-start; gap: 10px; padding: 12px 14px; }
+  #breath-circle-wrap { width: 140px; height: 140px; }
+  #timer-display { font-size: 2rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Lien d'évitement -->
+<a class="skip-link" href="#main-content">Aller au contenu principal</a>
+
+<!-- Région aria-live invisible -->
+<div id="aria-live-region" aria-live="polite" aria-atomic="true" role="status"></div>
+
+<!-- ===== EN-TÊTE ===== -->
+<header id="app-header" role="banner">
+  <div id="header-left">
+    <a id="back-link" href="../index.html" aria-label="Retour à LibreA11y">← LibreA11y</a>
+    <div id="app-title" aria-label="CalmSpace, application de régulation sensorielle et émotionnelle">
+      🌿 CalmSpace — démo
+    </div>
+  </div>
+  <div id="header-notice" aria-label="Informations : démo, 100 % hors-ligne, aucune donnée envoyée">
+    démo · 100 % hors-ligne<br>aucune donnée envoyée
+  </div>
+</header>
+
+<!-- Avertissement TTS -->
+<div id="tts-warning" role="alert" aria-live="assertive">
+  <span aria-hidden="true">⚠️</span>
+  Lecture vocale non disponible sur cet appareil ou navigateur.
+</div>
+
+<!-- Avertissement santé -->
+<div id="disclaimer" role="note" aria-label="Information importante">
+  <span aria-hidden="true">ℹ️</span>
+  <span>
+    <strong>CalmSpace est un soutien et ne remplace pas un soin de santé.</strong>
+    Si tu souffres beaucoup, parle à un adulte de confiance ou à un professionnel de santé.
+  </span>
+</div>
+
+<!-- ===== CONTENU PRINCIPAL ===== -->
+<main id="main-content">
+  <h1 style="font-size:1.5rem;font-weight:800;color:var(--marine);display:flex;align-items:center;gap:10px;padding:4px 0 0;">
+    🌿 Comment tu te sens ?
+  </h1>
+
+  <!-- Navigation par onglets -->
+  <nav aria-label="Sections de CalmSpace">
+    <div id="nav-tabs" role="tablist">
+      <button class="tab-btn" role="tab" aria-selected="true" aria-controls="panel-emotions" id="tab-emotions">
+        💛 Émotions
+      </button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-stress" id="tab-stress">
+        📊 Niveau
+      </button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-breath" id="tab-breath">
+        🌬️ Respiration
+      </button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-timer" id="tab-timer">
+        ⏱️ Minuteur
+      </button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-tools" id="tab-tools">
+        🧰 Outils
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===== PANNEAU : ÉMOTIONS ===== -->
+  <section id="panel-emotions" class="section-panel active" role="tabpanel" aria-labelledby="tab-emotions">
+    <h2 class="section-title"><span aria-hidden="true">💛</span> Quelle émotion est là ?</h2>
+    <p style="font-size:0.87rem;color:#4a5568;margin-bottom:12px;">Appuie sur l'émotion que tu ressens. Tu peux en choisir plusieurs.</p>
+
+    <div class="emotions-grid" id="emotions-grid" role="group" aria-label="Cartes d'émotions">
+      <!-- Rempli par JS -->
+    </div>
+
+    <div id="emotion-display" aria-live="polite" role="region" aria-label="Émotion choisie">
+      <div id="emotion-chosen-text"></div>
+      <button id="btn-speak-emotion" aria-label="Lire l'émotion à voix haute">
+        🔊 <span>Lire</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ===== PANNEAU : STRESS / ÉNERGIE ===== -->
+  <section id="panel-stress" class="section-panel" role="tabpanel" aria-labelledby="tab-stress" hidden>
+    <h2 class="section-title"><span aria-hidden="true">📊</span> Mon niveau de stress / énergie</h2>
+    <p style="font-size:0.87rem;color:#4a5568;margin-bottom:14px;">Choisis le chiffre qui correspond à ce que tu ressens maintenant.</p>
+
+    <div class="stress-scale" role="group" aria-label="Échelle de stress de 1 à 5">
+      <button class="stress-btn" data-level="1" aria-pressed="false">
+        <span class="stress-emoji" aria-hidden="true">😌</span>
+        <span class="stress-num" aria-hidden="true">1</span>
+        <span class="stress-label">Très calme</span>
+      </button>
+      <button class="stress-btn" data-level="2" aria-pressed="false">
+        <span class="stress-emoji" aria-hidden="true">🙂</span>
+        <span class="stress-num" aria-hidden="true">2</span>
+        <span class="stress-label">Calme</span>
+      </button>
+      <button class="stress-btn" data-level="3" aria-pressed="false">
+        <span class="stress-emoji" aria-hidden="true">😐</span>
+        <span class="stress-num" aria-hidden="true">3</span>
+        <span class="stress-label">Un peu tendu</span>
+      </button>
+      <button class="stress-btn" data-level="4" aria-pressed="false">
+        <span class="stress-emoji" aria-hidden="true">😟</span>
+        <span class="stress-num" aria-hidden="true">4</span>
+        <span class="stress-label">Très tendu</span>
+      </button>
+      <button class="stress-btn" data-level="5" aria-pressed="false">
+        <span class="stress-emoji" aria-hidden="true">😰</span>
+        <span class="stress-num" aria-hidden="true">5</span>
+        <span class="stress-label">Débordé</span>
+      </button>
+    </div>
+
+    <div id="stress-strategy" aria-live="polite" role="region" aria-label="Stratégie proposée"></div>
+  </section>
+
+  <!-- ===== PANNEAU : RESPIRATION ===== -->
+  <section id="panel-breath" class="section-panel" role="tabpanel" aria-labelledby="tab-breath" hidden>
+    <h2 class="section-title"><span aria-hidden="true">🌬️</span> Respiration guidée</h2>
+    <p style="font-size:0.87rem;color:#4a5568;margin-bottom:14px;">Choisis un exercice et suis le rythme doucement.</p>
+
+    <div class="breath-choices" role="group" aria-label="Type de respiration">
+      <button class="breath-choice-btn" data-pattern="square" aria-pressed="true">
+        Carré 4-4-4-4
+      </button>
+      <button class="breath-choice-btn" data-pattern="478" aria-pressed="false">
+        4-7-8 (relaxant)
+      </button>
+    </div>
+
+    <div id="breath-arena">
+      <div id="breath-circle-wrap" aria-hidden="true">
+        <div id="breath-circle"></div>
+      </div>
+      <div id="breath-text" aria-live="polite" role="status">Prêt</div>
+      <div id="breath-timer-display" aria-live="off" aria-label="Compte à rebours de la phase">—</div>
+      <div id="breath-count-display" aria-live="polite" role="status"></div>
+      <div class="breath-controls">
+        <button class="btn-primary" id="btn-breath-start">▶ Démarrer</button>
+        <button class="btn-secondary" id="btn-breath-stop">⏹ Arrêter</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PANNEAU : MINUTEUR ===== -->
+  <section id="panel-timer" class="section-panel" role="tabpanel" aria-labelledby="tab-timer" hidden>
+    <h2 class="section-title"><span aria-hidden="true">⏱️</span> Minuteur calme</h2>
+    <p style="font-size:0.87rem;color:#4a5568;margin-bottom:16px;">Règle le temps et laisse passer ce moment.</p>
+
+    <div class="timer-controls">
+      <div class="timer-input-row">
+        <label for="timer-minutes-input" style="font-weight:600;color:var(--marine);">Minutes :</label>
+        <input
+          id="timer-minutes-input"
+          type="number"
+          min="1"
+          max="60"
+          value="5"
+          aria-label="Nombre de minutes"
+        >
+        <button class="btn-primary" id="btn-timer-start">▶ Démarrer</button>
+        <button class="btn-secondary" id="btn-timer-reset">↺ Réinitialiser</button>
+      </div>
+
+      <div id="timer-display" aria-live="off" aria-label="Temps restant" role="timer">05:00</div>
+      <div id="timer-finished-msg" role="alert">
+        <span aria-hidden="true">✅</span> Temps écoulé ! Bravo d'avoir pris ce moment pour toi.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PANNEAU : BOÎTE À OUTILS ===== -->
+  <section id="panel-tools" class="section-panel" role="tabpanel" aria-labelledby="tab-tools" hidden>
+    <h2 class="section-title"><span aria-hidden="true">🧰</span> Stratégies d'apaisement</h2>
+    <p style="font-size:0.87rem;color:#4a5568;margin-bottom:10px;">Marque tes favoris ⭐ pour les retrouver vite.</p>
+
+    <div id="fav-section" aria-live="polite">
+      <h3><span aria-hidden="true">⭐</span> Mes favoris</h3>
+      <div id="fav-list" aria-label="Stratégies favorites">
+        <span style="font-size:0.82rem;color:#888;font-style:italic;">Aucun favori encore.</span>
+      </div>
+    </div>
+
+    <div class="tools-list" id="tools-list" role="list">
+      <!-- Rempli par JS -->
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== PIED DE PAGE ===== -->
+<footer id="app-footer" role="contentinfo">
+  <p>CalmSpace · Partie de la suite <strong>LibreA11y</strong> · Open-source · 100 % hors-ligne</p>
+  <p style="margin-top:4px;"><a href="../index.html" style="color:var(--marine);font-weight:600;">← Retour à LibreA11y</a></p>
+</footer>
+
+<script>
+/* ============================================================
+   DONNÉES
+   ============================================================ */
+const EMOTIONS = [
+  { id: 'heureux',   icon: '😊', label: 'Heureux',   phrase: 'Je me sens heureux.' },
+  { id: 'triste',    icon: '😢', label: 'Triste',    phrase: 'Je me sens triste.' },
+  { id: 'fache',     icon: '😡', label: 'Fâché',     phrase: 'Je me sens fâché.' },
+  { id: 'fatigue',   icon: '😴', label: 'Fatigué',   phrase: 'Je me sens fatigué.' },
+  { id: 'peur',      icon: '😨', label: 'J\'ai peur', phrase: 'J\'ai peur.' },
+  { id: 'calme',     icon: '😌', label: 'Calme',     phrase: 'Je me sens calme.' },
+  { id: 'excite',    icon: '🤩', label: 'Excité',    phrase: 'Je me sens excité.' },
+  { id: 'malade',    icon: '🤒', label: 'Malade',    phrase: 'Je me sens malade.' },
+  { id: 'stresse',   icon: '😰', label: 'Stressé',   phrase: 'Je me sens stressé.' },
+  { id: 'fier',      icon: '🥹', label: 'Fier',      phrase: 'Je me sens fier.' },
+  { id: 'confus',    icon: '😕', label: 'Perdu',     phrase: 'Je me sens perdu.' },
+  { id: 'content',   icon: '😁', label: 'Content',   phrase: 'Je me sens content.' },
+];
+
+const STRESS_STRATEGIES = {
+  1: {
+    title: 'Niveau 1 — Très calme',
+    text: 'Super ! Tu es dans un très bon état. C\'est le bon moment pour faire quelque chose que tu aimes, ou aider quelqu\'un.',
+    tips: []
+  },
+  2: {
+    title: 'Niveau 2 — Calme',
+    text: 'Tu vas bien. Pour garder cet état, tu peux :',
+    tips: ['🧘 Prendre quelques respirations profondes.', '🎨 Faire une activité que tu aimes.', '🚶 Marcher doucement.']
+  },
+  3: {
+    title: 'Niveau 3 — Un peu tendu',
+    text: 'Tu sens une tension. C\'est normal. Tu peux essayer :',
+    tips: ['🌬️ La respiration carrée (4-4-4-4).', '💧 Boire un verre d\'eau fraîche.', '👂 Écouter une musique douce.', '🤲 Serrer et relâcher les poings doucement.']
+  },
+  4: {
+    title: 'Niveau 4 — Très tendu',
+    text: 'Tu as besoin de calme maintenant. Essaie :',
+    tips: ['🌬️ La respiration 4-7-8 (très relaxante).', '❄️ Mettre de l\'eau froide sur les poignets.', '🏃 Bouger : sauter sur place, secouer les mains.', '🗣️ Dire comment tu te sens à quelqu\'un de confiance.']
+  },
+  5: {
+    title: 'Niveau 5 — Débordé',
+    text: 'C\'est très difficile là. Tu n\'es pas seul(e). Essaie maintenant :',
+    tips: ['📍 Ancre-toi : nomme 5 choses que tu vois, 4 que tu touches, 3 que tu entends.', '🛑 Arrête ce que tu fais et trouve un endroit calme.', '🤗 Demande de l\'aide à un adulte de confiance ou appelle un service d\'aide.', '🌬️ Fais une inspiration profonde, même une seule.']
+  }
+};
+
+const TOOLS = [
+  { id: 't1', icon: '🦋',  name: 'Câlin papillon',      desc: 'Croise les bras sur ta poitrine et tapote doucement tes épaules en alternance. Répète 10 fois. Ça apaise rapidement.' },
+  { id: 't2', icon: '🖐️', name: '5-4-3-2-1',           desc: 'Nomme 5 choses que tu vois, 4 que tu peux toucher, 3 que tu entends, 2 que tu sens, 1 que tu peux goûter. Ça ramène dans l\'instant présent.' },
+  { id: 't3', icon: '🌊',  name: 'Vagues de relaxation', desc: 'Contracte tes pieds 5 secondes, puis relâche. Remonte jusqu\'aux jambes, ventre, bras, visage. Relâche chaque fois.' },
+  { id: 't4', icon: '🎵',  name: 'Fredonne doucement',   desc: 'Fredonne une chanson calme que tu aimes. La vibration dans ta gorge active ton système de repos.' },
+  { id: 't5', icon: '🌱',  name: 'Pense à un endroit sûr', desc: 'Ferme les yeux. Imagine un endroit où tu te sens bien et en sécurité. Décris-le dans ta tête : les couleurs, les sons, les odeurs.' },
+  { id: 't6', icon: '💧',  name: 'Eau fraîche',          desc: 'Bois un verre d\'eau lentement, ou mets de l\'eau fraîche sur tes poignets. Ça aide le corps à se calmer.' },
+  { id: 't7', icon: '✋',  name: 'Touche et nomme',      desc: 'Touche 5 objets autour de toi. Dis à voix haute (ou dans ta tête) leur texture : doux, dur, chaud, froid, lisse...' },
+  { id: 't8', icon: '🐢',  name: 'Pas de tortue',        desc: 'Marche très, très lentement pendant 2 minutes. Ressens chaque pas. Ça ralentit le rythme cardiaque.' },
+];
+
+/* ============================================================
+   TTS (WEB SPEECH)
+   ============================================================ */
+const ttsWarning = document.getElementById('tts-warning');
+let ttsAvailable = false;
+let frVoice = null;
+
+function initTTS() {
+  if (!window.speechSynthesis) {
+    ttsWarning.classList.add('visible');
+    return;
+  }
+  ttsAvailable = true;
+  function pickVoice() {
+    const voices = window.speechSynthesis.getVoices();
+    const fr = voices.find(v => v.lang.startsWith('fr'));
+    if (fr) frVoice = fr;
+  }
+  pickVoice();
+  if (window.speechSynthesis.onvoiceschanged !== undefined) {
+    window.speechSynthesis.addEventListener('voiceschanged', pickVoice);
+  }
+}
+
+function speak(text) {
+  if (!ttsAvailable || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'fr-FR';
+  if (frVoice) utt.voice = frVoice;
+  utt.rate = 0.9;
+  utt.pitch = 1.0;
+  window.speechSynthesis.speak(utt);
+}
+
+/* ============================================================
+   ARIA LIVE
+   ============================================================ */
+const liveRegion = document.getElementById('aria-live-region');
+function announce(text) {
+  liveRegion.textContent = '';
+  setTimeout(() => { liveRegion.textContent = text; }, 60);
+}
+
+/* ============================================================
+   ONGLETS
+   ============================================================ */
+const tabs = document.querySelectorAll('.tab-btn');
+const panels = document.querySelectorAll('.section-panel');
+
+function activateTab(btn) {
+  tabs.forEach(t => {
+    t.setAttribute('aria-selected', 'false');
+  });
+  panels.forEach(p => {
+    p.classList.remove('active');
+    p.setAttribute('hidden', '');
+  });
+  btn.setAttribute('aria-selected', 'true');
+  const panel = document.getElementById(btn.getAttribute('aria-controls'));
+  if (panel) {
+    panel.classList.add('active');
+    panel.removeAttribute('hidden');
+  }
+}
+
+tabs.forEach(btn => {
+  btn.addEventListener('click', () => activateTab(btn));
+  btn.addEventListener('keydown', e => {
+    let idx = Array.from(tabs).indexOf(btn);
+    if (e.key === 'ArrowRight') { e.preventDefault(); tabs[(idx+1)%tabs.length].focus(); }
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); tabs[(idx-1+tabs.length)%tabs.length].focus(); }
+    if (e.key === 'Home')       { e.preventDefault(); tabs[0].focus(); }
+    if (e.key === 'End')        { e.preventDefault(); tabs[tabs.length-1].focus(); }
+  });
+});
+
+/* ============================================================
+   ÉMOTIONS
+   ============================================================ */
+const emotionsGrid = document.getElementById('emotions-grid');
+const emotionDisplay = document.getElementById('emotion-display');
+const emotionChosenText = document.getElementById('emotion-chosen-text');
+const btnSpeakEmotion = document.getElementById('btn-speak-emotion');
+
+let currentEmotionPhrase = '';
+
+function buildEmotions() {
+  EMOTIONS.forEach(em => {
+    const btn = document.createElement('button');
+    btn.className = 'emotion-card';
+    btn.setAttribute('aria-pressed', 'false');
+    btn.setAttribute('aria-label', em.label);
+    btn.dataset.id = em.id;
+    btn.innerHTML = `<span class="emotion-icon" aria-hidden="true">${em.icon}</span><span class="emotion-label">${em.label}</span>`;
+    btn.addEventListener('click', () => selectEmotion(btn, em));
+    emotionsGrid.appendChild(btn);
+  });
+}
+
+function selectEmotion(btn, em) {
+  const wasPressed = btn.getAttribute('aria-pressed') === 'true';
+  // Toggle
+  if (wasPressed) {
+    btn.setAttribute('aria-pressed', 'false');
+    // Cherche d'autres émotions sélectionnées
+    const others = emotionsGrid.querySelectorAll('[aria-pressed="true"]');
+    if (others.length === 0) {
+      emotionDisplay.classList.remove('visible');
+      currentEmotionPhrase = '';
+    } else {
+      const lastEm = EMOTIONS.find(e => e.id === others[others.length - 1].dataset.id);
+      if (lastEm) showEmotion(lastEm);
+    }
+    return;
+  }
+  btn.setAttribute('aria-pressed', 'true');
+  showEmotion(em);
+}
+
+function showEmotion(em) {
+  currentEmotionPhrase = em.phrase;
+  emotionChosenText.textContent = em.icon + ' ' + em.phrase;
+  emotionDisplay.classList.add('visible');
+  announce(em.phrase);
+  speak(em.phrase);
+}
+
+btnSpeakEmotion.addEventListener('click', () => {
+  if (currentEmotionPhrase) speak(currentEmotionPhrase);
+});
+
+/* ============================================================
+   STRESS / ÉNERGIE
+   ============================================================ */
+const stressBtns = document.querySelectorAll('.stress-btn');
+const stressStrategy = document.getElementById('stress-strategy');
+
+stressBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const level = parseInt(btn.dataset.level, 10);
+    stressBtns.forEach(b => b.setAttribute('aria-pressed', 'false'));
+    btn.setAttribute('aria-pressed', 'true');
+    showStressStrategy(level);
+  });
+});
+
+function showStressStrategy(level) {
+  const s = STRESS_STRATEGIES[level];
+  let html = `<strong>${s.title}</strong><br>${s.text}`;
+  if (s.tips.length) {
+    html += '<ul style="margin-top:8px;padding-left:20px;display:flex;flex-direction:column;gap:6px;">';
+    s.tips.forEach(tip => { html += `<li>${tip}</li>`; });
+    html += '</ul>';
+  }
+  stressStrategy.innerHTML = html;
+  stressStrategy.classList.add('visible');
+  announce(s.title + '. ' + s.text);
+}
+
+/* ============================================================
+   RESPIRATION GUIDÉE
+   ============================================================ */
+const btnBreathStart = document.getElementById('btn-breath-start');
+const btnBreathStop  = document.getElementById('btn-breath-stop');
+const breathText     = document.getElementById('breath-text');
+const breathTimerDisp= document.getElementById('breath-timer-display');
+const breathCountDisp= document.getElementById('breath-count-display');
+const breathCircle   = document.getElementById('breath-circle');
+const breathChoiceBtns = document.querySelectorAll('.breath-choice-btn');
+
+const BREATH_PATTERNS = {
+  square: { phases: [
+    { name: 'Inspire',  dur: 4, size: 160 },
+    { name: 'Retiens',  dur: 4, size: 160 },
+    { name: 'Expire',   dur: 4, size: 100 },
+    { name: 'Pause',    dur: 4, size: 100 },
+  ], label: 'Carré 4-4-4-4' },
+  '478': { phases: [
+    { name: 'Inspire',  dur: 4, size: 160 },
+    { name: 'Retiens',  dur: 7, size: 160 },
+    { name: 'Expire',   dur: 8, size: 100 },
+  ], label: '4-7-8' },
+};
+
+let breathPattern = 'square';
+let breathRunning = false;
+let breathPhaseIdx = 0;
+let breathCycles = 0;
+let breathCountdown = 0;
+let breathInterval = null;
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+breathChoiceBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (breathRunning) stopBreath();
+    breathPattern = btn.dataset.pattern;
+    breathChoiceBtns.forEach(b => b.setAttribute('aria-pressed', 'false'));
+    btn.setAttribute('aria-pressed', 'true');
+    breathText.textContent = 'Prêt';
+    breathTimerDisp.textContent = '—';
+    breathCountDisp.textContent = '';
+    resetCircle();
+  });
+});
+
+function resetCircle() {
+  if (!prefersReducedMotion && breathCircle) {
+    breathCircle.classList.remove('animating');
+    breathCircle.style.width  = '100px';
+    breathCircle.style.height = '100px';
+  }
+}
+
+btnBreathStart.addEventListener('click', () => {
+  if (breathRunning) return;
+  breathRunning = true;
+  breathPhaseIdx = 0;
+  breathCycles = 0;
+  breathCountDisp.textContent = '';
+  btnBreathStart.disabled = true;
+  runBreathPhase();
+});
+
+btnBreathStop.addEventListener('click', stopBreath);
+
+function stopBreath() {
+  breathRunning = false;
+  if (breathInterval) { clearInterval(breathInterval); breathInterval = null; }
+  breathText.textContent = 'Arrêté. Respire normalement.';
+  breathTimerDisp.textContent = '';
+  breathCountDisp.textContent = '';
+  resetCircle();
+  btnBreathStart.disabled = false;
+  announce('Exercice de respiration arrêté.');
+}
+
+function runBreathPhase() {
+  if (!breathRunning) return;
+  const pattern = BREATH_PATTERNS[breathPattern];
+  const phase = pattern.phases[breathPhaseIdx];
+  breathCountdown = phase.dur;
+
+  // Texte
+  breathText.textContent = phase.name;
+  breathTimerDisp.textContent = breathCountdown + 's';
+  announce(phase.name + ' — ' + phase.dur + ' secondes.');
+
+  // Animation du cercle
+  if (!prefersReducedMotion && breathCircle) {
+    breathCircle.classList.add('animating');
+    const sz = phase.size + 'px';
+    breathCircle.style.width  = sz;
+    breathCircle.style.height = sz;
+  }
+
+  if (breathInterval) clearInterval(breathInterval);
+  breathInterval = setInterval(() => {
+    breathCountdown--;
+    breathTimerDisp.textContent = breathCountdown > 0 ? breathCountdown + 's' : '';
+    if (breathCountdown <= 0) {
+      clearInterval(breathInterval);
+      breathPhaseIdx++;
+      if (breathPhaseIdx >= pattern.phases.length) {
+        breathPhaseIdx = 0;
+        breathCycles++;
+        breathCountDisp.textContent = 'Cycle ' + breathCycles + ' terminé';
+      }
+      if (breathRunning) {
+        setTimeout(runBreathPhase, 100);
+      }
+    }
+  }, 1000);
+}
+
+/* ============================================================
+   MINUTEUR
+   ============================================================ */
+const btnTimerStart  = document.getElementById('btn-timer-start');
+const btnTimerReset  = document.getElementById('btn-timer-reset');
+const timerDisplay   = document.getElementById('timer-display');
+const timerInput     = document.getElementById('timer-minutes-input');
+const timerFinished  = document.getElementById('timer-finished-msg');
+
+let timerRunning = false;
+let timerSeconds = 0;
+let timerInterval = null;
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+}
+
+btnTimerStart.addEventListener('click', () => {
+  if (timerRunning) return;
+  const mins = parseInt(timerInput.value, 10);
+  if (!mins || mins < 1 || mins > 60) {
+    announce('Veuillez entrer un nombre de minutes entre 1 et 60.');
+    timerInput.focus();
+    return;
+  }
+  timerSeconds = mins * 60;
+  timerDisplay.textContent = formatTime(timerSeconds);
+  timerFinished.classList.remove('visible');
+  timerRunning = true;
+  btnTimerStart.disabled = true;
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    timerDisplay.textContent = formatTime(timerSeconds);
+    if (timerSeconds <= 0) {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      btnTimerStart.disabled = false;
+      timerDisplay.textContent = '00:00';
+      timerFinished.classList.add('visible');
+      announce('Temps écoulé ! Bravo d\'avoir pris ce moment pour toi.');
+      speak('Le temps est écoulé. Bravo d\'avoir pris ce moment pour toi.');
+    }
+  }, 1000);
+});
+
+btnTimerReset.addEventListener('click', () => {
+  if (timerInterval) clearInterval(timerInterval);
+  timerRunning = false;
+  btnTimerStart.disabled = false;
+  timerFinished.classList.remove('visible');
+  const mins = parseInt(timerInput.value, 10) || 5;
+  timerDisplay.textContent = formatTime(mins * 60);
+  announce('Minuteur réinitialisé.');
+});
+
+timerInput.addEventListener('change', () => {
+  if (!timerRunning) {
+    const mins = parseInt(timerInput.value, 10) || 5;
+    timerDisplay.textContent = formatTime(Math.max(1, Math.min(60, mins)) * 60);
+  }
+});
+
+/* ============================================================
+   BOÎTE À OUTILS
+   ============================================================ */
+const toolsList = document.getElementById('tools-list');
+const favList   = document.getElementById('fav-list');
+
+// Charger les favoris depuis localStorage
+let favorites = [];
+try {
+  const raw = localStorage.getItem('calmspace_favs');
+  if (raw) favorites = JSON.parse(raw);
+  if (!Array.isArray(favorites)) favorites = [];
+} catch(e) { favorites = []; }
+
+function saveFavs() {
+  try { localStorage.setItem('calmspace_favs', JSON.stringify(favorites)); } catch(e) {}
+}
+
+function renderFavs() {
+  if (favorites.length === 0) {
+    favList.innerHTML = '<span style="font-size:0.82rem;color:#888;font-style:italic;">Aucun favori encore.</span>';
+    return;
+  }
+  favList.innerHTML = '';
+  favorites.forEach(id => {
+    const tool = TOOLS.find(t => t.id === id);
+    if (!tool) return;
+    const chip = document.createElement('span');
+    chip.className = 'fav-chip';
+    chip.textContent = tool.icon + ' ' + tool.name;
+    favList.appendChild(chip);
+  });
+}
+
+function buildTools() {
+  TOOLS.forEach(tool => {
+    const isFav = favorites.includes(tool.id);
+    const item = document.createElement('div');
+    item.className = 'tool-item';
+    item.setAttribute('role', 'listitem');
+    item.innerHTML = `
+      <span class="tool-icon" aria-hidden="true">${tool.icon}</span>
+      <div class="tool-body">
+        <div class="tool-name">${tool.name}</div>
+        <div class="tool-desc">${tool.desc}</div>
+      </div>
+      <button
+        class="btn-fav"
+        aria-pressed="${isFav ? 'true' : 'false'}"
+        aria-label="${isFav ? 'Retirer des favoris : ' : 'Ajouter aux favoris : '}${tool.name}"
+        data-id="${tool.id}"
+      ></button>
+    `;
+    const favBtn = item.querySelector('.btn-fav');
+    favBtn.addEventListener('click', () => toggleFav(tool.id, favBtn, tool.name));
+    toolsList.appendChild(item);
+  });
+  renderFavs();
+}
+
+function toggleFav(id, btn, name) {
+  const idx = favorites.indexOf(id);
+  if (idx === -1) {
+    favorites.push(id);
+    btn.setAttribute('aria-pressed', 'true');
+    btn.setAttribute('aria-label', 'Retirer des favoris : ' + name);
+    announce(name + ' ajouté aux favoris.');
+  } else {
+    favorites.splice(idx, 1);
+    btn.setAttribute('aria-pressed', 'false');
+    btn.setAttribute('aria-label', 'Ajouter aux favoris : ' + name);
+    announce(name + ' retiré des favoris.');
+  }
+  saveFavs();
+  renderFavs();
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+initTTS();
+buildEmotions();
+buildTools();
+
+// Init affichage minuteur
+(function() {
+  const mins = parseInt(timerInput.value, 10) || 5;
+  timerDisplay.textContent = formatTime(mins * 60);
+})();
+</script>
+</body>
+</html>

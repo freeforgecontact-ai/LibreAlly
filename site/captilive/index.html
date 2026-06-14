@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CaptiLive — Sous-titres en direct | LibreA11y</title>
+<meta name="description" content="Sous-titres en direct et communication face-à-face. Démo hors-ligne, aucune donnée envoyée.">
+<style>
+/* ===== VARIABLES & RESET ===== */
+:root {
+  --marine:    #0F4C81;
+  --marine-dk: #0A3A63;
+  --or:        #F4B81C;
+  --or-lt:     #FFD45E;
+  --encre:     #16202E;
+  --fond:      #F7F9FC;
+  --surface:   #FFFFFF;
+  --border:    #D0D9E8;
+  --focus-ring: #F4B81C;
+  --radius:    12px;
+  --radius-sm: 8px;
+  --shadow:    0 2px 8px rgba(15,76,129,0.12);
+  --shadow-hv: 0 4px 16px rgba(15,76,129,0.22);
+  --tr:        0.15s ease;
+  --caption-size: 2.4rem;
+  --caption-bg:   #000;
+  --caption-fg:   #fff;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; }
+body {
+  min-height: 100%;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--fond);
+  color: var(--encre);
+  font-size: 16px;
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== FOCUS ===== */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* ===== SKIP LINK ===== */
+#skip-link {
+  position: absolute;
+  top: -999px;
+  left: 8px;
+  z-index: 9999;
+  background: var(--or);
+  color: var(--encre);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  text-decoration: none;
+}
+#skip-link:focus {
+  top: 8px;
+}
+
+/* ===== HEADER ===== */
+#app-header {
+  background: var(--marine);
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(10,58,99,0.3);
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+}
+#header-left { display: flex; align-items: center; gap: 16px; }
+#back-link {
+  color: var(--or-lt);
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  transition: background var(--tr);
+  min-height: 48px;
+}
+#back-link:hover, #back-link:focus-visible { background: rgba(255,255,255,0.15); color: #fff; }
+#app-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.3px;
+}
+#header-notice {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.65);
+  text-align: right;
+  line-height: 1.5;
+}
+
+/* ===== MAIN ===== */
+#app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ===== TABS ===== */
+#mode-tabs {
+  display: flex;
+  gap: 0;
+  background: var(--marine-dk);
+  padding: 0 16px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+#mode-tabs::-webkit-scrollbar { display: none; }
+.tab-btn {
+  background: transparent;
+  color: rgba(255,255,255,0.7);
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  min-height: 48px;
+  transition: color var(--tr), border-color var(--tr), background var(--tr);
+}
+.tab-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
+.tab-btn[aria-selected="true"] {
+  color: var(--or-lt);
+  border-bottom-color: var(--or);
+  background: rgba(244,184,28,0.1);
+}
+.tab-btn:focus-visible { outline-offset: -3px; }
+
+/* ===== TAB PANELS ===== */
+.tab-panel { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.tab-panel.active { display: flex; }
+
+/* ===== HONEST BOX ===== */
+#honest-box {
+  background: #FFF8E1;
+  border-left: 4px solid var(--or);
+  border-bottom: 1px solid #f4d56a;
+  padding: 12px 20px;
+  font-size: 0.86rem;
+  color: #5c4200;
+  line-height: 1.5;
+  flex-shrink: 0;
+}
+#honest-box strong { font-weight: 700; }
+#honest-box .tech-status {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#honest-box .dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+.dot-available { background: #2e7d32; }
+.dot-unavailable { background: #c62828; }
+.dot-warning { background: #e65100; }
+
+/* ===== CAPTION DISPLAY ===== */
+#caption-display {
+  flex: 1;
+  background: var(--caption-bg);
+  color: var(--caption-fg);
+  font-size: var(--caption-size);
+  font-weight: 700;
+  line-height: 1.25;
+  padding: 28px 32px;
+  overflow-y: auto;
+  word-break: break-word;
+  letter-spacing: 0.02em;
+  scroll-behavior: smooth;
+  transition: font-size 0.2s ease, background 0.2s ease, color 0.2s ease;
+  min-height: 180px;
+}
+@media (prefers-reduced-motion: reduce) {
+  #caption-display { scroll-behavior: auto; transition: none; }
+}
+#caption-display[aria-label]:empty::before {
+  content: attr(data-placeholder);
+  opacity: 0.35;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.6rem;
+}
+#caption-display .interim {
+  opacity: 0.55;
+  font-style: italic;
+}
+#caption-display .final-block {
+  display: block;
+}
+
+/* ===== CAPTION CONTROLS ===== */
+#caption-controls {
+  background: var(--surface);
+  border-top: 2px solid var(--marine);
+  padding: 10px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.ctrl-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--marine-dk);
+  white-space: nowrap;
+}
+.ctrl-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ctrl-btn {
+  background: var(--fond);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 40px;
+  transition: background var(--tr), border-color var(--tr);
+}
+.ctrl-btn:hover { background: var(--marine); color: #fff; border-color: var(--marine); }
+.ctrl-btn:focus-visible { outline-offset: 2px; }
+.ctrl-btn.active-theme {
+  background: var(--marine);
+  color: #fff;
+  border-color: var(--marine);
+}
+#fullscreen-btn {
+  background: var(--marine);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 48px;
+  margin-left: auto;
+  transition: background var(--tr);
+}
+#fullscreen-btn:hover { background: var(--marine-dk); }
+#fullscreen-btn:focus-visible { outline-offset: 2px; }
+
+/* Fullscreen caption */
+:fullscreen #caption-display,
+:-webkit-full-screen #caption-display {
+  font-size: 4rem;
+  padding: 40px 48px;
+}
+
+/* ===== LISTEN CONTROLS PANEL ===== */
+#listen-panel {
+  background: var(--fond);
+  border-top: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+#listen-btn {
+  background: var(--marine);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 12px 28px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background var(--tr);
+}
+#listen-btn:hover:not(:disabled) { background: var(--marine-dk); }
+#listen-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+#listen-btn.listening { background: #c62828; }
+#listen-btn.listening:hover { background: #9b1b1b; }
+#listen-status {
+  font-size: 0.88rem;
+  color: var(--marine-dk);
+  font-style: italic;
+}
+#clear-caption-btn {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  min-height: 40px;
+  transition: background var(--tr);
+  margin-left: auto;
+}
+#clear-caption-btn:hover { background: #fee2e2; border-color: #c62828; color: #c62828; }
+
+/* ===== TYPE TO DISPLAY PANEL ===== */
+#type-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#type-output {
+  flex: 1;
+  background: #000;
+  color: #fff;
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.25;
+  padding: 28px 32px;
+  overflow-y: auto;
+  word-break: break-word;
+  display: flex;
+  align-items: flex-end;
+}
+#type-output[data-empty="true"] {
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.3);
+  font-size: 1.8rem;
+  font-style: italic;
+  font-weight: 400;
+}
+#type-input-area {
+  background: var(--surface);
+  border-top: 2px solid var(--marine);
+  padding: 12px 16px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+#type-input {
+  flex: 1;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  font-size: 1.1rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 56px;
+  max-height: 160px;
+  color: var(--encre);
+  background: var(--fond);
+  transition: border-color var(--tr);
+}
+#type-input:focus { border-color: var(--marine); outline: none; box-shadow: 0 0 0 3px rgba(15,76,129,0.2); }
+#type-send-btn {
+  background: var(--or);
+  color: var(--encre);
+  border: none;
+  border-radius: var(--radius);
+  padding: 14px 24px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 56px;
+  white-space: nowrap;
+  transition: background var(--tr);
+}
+#type-send-btn:hover { background: var(--or-lt); }
+#type-clear-btn {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  font-size: 1rem;
+  cursor: pointer;
+  min-height: 56px;
+  transition: background var(--tr);
+}
+#type-clear-btn:hover { background: #fee2e2; border-color: #c62828; color: #c62828; }
+#type-fs-btn {
+  background: var(--marine);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  font-size: 1rem;
+  cursor: pointer;
+  min-height: 56px;
+  transition: background var(--tr);
+}
+#type-fs-btn:hover { background: var(--marine-dk); }
+
+/* ===== FACE TO FACE PANEL ===== */
+#face-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 0;
+}
+.face-zone {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 2px solid var(--marine);
+  min-height: 0;
+}
+.face-zone:last-child { border-bottom: none; }
+.face-zone.flipped {
+  transform: rotate(180deg);
+}
+.face-output {
+  flex: 1;
+  background: #000;
+  color: #fff;
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1.25;
+  padding: 16px 20px;
+  overflow-y: auto;
+  word-break: break-word;
+  display: flex;
+  align-items: flex-end;
+}
+.face-output[data-empty="true"] {
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.3);
+  font-size: 1.2rem;
+  font-style: italic;
+  font-weight: 400;
+}
+.face-input-row {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 8px 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.face-who-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--marine);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  padding: 6px 10px;
+  background: var(--fond);
+  border-radius: var(--radius-sm);
+}
+.face-text-input {
+  flex: 1;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 1rem;
+  font-family: inherit;
+  min-height: 48px;
+  color: var(--encre);
+  background: var(--fond);
+  transition: border-color var(--tr);
+}
+.face-text-input:focus { border-color: var(--marine); outline: none; box-shadow: 0 0 0 3px rgba(15,76,129,0.2); }
+.face-send-btn {
+  background: var(--or);
+  color: var(--encre);
+  border: none;
+  border-radius: var(--radius);
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 48px;
+  transition: background var(--tr);
+}
+.face-send-btn:hover { background: var(--or-lt); }
+.face-clear-btn {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  min-height: 48px;
+  transition: background var(--tr);
+}
+.face-clear-btn:hover { background: #fee2e2; border-color: #c62828; color: #c62828; }
+
+/* ===== HISTORY PANEL ===== */
+#history-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#history-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.history-entry {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  animation: fadeIn 0.15s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .history-entry { animation: none; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+.history-entry .h-meta {
+  font-size: 0.76rem;
+  color: #8896aa;
+  margin-bottom: 4px;
+  display: flex;
+  gap: 8px;
+}
+.history-entry .h-source {
+  font-weight: 700;
+  color: var(--marine);
+}
+.history-empty {
+  color: #8896aa;
+  font-style: italic;
+  text-align: center;
+  padding: 40px 20px;
+}
+#history-actions {
+  border-top: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: var(--fond);
+  flex-shrink: 0;
+}
+#clear-history-btn {
+  background: #fee2e2;
+  color: #c62828;
+  border: 1.5px solid #f8b4b4;
+  border-radius: var(--radius);
+  padding: 10px 20px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 48px;
+  transition: background var(--tr);
+}
+#clear-history-btn:hover { background: #fccaca; }
+#history-count {
+  font-size: 0.82rem;
+  color: #8896aa;
+}
+
+/* ===== PULSING MIC ===== */
+@keyframes pulse-mic {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(198,40,40,0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(198,40,40,0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  #listen-btn.listening {
+    animation: pulse-mic 1.4s ease infinite;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- LIEN D'ÉVITEMENT -->
+<a id="skip-link" href="#app-main">Aller au contenu principal</a>
+
+<!-- EN-TÊTE -->
+<header id="app-header" role="banner">
+  <div id="header-left">
+    <a id="back-link" href="../index.html" aria-label="Retour à LibreA11y">← LibreA11y</a>
+    <h1 id="app-title">📝 CaptiLive — démo</h1>
+  </div>
+  <div id="header-notice" aria-label="démo · 100% hors-ligne · aucune donnée envoyée">
+    démo · 100% hors-ligne<br>aucune donnée envoyée
+  </div>
+</header>
+
+<!-- MAIN -->
+<main id="app-main" tabindex="-1">
+
+  <!-- ONGLETS -->
+  <div id="mode-tabs" role="tablist" aria-label="Modes de CaptiLive">
+    <button class="tab-btn" role="tab" id="tab-listen" aria-selected="true" aria-controls="panel-listen">
+      🎤 Reconnaissance vocale
+    </button>
+    <button class="tab-btn" role="tab" id="tab-type" aria-selected="false" aria-controls="panel-type">
+      ⌨️ Taper pour afficher
+    </button>
+    <button class="tab-btn" role="tab" id="tab-face" aria-selected="false" aria-controls="panel-face">
+      👥 Face-à-face
+    </button>
+    <button class="tab-btn" role="tab" id="tab-history" aria-selected="false" aria-controls="panel-history">
+      📋 Historique
+    </button>
+  </div>
+
+  <!-- ===== PANEL : RECONNAISSANCE VOCALE ===== -->
+  <section class="tab-panel active" id="panel-listen" role="tabpanel" aria-labelledby="tab-listen">
+
+    <!-- Encart honnête -->
+    <div id="honest-box" role="note" aria-label="Note sur les limites techniques">
+      <strong>⚠️ Limite honnête de cette démo</strong> — La reconnaissance vocale <strong>100% hors-ligne</strong>
+      exige un modèle embarqué (Vosk, Whisper…) non inclus dans ce fichier unique.
+      L'API <code>webkitSpeechRecognition</code> du navigateur, quand elle existe, passe souvent par
+      <strong>un serveur cloud (Google, Microsoft…)</strong>. La démo utilise uniquement cette API native ;
+      si vous avez besoin d'un traitement local strict, consultez la feuille de route LibreA11y.
+      <div class="tech-status">
+        <span class="dot" id="api-dot" aria-hidden="true"></span>
+        <span id="api-status-text"></span>
+      </div>
+    </div>
+
+    <!-- Zone de sous-titres -->
+    <div id="caption-wrapper" style="flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:0;">
+      <div
+        id="caption-display"
+        role="log"
+        aria-live="polite"
+        aria-atomic="false"
+        aria-label="Sous-titres en direct"
+        data-placeholder="Les sous-titres apparaîtront ici…"
+        tabindex="0"
+      ></div>
+
+      <!-- Contrôles de la zone sous-titres -->
+      <div id="caption-controls" aria-label="Réglages d'affichage des sous-titres">
+        <div class="ctrl-group">
+          <span class="ctrl-label" id="size-label">Taille :</span>
+          <button class="ctrl-btn" id="size-s" aria-label="Petite taille de sous-titre" aria-describedby="size-label">A</button>
+          <button class="ctrl-btn" id="size-m" aria-label="Taille moyenne de sous-titre (active)" aria-describedby="size-label" aria-pressed="true" style="font-size:1.1rem">A</button>
+          <button class="ctrl-btn" id="size-l" aria-label="Grande taille de sous-titre" aria-describedby="size-label" style="font-size:1.3rem">A</button>
+          <button class="ctrl-btn" id="size-xl" aria-label="Très grande taille de sous-titre" aria-describedby="size-label" style="font-size:1.6rem">A</button>
+        </div>
+        <div class="ctrl-group" role="group" aria-label="Thème couleur">
+          <span class="ctrl-label">Thème :</span>
+          <button class="ctrl-btn active-theme" id="theme-bw" aria-pressed="true" aria-label="Thème blanc sur noir (actif)">blanc/noir</button>
+          <button class="ctrl-btn" id="theme-yb" aria-pressed="false" aria-label="Thème jaune sur noir">jaune/noir</button>
+          <button class="ctrl-btn" id="theme-wb" aria-pressed="false" aria-label="Thème noir sur blanc">noir/blanc</button>
+        </div>
+        <button id="fullscreen-btn" aria-label="Basculer en plein écran pour la zone de sous-titres">⛶ Plein écran</button>
+      </div>
+    </div>
+
+    <!-- Contrôles d'écoute -->
+    <div id="listen-panel" aria-label="Contrôles de reconnaissance vocale">
+      <button id="listen-btn" aria-live="polite" aria-label="Démarrer l'écoute">
+        🎤 Écouter
+      </button>
+      <span id="listen-status" role="status" aria-live="polite" aria-atomic="true"></span>
+      <button id="clear-caption-btn" aria-label="Effacer les sous-titres affichés">🗑 Effacer</button>
+    </div>
+
+  </section>
+
+  <!-- ===== PANEL : TAPER POUR AFFICHER ===== -->
+  <section class="tab-panel" id="panel-type" role="tabpanel" aria-labelledby="tab-type">
+    <div id="type-panel">
+      <div
+        id="type-output"
+        role="log"
+        aria-live="polite"
+        aria-atomic="true"
+        aria-label="Texte affiché en grand"
+        data-empty="true"
+        tabindex="0"
+      >Tapez ci-dessous — le texte s'affichera ici en grand</div>
+
+      <div id="type-input-area">
+        <label for="type-input" class="ctrl-label" style="white-space:nowrap; padding:0 4px 0 0;">Message :</label>
+        <textarea
+          id="type-input"
+          rows="1"
+          placeholder="Tapez votre message…"
+          aria-label="Message à afficher en grand"
+          autocomplete="off"
+          spellcheck="true"
+        ></textarea>
+        <button id="type-send-btn" aria-label="Afficher le message en grand">Afficher ↑</button>
+        <button id="type-clear-btn" aria-label="Effacer le texte affiché">🗑</button>
+        <button id="type-fs-btn" aria-label="Plein écran pour le texte tapé">⛶</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PANEL : FACE-À-FACE ===== -->
+  <section class="tab-panel" id="panel-face" role="tabpanel" aria-labelledby="tab-face">
+    <div id="face-panel">
+
+      <!-- Personne A (tournée, retournée pour la personne en face) -->
+      <div class="face-zone flipped" aria-label="Zone de la personne en face">
+        <div
+          class="face-output"
+          id="face-a-output"
+          role="log"
+          aria-live="polite"
+          aria-atomic="true"
+          aria-label="Texte de la personne A"
+          data-empty="true"
+          tabindex="0"
+        >← La personne en face lit ici</div>
+        <div class="face-input-row">
+          <span class="face-who-label">Personne A</span>
+          <input
+            type="text"
+            class="face-text-input"
+            id="face-a-input"
+            placeholder="Tapez votre message…"
+            aria-label="Message de la personne A"
+            autocomplete="off"
+          >
+          <button class="face-send-btn" id="face-a-send" aria-label="Envoyer le message de la personne A">Envoyer</button>
+          <button class="face-clear-btn" id="face-a-clear" aria-label="Effacer le message de la personne A">🗑</button>
+        </div>
+      </div>
+
+      <!-- Personne B (vue normale, vers l'utilisateur principal) -->
+      <div class="face-zone" aria-label="Votre zone">
+        <div
+          class="face-output"
+          id="face-b-output"
+          role="log"
+          aria-live="polite"
+          aria-atomic="true"
+          aria-label="Texte de la personne B"
+          data-empty="true"
+          tabindex="0"
+        >← Vous lisez ici</div>
+        <div class="face-input-row">
+          <span class="face-who-label">Personne B</span>
+          <input
+            type="text"
+            class="face-text-input"
+            id="face-b-input"
+            placeholder="Tapez votre message…"
+            aria-label="Message de la personne B"
+            autocomplete="off"
+          >
+          <button class="face-send-btn" id="face-b-send" aria-label="Envoyer le message de la personne B">Envoyer</button>
+          <button class="face-clear-btn" id="face-b-clear" aria-label="Effacer le message de la personne B">🗑</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== PANEL : HISTORIQUE ===== -->
+  <section class="tab-panel" id="panel-history" role="tabpanel" aria-labelledby="tab-history">
+    <div id="history-panel">
+      <div id="history-list" aria-label="Historique de la session" aria-live="polite">
+        <p class="history-empty" id="history-empty-msg">Aucun message dans l'historique.</p>
+      </div>
+      <div id="history-actions">
+        <button id="clear-history-btn" aria-label="Effacer tout l'historique de session">🗑 Effacer l'historique</button>
+        <span id="history-count" aria-live="polite" aria-atomic="true"></span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ===========================
+   CAPTILIVE — LOGIQUE PRINCIPALE
+   ========================== */
+
+// --- État ---
+const state = {
+  history: [],          // { time, source, text }
+  captionText: '',      // texte final consolidé
+  captionInterim: '',   // texte interimaire
+  isListening: false,
+  recognition: null,
+  activeTab: 'listen',
+  faceA: '',
+  faceB: '',
+  typeText: '',
+};
+
+// --- Éléments DOM ---
+const $ = id => document.getElementById(id);
+const captionDisplay  = $('caption-display');
+const listenBtn       = $('listen-btn');
+const listenStatus    = $('listen-status');
+const clearCaptionBtn = $('clear-caption-btn');
+const apiDot          = $('api-dot');
+const apiStatusText   = $('api-status-text');
+const fullscreenBtn   = $('fullscreen-btn');
+const typeOutput      = $('type-output');
+const typeInput       = $('type-input');
+const typeSendBtn     = $('type-send-btn');
+const typeClearBtn    = $('type-clear-btn');
+const typeFsBtn       = $('type-fs-btn');
+const faceAOutput     = $('face-a-output');
+const faceBOutput     = $('face-b-output');
+const faceAInput      = $('face-a-input');
+const faceBInput      = $('face-b-input');
+const faceASend       = $('face-a-send');
+const faceBSend       = $('face-b-send');
+const faceAClear      = $('face-a-clear');
+const faceBClear      = $('face-b-clear');
+const historyList     = $('history-list');
+const historyCount    = $('history-count');
+const clearHistoryBtn = $('clear-history-btn');
+const historyEmpty    = $('history-empty-msg');
+
+// ========== ONGLETS ==========
+const tabs   = document.querySelectorAll('.tab-btn');
+const panels = document.querySelectorAll('.tab-panel');
+
+function activateTab(tabId) {
+  tabs.forEach(t => {
+    const selected = t.id === tabId;
+    t.setAttribute('aria-selected', String(selected));
+  });
+  panels.forEach(p => {
+    p.classList.toggle('active', p.id === 'panel-' + tabId.replace('tab-', ''));
+  });
+  state.activeTab = tabId;
+}
+
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => activateTab(tab.id));
+  tab.addEventListener('keydown', e => {
+    const list   = Array.from(tabs);
+    const idx    = list.indexOf(tab);
+    let nextIdx  = idx;
+    if (e.key === 'ArrowRight') nextIdx = (idx + 1) % list.length;
+    if (e.key === 'ArrowLeft')  nextIdx = (idx - 1 + list.length) % list.length;
+    if (e.key === 'Home')       nextIdx = 0;
+    if (e.key === 'End')        nextIdx = list.length - 1;
+    if (nextIdx !== idx) {
+      e.preventDefault();
+      list[nextIdx].focus();
+      activateTab(list[nextIdx].id);
+    }
+  });
+});
+
+// ========== HISTORIQUE ==========
+function addHistory(source, text) {
+  if (!text.trim()) return;
+  const entry = { time: new Date(), source, text: text.trim() };
+  state.history.push(entry);
+  renderHistory();
+}
+
+function renderHistory() {
+  const count = state.history.length;
+  historyEmpty.style.display = count === 0 ? '' : 'none';
+  historyCount.textContent = count === 0 ? '' : `${count} message${count > 1 ? 's' : ''}`;
+
+  // Supprimer les anciennes entrées (garder le message vide)
+  Array.from(historyList.querySelectorAll('.history-entry')).forEach(e => e.remove());
+
+  state.history.forEach(entry => {
+    const div = document.createElement('div');
+    div.className = 'history-entry';
+    const timeStr = entry.time.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    div.innerHTML =
+      '<div class="h-meta"><span class="h-source">' + escHtml(entry.source) + '</span>'
+      + '<span>' + escHtml(timeStr) + '</span></div>'
+      + '<div>' + escHtml(entry.text) + '</div>';
+    historyList.appendChild(div);
+  });
+  historyList.scrollTop = historyList.scrollHeight;
+}
+
+clearHistoryBtn.addEventListener('click', () => {
+  if (state.history.length === 0) return;
+  if (confirm('Effacer tout l\'historique de cette session ?')) {
+    state.history = [];
+    renderHistory();
+  }
+});
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ========== AFFICHAGE CAPTION ==========
+function renderCaption() {
+  const final   = state.captionText;
+  const interim = state.captionInterim;
+  if (!final && !interim) {
+    captionDisplay.innerHTML = '';
+    return;
+  }
+  let html = '';
+  if (final) {
+    // Chaque bloc final = un paragraphe
+    final.split('\n').forEach(line => {
+      if (line.trim()) html += '<span class="final-block">' + escHtml(line) + '</span>';
+    });
+  }
+  if (interim) {
+    html += '<span class="interim" aria-hidden="true"> ' + escHtml(interim) + '</span>';
+  }
+  captionDisplay.innerHTML = html;
+  captionDisplay.scrollTop = captionDisplay.scrollHeight;
+}
+
+// ========== API VOCALE ==========
+const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+
+function initSpeechStatus() {
+  if (SpeechRecognitionAPI) {
+    apiDot.className = 'dot dot-warning';
+    apiStatusText.textContent =
+      'API SpeechRecognition disponible dans ce navigateur — peut utiliser une reconnaissance en ligne (selon le navigateur/OS).';
+    listenBtn.disabled = false;
+  } else {
+    apiDot.className = 'dot dot-unavailable';
+    apiStatusText.textContent =
+      'API SpeechRecognition non disponible dans ce navigateur. Utilisez le mode « Taper pour afficher ».';
+    listenBtn.disabled = true;
+    listenBtn.setAttribute('aria-label', 'Reconnaissance vocale indisponible dans ce navigateur');
+    listenStatus.textContent = 'Non disponible — utilisez le mode « Taper pour afficher ».';
+  }
+}
+
+function startListening() {
+  if (!SpeechRecognitionAPI || state.isListening) return;
+
+  const rec = new SpeechRecognitionAPI();
+  state.recognition = rec;
+  rec.lang = 'fr-FR';
+  rec.interimResults = true;
+  rec.continuous = true;
+  rec.maxAlternatives = 1;
+
+  rec.onstart = () => {
+    state.isListening = true;
+    listenBtn.textContent = '⏹ Arrêter';
+    listenBtn.classList.add('listening');
+    listenBtn.setAttribute('aria-label', 'Arrêter l\'écoute');
+    listenStatus.textContent = '🔴 Écoute en cours… (peut utiliser une reconnaissance en ligne)';
+  };
+
+  rec.onresult = e => {
+    let finalDelta = '';
+    let interim    = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) finalDelta += t + '\n';
+      else interim += t;
+    }
+    if (finalDelta) {
+      state.captionText += finalDelta;
+      addHistory('Micro', finalDelta.trim());
+    }
+    state.captionInterim = interim;
+    renderCaption();
+  };
+
+  rec.onerror = ev => {
+    let msg = 'Erreur de reconnaissance';
+    if (ev.error === 'no-speech')         msg = 'Aucune parole détectée.';
+    else if (ev.error === 'not-allowed')  msg = 'Accès au micro refusé.';
+    else if (ev.error === 'network')      msg = 'Erreur réseau — vérifiez votre connexion.';
+    else if (ev.error === 'service-not-allowed') msg = 'Service non autorisé.';
+    listenStatus.textContent = '⚠ ' + msg;
+    stopListening();
+  };
+
+  rec.onend = () => {
+    // Relancer si toujours actif (continuous ne repart pas seul dans certains nav.)
+    if (state.isListening) {
+      try { rec.start(); } catch(_) { stopListening(); }
+    }
+  };
+
+  try {
+    rec.start();
+  } catch(err) {
+    listenStatus.textContent = '⚠ Impossible de démarrer : ' + err.message;
+  }
+}
+
+function stopListening() {
+  state.isListening = false;
+  if (state.recognition) {
+    try { state.recognition.stop(); } catch(_) {}
+    state.recognition = null;
+  }
+  listenBtn.textContent = '🎤 Écouter';
+  listenBtn.classList.remove('listening');
+  listenBtn.setAttribute('aria-label', 'Démarrer l\'écoute');
+  state.captionInterim = '';
+  renderCaption();
+  if (listenStatus.textContent.startsWith('🔴')) {
+    listenStatus.textContent = 'Écoute arrêtée.';
+  }
+}
+
+listenBtn.addEventListener('click', () => {
+  if (state.isListening) stopListening();
+  else startListening();
+});
+
+clearCaptionBtn.addEventListener('click', () => {
+  state.captionText    = '';
+  state.captionInterim = '';
+  renderCaption();
+});
+
+// ========== TAILLE CAPTIONS ==========
+const sizeBtns = [
+  { id: 'size-s',  val: '1.5rem'  },
+  { id: 'size-m',  val: '2.4rem'  },
+  { id: 'size-l',  val: '3.2rem'  },
+  { id: 'size-xl', val: '4.2rem'  },
+];
+sizeBtns.forEach(({ id, val }) => {
+  const btn = $(id);
+  btn.addEventListener('click', () => {
+    captionDisplay.style.setProperty('--caption-size', val);
+    captionDisplay.style.fontSize = val;
+    sizeBtns.forEach(b => {
+      const el = $(b.id);
+      el.setAttribute('aria-pressed', b.id === id ? 'true' : 'false');
+      el.classList.toggle('active-theme', b.id === id);
+    });
+  });
+});
+
+// ========== THÈMES CAPTIONS ==========
+const themes = {
+  'theme-bw': { bg: '#000',     fg: '#fff',     label: 'blanc sur noir (actif)' },
+  'theme-yb': { bg: '#111',     fg: '#FFD45E',  label: 'jaune sur noir (actif)' },
+  'theme-wb': { bg: '#fff',     fg: '#111',     label: 'noir sur blanc (actif)' },
+};
+Object.entries(themes).forEach(([id, theme]) => {
+  const btn = $(id);
+  btn.addEventListener('click', () => {
+    captionDisplay.style.background = theme.bg;
+    captionDisplay.style.color      = theme.fg;
+    // Appliquer aussi au type-output et face-outputs pour cohérence
+    Object.keys(themes).forEach(tid => {
+      const el = $(tid);
+      const active = tid === id;
+      el.setAttribute('aria-pressed', String(active));
+      el.classList.toggle('active-theme', active);
+    });
+  });
+});
+
+// ========== PLEIN ÉCRAN (zone caption) ==========
+fullscreenBtn.addEventListener('click', () => {
+  const wrapper = $('caption-wrapper');
+  if (!document.fullscreenElement) {
+    wrapper.requestFullscreen && wrapper.requestFullscreen();
+    fullscreenBtn.textContent = '✕ Quitter plein écran';
+    fullscreenBtn.setAttribute('aria-label', 'Quitter le plein écran');
+  } else {
+    document.exitFullscreen && document.exitFullscreen();
+    fullscreenBtn.textContent = '⛶ Plein écran';
+    fullscreenBtn.setAttribute('aria-label', 'Basculer en plein écran pour la zone de sous-titres');
+  }
+});
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement) {
+    fullscreenBtn.textContent = '⛶ Plein écran';
+    fullscreenBtn.setAttribute('aria-label', 'Basculer en plein écran pour la zone de sous-titres');
+  }
+});
+
+// ========== TAPER POUR AFFICHER ==========
+function sendTypeMessage() {
+  const txt = typeInput.value.trim();
+  if (!txt) return;
+  typeOutput.textContent = txt;
+  typeOutput.setAttribute('data-empty', 'false');
+  typeOutput.style.alignItems    = 'flex-end';
+  typeOutput.style.justifyContent = '';
+  typeOutput.style.color          = '';
+  typeOutput.style.fontStyle      = '';
+  typeOutput.style.fontSize       = '';
+  addHistory('Taper pour afficher', txt);
+  typeInput.value = '';
+  typeInput.focus();
+}
+
+typeSendBtn.addEventListener('click', sendTypeMessage);
+typeInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendTypeMessage();
+  }
+});
+
+typeClearBtn.addEventListener('click', () => {
+  typeOutput.textContent = 'Tapez ci-dessous — le texte s\'affichera ici en grand';
+  typeOutput.setAttribute('data-empty', 'true');
+  typeOutput.style.alignItems    = '';
+  typeOutput.style.justifyContent = '';
+  typeOutput.style.color          = '';
+  typeOutput.style.fontStyle      = '';
+  typeInput.value = '';
+  typeInput.focus();
+});
+
+typeFsBtn.addEventListener('click', () => {
+  const panel = $('type-panel');
+  if (!document.fullscreenElement) {
+    panel.requestFullscreen && panel.requestFullscreen();
+  } else {
+    document.exitFullscreen && document.exitFullscreen();
+  }
+});
+
+// ========== FACE-À-FACE ==========
+function setFaceOutput(output, text) {
+  output.textContent = text;
+  const empty = !text.trim();
+  output.setAttribute('data-empty', String(empty));
+  if (!empty) {
+    output.style.alignItems     = 'flex-end';
+    output.style.justifyContent = '';
+    output.style.color          = '';
+    output.style.fontStyle      = '';
+  }
+}
+
+function sendFace(who, input, output) {
+  const txt = input.value.trim();
+  if (!txt) return;
+  setFaceOutput(output, txt);
+  addHistory('Face-à-face — ' + who, txt);
+  input.value = '';
+  input.focus();
+}
+
+function clearFace(input, output, placeholder) {
+  output.textContent = placeholder;
+  output.setAttribute('data-empty', 'true');
+  output.style.alignItems     = '';
+  output.style.justifyContent = '';
+  output.style.color          = '';
+  output.style.fontStyle      = '';
+  input.value = '';
+  input.focus();
+}
+
+faceASend.addEventListener('click', () => sendFace('A', faceAInput, faceAOutput));
+faceBSend.addEventListener('click', () => sendFace('B', faceBInput, faceBOutput));
+
+faceAInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); sendFace('A', faceAInput, faceAOutput); }
+});
+faceBInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); sendFace('B', faceBInput, faceBOutput); }
+});
+
+faceAClear.addEventListener('click', () => clearFace(faceAInput, faceAOutput, '← La personne en face lit ici'));
+faceBClear.addEventListener('click', () => clearFace(faceBInput, faceBOutput, '← Vous lisez ici'));
+
+// ========== INIT ==========
+initSpeechStatus();
+renderHistory();
+</script>
+</body>
+</html>

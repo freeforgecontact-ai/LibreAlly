@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GazeType — Démo clavier regard/tête | LibreA11y</title>
+<meta name="description" content="Clavier visuel piloté par maintien du regard ou de la tête. Démo hors-ligne, aucune donnée envoyée.">
+<style>
+/* ===== VARIABLES & RESET ===== */
+:root {
+  --marine:    #0F4C81;
+  --marine-dk: #0A3A63;
+  --or:        #F4B81C;
+  --or-lt:     #FFD45E;
+  --encre:     #16202E;
+  --fond:      #F7F9FC;
+  --surface:   #FFFFFF;
+  --border:    #D0D9E8;
+  --focus-ring: #F4B81C;
+  --radius:    12px;
+  --radius-sm: 8px;
+  --shadow:    0 2px 8px rgba(15,76,129,0.12);
+  --shadow-hv: 0 4px 16px rgba(15,76,129,0.22);
+  --tr:        0.15s ease;
+  --dwell-time: 1000;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; }
+body {
+  min-height: 100%;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--fond);
+  color: var(--encre);
+  font-size: 16px;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== FOCUS ===== */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* ===== SKIP LINK ===== */
+#skip-link {
+  position: absolute;
+  top: -9999px;
+  left: 8px;
+  background: var(--or);
+  color: var(--encre);
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  z-index: 9999;
+  text-decoration: none;
+}
+#skip-link:focus { top: 8px; }
+
+/* ===== HEADER ===== */
+#app-header {
+  background: var(--marine);
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(10,58,99,0.3);
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+}
+#header-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+#back-link {
+  color: var(--or-lt);
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  transition: background var(--tr);
+}
+#back-link:hover, #back-link:focus-visible { background: rgba(255,255,255,0.15); color: #fff; }
+#app-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#header-notice {
+  font-size: 0.72rem;
+  background: rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 4px 12px;
+  color: rgba(255,255,255,0.85);
+  white-space: nowrap;
+}
+
+/* ===== LAYOUT ===== */
+#main-layout {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px;
+  gap: 14px;
+}
+
+/* ===== HONEST BANNER ===== */
+#honest-banner {
+  background: #FFF8E6;
+  border: 2px solid var(--or);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--encre);
+}
+#honest-banner strong { color: var(--marine-dk); }
+#honest-banner summary {
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--marine);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+#honest-banner summary::before { content: "▶"; font-size: 0.75rem; transition: transform 0.2s; }
+#honest-banner[open] summary::before { transform: rotate(90deg); }
+#honest-banner .banner-body { margin-top: 10px; }
+
+/* ===== TEXT AREA ===== */
+#output-section {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+#text-output {
+  width: 100%;
+  min-height: 90px;
+  border: none;
+  outline: none;
+  resize: vertical;
+  font-size: 1.15rem;
+  font-family: inherit;
+  color: var(--encre);
+  background: transparent;
+  line-height: 1.6;
+}
+#text-output:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  border-radius: 4px;
+}
+#text-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  background: var(--marine);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+#output-display {
+  font-size: 1.15rem;
+  min-height: 60px;
+  padding: 8px 4px;
+  word-break: break-word;
+  line-height: 1.6;
+  color: var(--encre);
+  border-radius: 6px;
+}
+#output-display:empty::before {
+  content: "Commencez à regarder les touches…";
+  color: #9AABB8;
+  font-style: italic;
+}
+
+/* ===== ACTION BUTTONS ===== */
+#action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.action-btn {
+  position: relative;
+  padding: 0 16px;
+  height: 56px;
+  min-width: 100px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  overflow: hidden;
+  transition: box-shadow var(--tr), transform var(--tr);
+  font-family: inherit;
+}
+.action-btn:hover { box-shadow: var(--shadow-hv); transform: translateY(-1px); }
+.action-btn:active { transform: translateY(0); }
+.btn-primary { background: var(--marine); color: #fff; }
+.btn-primary:hover { background: var(--marine-dk); }
+.btn-danger { background: #E53E3E; color: #fff; }
+.btn-speak { background: var(--or); color: var(--encre); }
+.btn-space { background: var(--surface); color: var(--marine); border: 2px solid var(--marine); flex: 1; }
+
+/* ===== DWELL RING on BUTTONS ===== */
+.dwell-target { position: relative; overflow: hidden; }
+.dwell-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.dwell-ring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.dwell-ring circle {
+  fill: none;
+  stroke: rgba(255,255,255,0.0);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 0 1000;
+  transition: stroke-dasharray 0.05s linear;
+}
+.dwell-ring.active circle {
+  stroke: rgba(255,255,255,0.9);
+  stroke-dasharray: var(--dash, 0) 1000;
+}
+.btn-space .dwell-ring.active circle,
+.btn-speak .dwell-ring.active circle {
+  stroke: var(--marine);
+}
+
+/* ===== WORD PREDICTION ===== */
+#prediction-section {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  box-shadow: var(--shadow);
+}
+#prediction-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--marine);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+#prediction-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  min-height: 44px;
+}
+.pred-btn {
+  position: relative;
+  overflow: hidden;
+  padding: 0 16px;
+  height: 44px;
+  border: 2px solid var(--marine);
+  border-radius: 22px;
+  background: var(--surface);
+  color: var(--marine);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--tr), color var(--tr), box-shadow var(--tr);
+  font-family: inherit;
+  white-space: nowrap;
+}
+.pred-btn:hover, .pred-btn:focus-visible {
+  background: var(--marine);
+  color: #fff;
+}
+.pred-btn .dwell-ring.active circle {
+  stroke: var(--or);
+}
+
+/* ===== PHRASES RAPIDES ===== */
+#quick-section {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  box-shadow: var(--shadow);
+}
+#quick-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--marine);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+#quick-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+}
+.quick-btn {
+  position: relative;
+  overflow: hidden;
+  padding: 0 18px;
+  height: 48px;
+  border: 2px solid var(--or);
+  border-radius: var(--radius-sm);
+  background: var(--or);
+  color: var(--encre);
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--tr), box-shadow var(--tr);
+  font-family: inherit;
+  white-space: nowrap;
+}
+.quick-btn:hover, .quick-btn:focus-visible {
+  background: var(--or-lt);
+  box-shadow: var(--shadow-hv);
+}
+.quick-btn .dwell-ring.active circle {
+  stroke: var(--marine);
+}
+
+/* ===== KEYBOARD ===== */
+#keyboard-section {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: var(--shadow);
+}
+#keyboard-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.kb-toggle {
+  padding: 6px 14px;
+  height: 38px;
+  border: 2px solid var(--marine);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--marine);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background var(--tr), color var(--tr);
+}
+.kb-toggle.active, .kb-toggle:hover {
+  background: var(--marine);
+  color: #fff;
+}
+#keyboard-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.kb-row {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+}
+
+/* ===== KEYBOARD KEY ===== */
+.key-btn {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--encre);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--tr), border-color var(--tr), box-shadow var(--tr), transform var(--tr);
+  font-family: inherit;
+  flex-shrink: 0;
+  /* size controlled by JS var --key-size */
+  width: var(--key-size, 52px);
+  height: var(--key-size, 52px);
+  min-width: 36px;
+  min-height: 36px;
+  user-select: none;
+}
+.key-btn:hover, .key-btn:focus-visible {
+  border-color: var(--marine);
+  background: #EEF3FA;
+  box-shadow: var(--shadow);
+}
+.key-btn.dwell-active {
+  background: var(--marine);
+  color: #fff;
+  border-color: var(--marine-dk);
+  transform: scale(0.95);
+}
+.key-btn.fired {
+  background: var(--or);
+  color: var(--encre);
+  border-color: var(--or);
+  transform: scale(1.08);
+  transition: background 0.08s, transform 0.08s;
+}
+/* Special wider keys */
+.key-wide { width: calc(var(--key-size, 52px) * 1.7) !important; }
+.key-xwide { width: calc(var(--key-size, 52px) * 2.6) !important; }
+
+/* Dwell progress ring on keys */
+.key-btn .dwell-ring.active circle {
+  stroke: var(--or);
+}
+
+/* ===== SETTINGS ===== */
+#settings-section {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  box-shadow: var(--shadow);
+}
+#settings-section summary {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--marine);
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  padding: 2px 0;
+}
+#settings-section summary::before { content: "▶"; font-size: 0.7rem; transition: transform 0.2s; }
+#settings-section[open] summary::before { transform: rotate(90deg); }
+.settings-body {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.setting-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.setting-row label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--encre);
+  min-width: 160px;
+}
+.setting-row input[type="range"] {
+  flex: 1;
+  min-width: 100px;
+  accent-color: var(--marine);
+  height: 6px;
+  cursor: pointer;
+}
+.setting-val {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--marine);
+  min-width: 38px;
+}
+.setting-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--marine);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+/* ===== STATUS BAR ===== */
+#status-bar {
+  font-size: 0.8rem;
+  color: #5A7288;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+#status-bar span { display: flex; align-items: center; gap: 4px; }
+#status-live { font-weight: 600; color: var(--marine); }
+
+/* ===== FOOTER ===== */
+footer {
+  background: var(--marine-dk);
+  color: rgba(255,255,255,0.7);
+  text-align: center;
+  font-size: 0.78rem;
+  padding: 12px 20px;
+  margin-top: auto;
+}
+footer a { color: var(--or-lt); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+/* ===== PREFERS-REDUCED-MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+  #text-cursor { animation: none; opacity: 1; }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .key-btn { --key-size: 40px; font-size: 0.88rem; }
+  #app-title { font-size: 1.1rem; }
+  #header-notice { display: none; }
+  #main-layout { padding: 10px; gap: 10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Skip link -->
+<a href="#main-content" id="skip-link">Aller au contenu principal</a>
+
+<!-- HEADER -->
+<header id="app-header" role="banner">
+  <div id="header-left">
+    <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y">← LibreA11y</a>
+    <h1 id="app-title">👁️ GazeType — démo</h1>
+  </div>
+  <div id="header-notice" aria-hidden="true">démo · 100% hors-ligne · aucune donnée envoyée</div>
+</header>
+
+<!-- MAIN -->
+<main id="main-content" tabindex="-1" aria-label="Application GazeType">
+<div id="main-layout">
+
+  <!-- HONEST BANNER -->
+  <details id="honest-banner" role="note" aria-label="Limite technique importante">
+    <summary>⚠️ Limite honnête — comment ça marche vraiment</summary>
+    <div class="banner-body">
+      <p><strong>Le suivi réel du regard ou de la tête exige une webcam + un modèle de vision par ordinateur</strong> (ex. MediaPipe FaceMesh, Eye-tracking via WebGazer) — non inclus dans cette démo hors-ligne en un seul fichier.</p>
+      <p style="margin-top:8px">Cette démo reproduit <strong>l'expérience de saisie par maintien (dwell click)</strong> : survoler une touche pendant un temps réglable la sélectionne — anneau de progression visible. <strong>En production</strong>, c'est le déplacement des yeux ou de la tête qui déplace le pointeur, sans les mains.</p>
+    </div>
+  </details>
+
+  <!-- TEXT OUTPUT -->
+  <section id="output-section" aria-labelledby="output-label">
+    <div id="output-label" style="font-size:0.8rem;font-weight:700;color:var(--marine);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Texte composé</div>
+    <div id="output-display" role="textbox" aria-multiline="true" aria-label="Zone de texte composé" aria-live="off"></div>
+  </section>
+
+  <!-- STATUS (live) -->
+  <div id="status-bar" aria-live="polite" aria-atomic="true">
+    <span>✏️ <span id="char-count">0</span> caractères</span>
+    <span>📝 <span id="word-count">0</span> mots</span>
+    <span id="status-live" aria-live="assertive" aria-atomic="true"></span>
+  </div>
+
+  <!-- ACTION BAR -->
+  <section aria-label="Actions principales">
+    <div id="action-bar" role="toolbar" aria-label="Boutons d'action">
+      <button class="action-btn btn-space dwell-target" id="btn-space" aria-label="Insérer un espace">
+        ⎵ Espace
+        <span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span>
+      </button>
+      <button class="action-btn btn-primary dwell-target" id="btn-back" aria-label="Effacer le dernier caractère">
+        ⌫ Effacer
+        <span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span>
+      </button>
+      <button class="action-btn btn-speak dwell-target" id="btn-speak" aria-label="Lire le texte à voix haute">
+        🔊 Parler
+        <span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span>
+      </button>
+      <button class="action-btn btn-danger dwell-target" id="btn-clear" aria-label="Effacer tout le texte">
+        🗑️ Tout effacer
+        <span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span>
+      </button>
+    </div>
+  </section>
+
+  <!-- WORD PREDICTION -->
+  <section id="prediction-section" aria-labelledby="prediction-label" style="display:none">
+    <div id="prediction-label">Prédiction de mots</div>
+    <ul id="prediction-list" role="listbox" aria-label="Mots suggérés" aria-live="polite"></ul>
+  </section>
+
+  <!-- QUICK PHRASES -->
+  <section id="quick-section" aria-labelledby="quick-label">
+    <div id="quick-label">Phrases rapides</div>
+    <ul id="quick-list" role="listbox" aria-label="Phrases pré-enregistrées">
+      <li role="option"><button class="quick-btn dwell-target" data-phrase="Oui" aria-label="Phrase rapide : Oui">Oui<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button></li>
+      <li role="option"><button class="quick-btn dwell-target" data-phrase="Non" aria-label="Phrase rapide : Non">Non<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button></li>
+      <li role="option"><button class="quick-btn dwell-target" data-phrase="J'ai besoin d'aide" aria-label="Phrase rapide : J'ai besoin d'aide">J'ai besoin d'aide<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button></li>
+      <li role="option"><button class="quick-btn dwell-target" data-phrase="Merci" aria-label="Phrase rapide : Merci">Merci<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button></li>
+      <li role="option"><button class="quick-btn dwell-target" data-phrase="S'il vous plaît" aria-label="Phrase rapide : S'il vous plaît">S'il vous plaît<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button></li>
+      <li role="option"><button class="quick-btn dwell-target" data-phrase="Je ne comprends pas" aria-label="Phrase rapide : Je ne comprends pas">Je ne comprends pas<span class="dwell-ring" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></span></button></li>
+    </ul>
+  </section>
+
+  <!-- KEYBOARD -->
+  <section id="keyboard-section" aria-labelledby="keyboard-heading">
+    <div id="keyboard-heading" style="font-size:0.8rem;font-weight:700;color:var(--marine);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">Clavier visuel</div>
+    <div id="keyboard-controls" role="group" aria-label="Options du clavier">
+      <button class="kb-toggle active" id="toggle-azerty" aria-pressed="true" aria-label="Disposition AZERTY">AZERTY</button>
+      <button class="kb-toggle" id="toggle-alpha" aria-pressed="false" aria-label="Disposition alphabétique">A–Z</button>
+    </div>
+    <div id="keyboard-grid" role="group" aria-label="Touches du clavier visuel"></div>
+  </section>
+
+  <!-- SETTINGS -->
+  <details id="settings-section" aria-label="Réglages">
+    <summary>⚙️ Réglages</summary>
+    <div class="settings-body">
+      <div class="setting-row">
+        <label for="dwell-slider">⏱️ Temps de maintien (dwell)</label>
+        <input type="range" id="dwell-slider" min="400" max="2000" step="100" value="1000"
+               aria-label="Temps de maintien en millisecondes" aria-valuemin="400" aria-valuemax="2000" aria-valuenow="1000">
+        <span class="setting-val" id="dwell-val" aria-live="polite">1,0 s</span>
+      </div>
+      <div class="setting-row">
+        <label for="size-slider">🔡 Taille des touches</label>
+        <input type="range" id="size-slider" min="38" max="80" step="4" value="52"
+               aria-label="Taille des touches en pixels" aria-valuemin="38" aria-valuemax="80" aria-valuenow="52">
+        <span class="setting-val" id="size-val" aria-live="polite">52 px</span>
+      </div>
+      <div class="setting-row">
+        <label for="pred-toggle">💡 Prédiction de mots</label>
+        <input type="checkbox" id="pred-toggle" checked aria-label="Activer la prédiction de mots">
+      </div>
+    </div>
+  </details>
+
+</div><!-- /main-layout -->
+</main>
+
+<footer role="contentinfo">
+  <a href="../index.html">LibreA11y</a> — GazeType est un logiciel libre, démo hors-ligne. Aucune donnée collectée. Aucun cookie.
+</footer>
+
+<script>
+/* =============================================
+   GAZETYPE — Clavier piloté au maintien (dwell)
+   ============================================= */
+
+'use strict';
+
+/* -------- STATE -------- */
+const state = {
+  text: '',
+  dwellMs: 1000,
+  keySize: 52,
+  predEnabled: true,
+  layout: 'azerty',
+  synth: null,
+  activeVoice: null,
+};
+
+/* -------- KEYBOARD LAYOUTS -------- */
+const AZERTY = [
+  ['A','Z','E','R','T','Y','U','I','O','P'],
+  ['Q','S','D','F','G','H','J','K','L','M'],
+  ['W','X','C','V','B','N','É','È','À','Ç'],
+  ['1','2','3','4','5','6','7','8','9','0'],
+  ['.',',','?','!','\'','-','(',')','"',':'],
+];
+const ALPHA = [
+  ['A','B','C','D','E','F','G','H','I'],
+  ['J','K','L','M','N','O','P','Q','R'],
+  ['S','T','U','V','W','X','Y','Z','É'],
+  ['È','À','Ç','1','2','3','4','5','6'],
+  ['7','8','9','0','.',',','?','!','\''],
+];
+
+/* -------- WORD FREQUENCY LIST (French top 200) -------- */
+const WORD_LIST = [
+  'le','la','les','de','des','du','un','une','et','en','est',
+  'que','qui','il','elle','ils','elles','nous','vous','je','tu',
+  'pas','plus','par','sur','avec','dans','pour','au','aux','se',
+  'ne','ce','cet','cette','ces','son','sa','ses','mon','ma','mes',
+  'ton','ta','tes','leur','leurs','y','à','ou','si','mais','donc',
+  'car','ni','or','avoir','être','faire','dire','aller','voir',
+  'vouloir','pouvoir','savoir','venir','prendre','devoir',
+  'falloir','partir','donner','parler','manger','boire','dormir',
+  'aimer','penser','trouver','sembler','rester','tenir','mettre',
+  'bien','très','aussi','comme','tout','encore','même','alors',
+  'après','avant','depuis','lors','pendant','contre','entre',
+  'oui','non','merci','aide','besoin','sil','vous','bonjour',
+  'bonsoir','au revoir','comment','allez','grand','petit','bon',
+  'mauvais','nouveau','vieux','jeune','long','haut','bas',
+  'premier','deuxième','troisième','autre','même','seul','tout',
+  'plusieurs','certain','chaque','quelque','homme','femme','enfant',
+  'temps','jour','nuit','année','heure','moment','vie','monde',
+  'pays','ville','maison','travail','main','tête','yeux','corps',
+  'eau','pain','médecin','hôpital','urgence','douleur','mal',
+];
+
+/* -------- DOM REFS -------- */
+const els = {
+  output: document.getElementById('output-display'),
+  charCount: document.getElementById('char-count'),
+  wordCount: document.getElementById('word-count'),
+  statusLive: document.getElementById('status-live'),
+  predSection: document.getElementById('prediction-section'),
+  predList: document.getElementById('prediction-list'),
+  kbGrid: document.getElementById('keyboard-grid'),
+  dwellSlider: document.getElementById('dwell-slider'),
+  dwellVal: document.getElementById('dwell-val'),
+  sizeSlider: document.getElementById('size-slider'),
+  sizeVal: document.getElementById('size-val'),
+  predToggle: document.getElementById('pred-toggle'),
+  toggleAzerty: document.getElementById('toggle-azerty'),
+  toggleAlpha: document.getElementById('toggle-alpha'),
+};
+
+/* -------- RENDER OUTPUT -------- */
+function renderOutput() {
+  const t = state.text;
+  els.output.textContent = t;
+  els.charCount.textContent = t.length;
+  const words = t.trim().length > 0 ? t.trim().split(/\s+/).length : 0;
+  els.wordCount.textContent = words;
+}
+
+/* -------- WORD PREDICTION -------- */
+function getPrefix() {
+  const parts = state.text.split(/\s/);
+  return (parts[parts.length - 1] || '').toLowerCase();
+}
+function updatePredictions() {
+  if (!state.predEnabled) { els.predSection.style.display = 'none'; return; }
+  const prefix = getPrefix();
+  if (prefix.length < 1) { els.predSection.style.display = 'none'; return; }
+  const matches = WORD_LIST.filter(w => w.startsWith(prefix) && w !== prefix).slice(0, 6);
+  if (matches.length === 0) { els.predSection.style.display = 'none'; return; }
+  els.predSection.style.display = '';
+  els.predList.innerHTML = '';
+  matches.forEach(word => {
+    const li = document.createElement('li');
+    li.setAttribute('role', 'option');
+    const btn = document.createElement('button');
+    btn.className = 'pred-btn dwell-target';
+    btn.setAttribute('aria-label', `Compléter avec : ${word}`);
+    btn.textContent = word;
+    const ring = buildRing();
+    btn.appendChild(ring);
+    btn.addEventListener('click', () => selectWord(word));
+    attachDwell(btn, () => selectWord(word));
+    li.appendChild(btn);
+    els.predList.appendChild(li);
+  });
+}
+function selectWord(word) {
+  // replace current prefix
+  const lastSpace = state.text.lastIndexOf(' ');
+  state.text = (lastSpace === -1 ? '' : state.text.slice(0, lastSpace + 1)) + word + ' ';
+  renderOutput();
+  updatePredictions();
+  speak(word, true);
+  announceStatus(`Mot : ${word}`);
+}
+
+/* -------- BUILD RING SVG -------- */
+function buildRing() {
+  const span = document.createElement('span');
+  span.className = 'dwell-ring';
+  span.setAttribute('aria-hidden', 'true');
+  span.innerHTML = '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg>';
+  return span;
+}
+
+/* -------- DWELL LOGIC -------- */
+// Map: element -> { timerId, startTime, rafId, ring }
+const dwellMap = new WeakMap();
+
+function attachDwell(el, onFire) {
+  // Pointer events (mouse + touch + stylus)
+  el.addEventListener('pointerenter', () => startDwell(el, onFire));
+  el.addEventListener('pointerleave', () => cancelDwell(el));
+  el.addEventListener('pointercancel', () => cancelDwell(el));
+  // Also handle click for pure keyboard/mouse users (instant)
+  // (dwell fires on timer, but click is kept for accessibility)
+}
+
+function startDwell(el, onFire) {
+  cancelDwell(el);
+  const ring = el.querySelector('.dwell-ring');
+  const start = performance.now();
+  const duration = state.dwellMs;
+  el.classList.add('dwell-active');
+  if (ring) ring.classList.add('active');
+
+  function animate(now) {
+    const elapsed = now - start;
+    const pct = Math.min(elapsed / duration, 1);
+    const circ = 2 * Math.PI * 46;
+    if (ring) {
+      ring.style.setProperty('--dash', (pct * circ).toFixed(1));
+      const circle = ring.querySelector('circle');
+      if (circle) circle.style.strokeDasharray = `${(pct * circ).toFixed(1)} ${circ}`;
+    }
+    if (pct < 1) {
+      const rafId = requestAnimationFrame(animate);
+      dwellMap.set(el, { ...dwellMap.get(el), rafId });
+    } else {
+      cancelDwell(el);
+      // Flash fired
+      el.classList.add('fired');
+      setTimeout(() => el.classList.remove('fired'), 250);
+      onFire();
+    }
+  }
+
+  const rafId = requestAnimationFrame(animate);
+  dwellMap.set(el, { rafId, ring });
+}
+
+function cancelDwell(el) {
+  const info = dwellMap.get(el);
+  if (info) {
+    cancelAnimationFrame(info.rafId);
+    if (info.ring) {
+      info.ring.classList.remove('active');
+      const circle = info.ring.querySelector('circle');
+      if (circle) circle.style.strokeDasharray = '0 1000';
+    }
+    dwellMap.delete(el);
+  }
+  el.classList.remove('dwell-active');
+}
+
+/* -------- KEYBOARD BUILD -------- */
+function buildKeyboard() {
+  const grid = els.kbGrid;
+  grid.innerHTML = '';
+  const layout = state.layout === 'azerty' ? AZERTY : ALPHA;
+  const sz = state.keySize;
+  document.documentElement.style.setProperty('--key-size', sz + 'px');
+
+  layout.forEach(row => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'kb-row';
+    row.forEach(char => {
+      const btn = document.createElement('button');
+      btn.className = 'key-btn dwell-target';
+      btn.textContent = char;
+      btn.setAttribute('aria-label', `Touche ${char}`);
+      btn.type = 'button';
+      const ring = buildRing();
+      btn.appendChild(ring);
+      btn.addEventListener('click', () => typeChar(char));
+      attachDwell(btn, () => typeChar(char));
+      rowEl.appendChild(btn);
+    });
+    grid.appendChild(rowEl);
+  });
+
+  // Accents row (second keyboard style additions)
+  // Already included in layouts above
+}
+
+function typeChar(c) {
+  state.text += c;
+  renderOutput();
+  updatePredictions();
+  announceStatus(c);
+}
+
+/* -------- ACTION BUTTONS -------- */
+function setupActions() {
+  const btnSpace = document.getElementById('btn-space');
+  const btnBack = document.getElementById('btn-back');
+  const btnSpeak = document.getElementById('btn-speak');
+  const btnClear = document.getElementById('btn-clear');
+
+  btnSpace.addEventListener('click', doSpace);
+  attachDwell(btnSpace, doSpace);
+
+  btnBack.addEventListener('click', doBack);
+  attachDwell(btnBack, doBack);
+
+  btnSpeak.addEventListener('click', doSpeak);
+  attachDwell(btnSpeak, doSpeak);
+
+  btnClear.addEventListener('click', doClear);
+  attachDwell(btnClear, doClear);
+}
+
+function doSpace() { state.text += ' '; renderOutput(); updatePredictions(); announceStatus('espace'); }
+function doBack() {
+  if (state.text.length > 0) {
+    state.text = state.text.slice(0, -1);
+    renderOutput(); updatePredictions(); announceStatus('effacé');
+  }
+}
+function doSpeak() {
+  if (!state.text.trim()) { announceStatus('Rien à lire'); return; }
+  speak(state.text, false);
+}
+function doClear() {
+  state.text = '';
+  renderOutput(); updatePredictions(); announceStatus('Texte effacé');
+}
+
+/* -------- QUICK PHRASES -------- */
+function setupQuick() {
+  document.querySelectorAll('.quick-btn').forEach(btn => {
+    const phrase = btn.dataset.phrase;
+    btn.addEventListener('click', () => insertPhrase(phrase));
+    attachDwell(btn, () => insertPhrase(phrase));
+  });
+}
+function insertPhrase(phrase) {
+  if (state.text && !state.text.endsWith(' ')) state.text += ' ';
+  state.text += phrase;
+  renderOutput(); updatePredictions(); speak(phrase, false); announceStatus(phrase);
+}
+
+/* -------- TTS -------- */
+function initSynth() {
+  if (!('speechSynthesis' in window)) return;
+  state.synth = window.speechSynthesis;
+  function pickVoice() {
+    const voices = state.synth.getVoices();
+    const fr = voices.find(v => v.lang.startsWith('fr'));
+    state.activeVoice = fr || voices[0] || null;
+  }
+  pickVoice();
+  state.synth.addEventListener('voiceschanged', pickVoice);
+}
+function speak(text, quiet) {
+  if (!state.synth) return;
+  if (quiet && state.dwellMs < 600) return; // skip letter-by-letter at fast dwell
+  state.synth.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'fr-FR';
+  if (state.activeVoice) utt.voice = state.activeVoice;
+  utt.rate = 0.95;
+  utt.pitch = 1.0;
+  state.synth.speak(utt);
+}
+
+/* -------- STATUS -------- */
+function announceStatus(msg) {
+  els.statusLive.textContent = '';
+  requestAnimationFrame(() => { els.statusLive.textContent = msg; });
+}
+
+/* -------- SETTINGS -------- */
+function setupSettings() {
+  els.dwellSlider.addEventListener('input', () => {
+    state.dwellMs = parseInt(els.dwellSlider.value);
+    els.dwellVal.textContent = (state.dwellMs / 1000).toFixed(1).replace('.', ',') + ' s';
+    els.dwellSlider.setAttribute('aria-valuenow', state.dwellMs);
+  });
+  els.sizeSlider.addEventListener('input', () => {
+    state.keySize = parseInt(els.sizeSlider.value);
+    els.sizeVal.textContent = state.keySize + ' px';
+    els.sizeSlider.setAttribute('aria-valuenow', state.keySize);
+    document.documentElement.style.setProperty('--key-size', state.keySize + 'px');
+  });
+  els.predToggle.addEventListener('change', () => {
+    state.predEnabled = els.predToggle.checked;
+    updatePredictions();
+  });
+  els.toggleAzerty.addEventListener('click', () => {
+    state.layout = 'azerty';
+    els.toggleAzerty.classList.add('active');
+    els.toggleAzerty.setAttribute('aria-pressed', 'true');
+    els.toggleAlpha.classList.remove('active');
+    els.toggleAlpha.setAttribute('aria-pressed', 'false');
+    buildKeyboard();
+  });
+  els.toggleAlpha.addEventListener('click', () => {
+    state.layout = 'alpha';
+    els.toggleAlpha.classList.add('active');
+    els.toggleAlpha.setAttribute('aria-pressed', 'true');
+    els.toggleAzerty.classList.remove('active');
+    els.toggleAzerty.setAttribute('aria-pressed', 'false');
+    buildKeyboard();
+  });
+}
+
+/* -------- INIT -------- */
+function init() {
+  initSynth();
+  buildKeyboard();
+  setupActions();
+  setupQuick();
+  setupSettings();
+  renderOutput();
+  updatePredictions();
+  // Open honest banner by default
+  document.getElementById('honest-banner').open = true;
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

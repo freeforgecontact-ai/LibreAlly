@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MathEase — Démo | LibreA11y</title>
+<meta name="description" content="Soutien à la dyscalculie : représentations multiples, opérations visuelles, argent. Démo hors-ligne, aucune donnée envoyée.">
+<style>
+/* ===== VARIABLES & RESET ===== */
+:root {
+  --marine:    #0F4C81;
+  --marine-dk: #0A3A63;
+  --or:        #F4B81C;
+  --or-lt:     #FFD45E;
+  --encre:     #16202E;
+  --fond:      #F7F9FC;
+  --surface:   #FFFFFF;
+  --border:    #D0D9E8;
+  --focus-ring:#F4B81C;
+  --radius:    12px;
+  --radius-sm: 8px;
+  --shadow:    0 2px 8px rgba(15,76,129,0.12);
+  --shadow-hv: 0 4px 16px rgba(15,76,129,0.22);
+  --tr:        0.18s ease;
+  --success:   #1B6B3A;
+  --success-bg:#E8F5EE;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+html, body {
+  min-height: 100%;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  background: var(--fond);
+  color: var(--encre);
+  font-size: 16px;
+  line-height: 1.5;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+  html { scroll-behavior: auto; }
+}
+
+/* ===== SKIP LINK ===== */
+#skip-link {
+  position: absolute;
+  top: -100px;
+  left: 8px;
+  background: var(--or);
+  color: var(--encre);
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  z-index: 9999;
+  text-decoration: none;
+  font-size: 1rem;
+}
+#skip-link:focus { top: 8px; }
+
+/* ===== FOCUS ===== */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* ===== HEADER ===== */
+#app-header {
+  background: var(--marine);
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(10,58,99,0.3);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+#header-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+#back-link {
+  color: var(--or-lt);
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  min-height: 44px;
+  transition: background var(--tr);
+}
+#back-link:hover, #back-link:focus-visible { background: rgba(255,255,255,0.18); color: #fff; }
+#app-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#header-notice {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.75);
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+/* ===== NAV TABS ===== */
+#main-nav {
+  background: var(--marine-dk);
+  display: flex;
+  overflow-x: auto;
+  gap: 4px;
+  padding: 6px 12px;
+}
+#main-nav button {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.75);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  min-height: 44px;
+  transition: background var(--tr), color var(--tr);
+  white-space: nowrap;
+}
+#main-nav button:hover { background: rgba(255,255,255,0.12); color: #fff; }
+#main-nav button[aria-selected="true"] {
+  background: var(--or);
+  color: var(--encre);
+}
+
+/* ===== MAIN ===== */
+#main-content {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+/* ===== PANELS ===== */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ===== SECTION CARD ===== */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+.card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--marine);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ===== BTN ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 48px;
+  min-width: 48px;
+  transition: background var(--tr), transform var(--tr), box-shadow var(--tr);
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary {
+  background: var(--marine);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--marine-dk); box-shadow: var(--shadow-hv); }
+.btn-accent {
+  background: var(--or);
+  color: var(--encre);
+}
+.btn-accent:hover { background: var(--or-lt); box-shadow: var(--shadow-hv); }
+.btn-lg {
+  font-size: 1.4rem;
+  min-height: 56px;
+  min-width: 56px;
+  padding: 12px 20px;
+  border-radius: 10px;
+}
+.btn-outline {
+  background: transparent;
+  border: 2px solid var(--marine);
+  color: var(--marine);
+}
+.btn-outline:hover { background: var(--marine); color: #fff; }
+.btn-ghost {
+  background: var(--fond);
+  color: var(--marine);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { background: var(--border); }
+
+/* ===== LIVE REGION ===== */
+#aria-live { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+/* ===== SECTION 1 — REPRÉSENTATIONS ===== */
+#num-selector-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+#num-label { font-weight: 700; font-size: 1rem; }
+#num-input {
+  width: 80px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-align: center;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  background: var(--surface);
+  color: var(--encre);
+  min-height: 48px;
+}
+#num-input:focus { border-color: var(--marine); outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
+#btn-speak-num {
+  min-height: 48px;
+}
+
+.repr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
+}
+.repr-card {
+  background: var(--fond);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.repr-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--marine);
+}
+.repr-chiffre {
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: var(--marine);
+  line-height: 1;
+}
+.repr-mot {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--encre);
+}
+.repr-tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  min-height: 40px;
+  align-items: center;
+}
+.token {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--marine);
+  display: inline-block;
+  flex-shrink: 0;
+}
+.token-zero {
+  font-size: 0.9rem;
+  color: #888;
+}
+/* Ten frame */
+.ten-frame {
+  display: grid;
+  grid-template-columns: repeat(5, 28px);
+  gap: 4px;
+  justify-content: center;
+}
+.tf-cell {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tf-cell.filled { background: var(--marine); border-color: var(--marine); }
+.tf-cell.filled-gold { background: var(--or); border-color: #d49a18; }
+
+/* Number line */
+.num-line-wrap {
+  width: 100%;
+  overflow-x: auto;
+  padding: 8px 0;
+}
+.num-line-svg { display: block; margin: 0 auto; }
+
+/* ===== SECTION 2 — JETONS ===== */
+#jeton-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 60px;
+  align-items: flex-start;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 16px;
+  background: var(--fond);
+}
+.jeton {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--marine);
+  display: inline-block;
+  flex-shrink: 0;
+}
+.jeton-dizaine {
+  background: var(--or);
+  border: 3px solid #d49a18;
+  border-radius: 6px;
+  width: 44px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1rem;
+  color: var(--encre);
+  flex-shrink: 0;
+}
+#jeton-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+#jeton-count-display {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--marine);
+  min-width: 100px;
+}
+#exchange-btn-wrap { margin-top: 10px; }
+#exchange-message {
+  font-size: 0.9rem;
+  background: var(--success-bg);
+  color: var(--success);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border-left: 4px solid var(--success);
+  display: none;
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+/* ===== SECTION 3 — OPÉRATIONS ===== */
+.ops-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+  margin-bottom: 20px;
+}
+.ops-form label { font-size: 0.9rem; font-weight: 600; display: block; margin-bottom: 4px; }
+.ops-input {
+  width: 70px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-align: center;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  background: var(--surface);
+  color: var(--encre);
+  min-height: 48px;
+}
+.ops-input:focus { border-color: var(--marine); outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
+#ops-op-select {
+  font-size: 1.3rem;
+  font-weight: 700;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  background: var(--surface);
+  color: var(--encre);
+  min-height: 48px;
+  cursor: pointer;
+}
+#ops-op-select:focus { border-color: var(--marine); outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
+
+#ops-steps-area { margin-top: 8px; }
+.step-box {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  background: var(--fond);
+  margin-bottom: 12px;
+}
+.step-box.highlight {
+  border-color: var(--or);
+  background: #fffbe8;
+}
+.step-title { font-weight: 700; color: var(--marine); margin-bottom: 8px; font-size: 0.95rem; }
+.step-tokens { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; min-height: 30px; }
+.step-result {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--marine);
+  margin-top: 10px;
+}
+#ops-encourage {
+  font-size: 0.95rem;
+  background: var(--success-bg);
+  color: var(--success);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border-left: 4px solid var(--success);
+  display: none;
+  margin-top: 10px;
+  font-weight: 600;
+}
+#btn-next-step { display: none; }
+
+/* ===== SECTION 4 — ARGENT ===== */
+.coins-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.coin-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 14px;
+  border-radius: 50%;
+  border: 3px solid var(--border);
+  background: #f5e8c0;
+  cursor: pointer;
+  min-height: 70px;
+  min-width: 70px;
+  font-weight: 900;
+  font-size: 1.05rem;
+  color: var(--encre);
+  transition: background var(--tr), transform var(--tr), box-shadow var(--tr);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  line-height: 1.2;
+}
+.coin-btn:hover { background: var(--or-lt); transform: translateY(-2px); box-shadow: var(--shadow-hv); }
+.coin-btn:active { transform: scale(0.96); }
+.coin-btn.billet {
+  border-radius: 10px;
+  background: #d4edda;
+  border-color: #6abf8a;
+  min-width: 90px;
+}
+.coin-label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; color: #666; }
+
+#argent-panier {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 56px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  background: var(--fond);
+  align-items: center;
+  margin-bottom: 12px;
+}
+.argent-chip {
+  background: var(--marine);
+  color: #fff;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+.argent-chip.billet-chip {
+  background: var(--success);
+}
+#argent-total {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--marine);
+  margin-bottom: 8px;
+}
+#argent-speak-btn { margin-top: 6px; }
+
+/* ===== ENCOURAGEMENTS ===== */
+.bravo {
+  background: var(--or);
+  color: var(--encre);
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-top: 10px;
+  display: none;
+}
+
+/* ===== MISC ===== */
+.sr-only {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.row-gap { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.mt8 { margin-top: 8px; }
+.mt12 { margin-top: 12px; }
+.mt16 { margin-top: 16px; }
+</style>
+</head>
+<body>
+
+<!-- SKIP LINK -->
+<a href="#main-content" id="skip-link">Aller au contenu principal</a>
+
+<!-- LIVE REGION ARIA -->
+<div id="aria-live" aria-live="polite" aria-atomic="true"></div>
+
+<!-- HEADER -->
+<header id="app-header" role="banner">
+  <div id="header-left">
+    <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y">← LibreA11y</a>
+    <h1 id="app-title">🔢 MathEase — démo</h1>
+  </div>
+  <div id="header-notice" aria-label="Informations : démo hors-ligne, aucune donnée envoyée">
+    démo · 100% hors-ligne · aucune donnée envoyée
+  </div>
+</header>
+
+<!-- NAV ONGLETS -->
+<nav id="main-nav" role="tablist" aria-label="Modules de MathEase">
+  <button role="tab" aria-selected="true"  aria-controls="panel-repr"  id="tab-repr"  onclick="switchTab('repr')">🔢 Représentations</button>
+  <button role="tab" aria-selected="false" aria-controls="panel-jeton" id="tab-jeton" onclick="switchTab('jeton')">🪙 Objets</button>
+  <button role="tab" aria-selected="false" aria-controls="panel-ops"   id="tab-ops"   onclick="switchTab('ops')">➕ Opérations</button>
+  <button role="tab" aria-selected="false" aria-controls="panel-argent" id="tab-argent" onclick="switchTab('argent')">💶 Argent</button>
+</nav>
+
+<!-- MAIN -->
+<main id="main-content" tabindex="-1">
+<div style="max-width:860px;margin:0 auto;padding:24px 16px 48px;">
+
+<!-- ==================== PANEL 1 : REPRÉSENTATIONS ==================== -->
+<section id="panel-repr" class="panel active" role="tabpanel" aria-labelledby="tab-repr">
+  <div class="card">
+    <div class="card-title">🔢 Un nombre, 5 façons de le voir</div>
+    <p style="margin-bottom:16px;font-size:0.95rem;">Choisis un nombre entre 0 et 20. Il s'affiche de 5 façons différentes.</p>
+
+    <div id="num-selector-row">
+      <label id="num-label" for="num-input">Nombre :</label>
+      <input type="number" id="num-input" min="0" max="20" value="7"
+             aria-describedby="num-hint"
+             oninput="updateRepresentations()">
+      <span id="num-hint" class="sr-only">Entre 0 et 20</span>
+      <button class="btn btn-primary" id="btn-speak-num" onclick="speakNumber()" aria-label="Écouter le nombre">
+        🔊 Écouter
+      </button>
+    </div>
+
+    <div class="repr-grid" id="repr-grid" aria-live="polite" aria-label="Représentations du nombre">
+      <!-- Rempli par JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PANEL 2 : JETONS ==================== -->
+<section id="panel-jeton" class="panel" role="tabpanel" aria-labelledby="tab-jeton">
+  <div class="card">
+    <div class="card-title">🪙 Ajoute et retire des jetons</div>
+    <p style="font-size:0.95rem;margin-bottom:14px;">
+      Chaque petit rond bleu = 1 unité. Quand tu as 10 unités, tu peux les échanger contre 1 dizaine (carré doré).
+    </p>
+
+    <div id="jeton-controls">
+      <button class="btn btn-primary btn-lg" id="btn-add-jeton" onclick="addJeton()" aria-label="Ajouter un jeton">
+        ＋ Jeton
+      </button>
+      <button class="btn btn-ghost btn-lg" id="btn-remove-jeton" onclick="removeJeton()" aria-label="Retirer un jeton">
+        － Jeton
+      </button>
+      <div id="jeton-count-display" aria-live="polite" aria-label="Nombre total de jetons"></div>
+    </div>
+
+    <div id="jeton-area" role="img" aria-label="Zone des jetons"></div>
+
+    <div id="exchange-btn-wrap">
+      <button class="btn btn-accent" id="btn-exchange" onclick="exchangeJetons()" style="display:none;" aria-label="Échanger 10 unités contre 1 dizaine">
+        🔄 Échanger 10 unités → 1 dizaine
+      </button>
+    </div>
+    <div id="exchange-message" role="status">✅ Bravo ! 10 petits jetons = 1 grande dizaine 🎉</div>
+
+    <div id="jeton-position" style="margin-top:14px;" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ==================== PANEL 3 : OPÉRATIONS ==================== -->
+<section id="panel-ops" class="panel" role="tabpanel" aria-labelledby="tab-ops">
+  <div class="card">
+    <div class="card-title">➕ Opération pas à pas</div>
+    <p style="font-size:0.95rem;margin-bottom:14px;">
+      Choisis deux nombres (0–20) et une opération. L'ordinateur montre chaque étape avec des jetons.
+    </p>
+
+    <div class="ops-form">
+      <div>
+        <label for="ops-a">Premier nombre</label>
+        <input type="number" class="ops-input" id="ops-a" min="0" max="20" value="5">
+      </div>
+      <div>
+        <label for="ops-op">Opération</label>
+        <select id="ops-op-select">
+          <option value="add">＋ Addition</option>
+          <option value="sub">－ Soustraction</option>
+        </select>
+      </div>
+      <div>
+        <label for="ops-b">Deuxième nombre</label>
+        <input type="number" class="ops-input" id="ops-b" min="0" max="20" value="3">
+      </div>
+      <button class="btn btn-primary" onclick="startOps()" aria-label="Commencer l'opération">▶ Commencer</button>
+    </div>
+
+    <div id="ops-steps-area" aria-live="polite" aria-label="Étapes de l'opération"></div>
+    <div class="row-gap mt12">
+      <button class="btn btn-accent" id="btn-next-step" onclick="nextOpsStep()" aria-label="Étape suivante">Étape suivante →</button>
+    </div>
+    <div id="ops-encourage" role="status"></div>
+  </div>
+</section>
+
+<!-- ==================== PANEL 4 : ARGENT ==================== -->
+<section id="panel-argent" class="panel" role="tabpanel" aria-labelledby="tab-argent">
+  <div class="card">
+    <div class="card-title">💶 Compter avec de l'argent</div>
+    <p style="font-size:0.95rem;margin-bottom:14px;">
+      Clique sur les pièces et billets pour composer un montant. Le total s'affiche en bas.
+    </p>
+
+    <div class="coins-grid" role="group" aria-label="Pièces et billets">
+      <button class="coin-btn" onclick="addCoin(1)" aria-label="Ajouter une pièce de 1 euro">
+        1 €<span class="coin-label">pièce</span>
+      </button>
+      <button class="coin-btn" onclick="addCoin(2)" aria-label="Ajouter une pièce de 2 euros">
+        2 €<span class="coin-label">pièce</span>
+      </button>
+      <button class="coin-btn" onclick="addCoin(5)" aria-label="Ajouter une pièce de 5 euros">
+        5 €<span class="coin-label">pièce</span>
+      </button>
+      <button class="coin-btn" onclick="addCoin(10)" aria-label="Ajouter une pièce de 10 euros">
+        10 €<span class="coin-label">pièce</span>
+      </button>
+      <button class="coin-btn billet" onclick="addCoin(20)" aria-label="Ajouter un billet de 20 euros">
+        20 €<span class="coin-label">billet</span>
+      </button>
+      <button class="coin-btn billet" onclick="addCoin(50)" aria-label="Ajouter un billet de 50 euros">
+        50 €<span class="coin-label">billet</span>
+      </button>
+    </div>
+
+    <div id="argent-total" aria-live="polite" aria-label="Total">Total : 0 €</div>
+    <div id="argent-panier" aria-label="Panier des pièces et billets ajoutés" role="list"></div>
+
+    <div class="row-gap mt12">
+      <button class="btn btn-ghost" onclick="removeLastCoin()" aria-label="Retirer la dernière pièce ou billet">
+        ← Retirer le dernier
+      </button>
+      <button class="btn btn-ghost" onclick="clearCoins()" aria-label="Tout effacer">
+        🗑️ Tout effacer
+      </button>
+      <button class="btn btn-primary" id="argent-speak-btn" onclick="speakTotal()" aria-label="Écouter le total">
+        🔊 Écouter le total
+      </button>
+    </div>
+  </div>
+</section>
+
+</div><!-- /inner -->
+</main>
+
+<script>
+/* =====================================================
+   SPEECH
+===================================================== */
+let voiceFR = null;
+function loadVoices() {
+  const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+  voiceFR = voices.find(v => v.lang && v.lang.startsWith('fr')) || null;
+}
+if (window.speechSynthesis) {
+  window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
+  loadVoices();
+}
+
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  if (voiceFR) u.voice = voiceFR;
+  u.lang = 'fr-FR';
+  u.rate = 0.92;
+  window.speechSynthesis.speak(u);
+  announce(text);
+}
+
+function announce(text) {
+  const el = document.getElementById('aria-live');
+  el.textContent = '';
+  setTimeout(() => { el.textContent = text; }, 50);
+}
+
+/* =====================================================
+   NAVIGATION ONGLETS
+===================================================== */
+function switchTab(id) {
+  ['repr','jeton','ops','argent'].forEach(t => {
+    document.getElementById('tab-' + t).setAttribute('aria-selected', t === id ? 'true' : 'false');
+    document.getElementById('panel-' + t).classList.toggle('active', t === id);
+  });
+  document.getElementById('panel-' + id).focus();
+}
+
+/* Clavier sur les onglets */
+document.getElementById('main-nav').addEventListener('keydown', function(e) {
+  const tabs = Array.from(this.querySelectorAll('[role=tab]'));
+  const idx = tabs.indexOf(document.activeElement);
+  if (e.key === 'ArrowRight') { tabs[(idx + 1) % tabs.length].focus(); e.preventDefault(); }
+  if (e.key === 'ArrowLeft')  { tabs[(idx - 1 + tabs.length) % tabs.length].focus(); e.preventDefault(); }
+});
+
+/* =====================================================
+   NOMS DES NOMBRES EN FRANÇAIS
+===================================================== */
+const MOTS = [
+  'zéro','un','deux','trois','quatre','cinq','six','sept','huit','neuf','dix',
+  'onze','douze','treize','quatorze','quinze','seize','dix-sept','dix-huit','dix-neuf','vingt'
+];
+
+/* =====================================================
+   PANEL 1 — REPRÉSENTATIONS
+===================================================== */
+function clamp(v, min, max) { return Math.min(Math.max(v|0, min), max); }
+
+function updateRepresentations() {
+  const raw = document.getElementById('num-input').value;
+  const n = clamp(parseInt(raw, 10) || 0, 0, 20);
+  document.getElementById('num-input').value = n;
+
+  const grid = document.getElementById('repr-grid');
+  grid.innerHTML = '';
+
+  // 1. Chiffre
+  grid.appendChild(makeReprCard('Chiffre',
+    `<div class="repr-chiffre" aria-hidden="true">${n}</div>`
+  ));
+
+  // 2. Mot
+  grid.appendChild(makeReprCard('Mot',
+    `<div class="repr-mot">${MOTS[n]}</div>`
+  ));
+
+  // 3. Points / jetons
+  let tokens = '';
+  if (n === 0) {
+    tokens = '<span class="token-zero">aucun jeton</span>';
+  } else {
+    for (let i = 0; i < n; i++) tokens += '<span class="token" aria-hidden="true"></span>';
+  }
+  grid.appendChild(makeReprCard('Jetons',
+    `<div class="repr-tokens" aria-label="${n} jeton${n>1?'s':''}">${tokens}</div>`
+  ));
+
+  // 4. Ten-frame (cadre de dix)
+  let tfHTML = '<div class="ten-frame" aria-label="Cadre de dix">';
+  for (let i = 0; i < 10; i++) {
+    const filled = i < Math.min(n, 10);
+    tfHTML += `<div class="tf-cell${filled ? ' filled' : ''}" aria-hidden="true"></div>`;
+  }
+  tfHTML += '</div>';
+  if (n > 10) {
+    tfHTML += '<div class="ten-frame" aria-label="Deuxième cadre" style="margin-top:4px;">';
+    for (let i = 0; i < 10; i++) {
+      const filled = i < (n - 10);
+      tfHTML += `<div class="tf-cell${filled ? ' filled filled-gold' : ''}" aria-hidden="true"></div>`;
+    }
+    tfHTML += '</div>';
+  }
+  grid.appendChild(makeReprCard('Cadre de 10', tfHTML));
+
+  // 5. Droite numérique (SVG inline)
+  grid.appendChild(makeReprCard('Droite numérique', makeNumberLine(n)));
+}
+
+function makeReprCard(label, inner) {
+  const div = document.createElement('div');
+  div.className = 'repr-card';
+  div.innerHTML = `<div class="repr-label">${label}</div>${inner}`;
+  return div;
+}
+
+function makeNumberLine(n) {
+  const W = 240, H = 54, pad = 16;
+  const usable = W - pad * 2;
+  const step = usable / 20;
+  let svg = `<svg class="num-line-svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-label="Position de ${n} sur la droite numérique" role="img" xmlns="http://www.w3.org/2000/svg">`;
+  // Ligne
+  svg += `<line x1="${pad}" y1="30" x2="${W-pad}" y2="30" stroke="#D0D9E8" stroke-width="2"/>`;
+  // Graduations et étiquettes (0, 5, 10, 15, 20)
+  [0,5,10,15,20].forEach(v => {
+    const x = pad + v * step;
+    svg += `<line x1="${x}" y1="24" x2="${x}" y2="36" stroke="#888" stroke-width="1.5"/>`;
+    svg += `<text x="${x}" y="${H-4}" text-anchor="middle" font-size="9" fill="#888" font-family="system-ui">${v}</text>`;
+  });
+  // Curseur
+  const cx = pad + n * step;
+  svg += `<circle cx="${cx}" cy="30" r="8" fill="#0F4C81" stroke="#fff" stroke-width="2"/>`;
+  svg += `<text x="${cx}" y="34" text-anchor="middle" font-size="8.5" fill="#fff" font-weight="bold" font-family="system-ui">${n}</text>`;
+  svg += '</svg>';
+  return `<div class="num-line-wrap">${svg}</div>`;
+}
+
+function speakNumber() {
+  const n = clamp(parseInt(document.getElementById('num-input').value, 10) || 0, 0, 20);
+  speak(`${n} : ${MOTS[n]}`);
+}
+
+// Init panel 1
+updateRepresentations();
+
+/* =====================================================
+   PANEL 2 — JETONS MANIPULABLES
+===================================================== */
+let unites = 0;
+let dizaines = 0;
+
+function renderJetons() {
+  const area = document.getElementById('jeton-area');
+  area.innerHTML = '';
+
+  // Dizaines d'abord
+  for (let i = 0; i < dizaines; i++) {
+    const d = document.createElement('span');
+    d.className = 'jeton-dizaine';
+    d.setAttribute('aria-label', 'Dizaine');
+    d.textContent = '10';
+    area.appendChild(d);
+  }
+  // Unités
+  for (let i = 0; i < unites; i++) {
+    const t = document.createElement('span');
+    t.className = 'jeton';
+    t.setAttribute('aria-hidden', 'true');
+    area.appendChild(t);
+  }
+  if (unites === 0 && dizaines === 0) {
+    area.textContent = 'Aucun jeton.';
+  }
+
+  const total = dizaines * 10 + unites;
+  const countEl = document.getElementById('jeton-count-display');
+  countEl.textContent = `Total : ${total} (${dizaines} dizaine${dizaines!==1?'s':''} + ${unites} unité${unites!==1?'s':''})`;
+
+  // Bouton échange
+  const exBtn = document.getElementById('btn-exchange');
+  exBtn.style.display = unites >= 10 ? 'inline-flex' : 'none';
+
+  // Message position
+  const pos = document.getElementById('jeton-position');
+  pos.textContent = total > 0 ? `🔢 ${total} = ${dizaines > 0 ? dizaines + ' dizaine' + (dizaines!==1?'s':'') : ''} ${unites > 0 ? (dizaines>0?'et ':'') + unites + ' unité' + (unites!==1?'s':'') : (dizaines===0?'zéro':'')}.` : '';
+
+  // Masquer message échange si plus >= 10
+  if (unites < 10) {
+    document.getElementById('exchange-message').style.display = 'none';
+  }
+}
+
+function addJeton() {
+  const total = dizaines * 10 + unites;
+  if (total >= 99) { announce("Maximum 99 atteint."); return; }
+  unites++;
+  renderJetons();
+  const msg = unites >= 10 ? `${unites} unités — tu peux faire un échange !` : `${dizaines * 10 + unites} au total`;
+  announce(msg);
+}
+
+function removeJeton() {
+  if (unites > 0) {
+    unites--;
+    renderJetons();
+    announce(`${dizaines * 10 + unites} au total`);
+  } else if (dizaines > 0) {
+    dizaines--;
+    unites = 9;
+    renderJetons();
+    announce(`J'ai défait une dizaine. ${dizaines * 10 + unites} au total.`);
+  } else {
+    announce("Il n'y a plus de jeton.");
+  }
+}
+
+function exchangeJetons() {
+  if (unites >= 10) {
+    unites -= 10;
+    dizaines++;
+    renderJetons();
+    document.getElementById('exchange-message').style.display = 'block';
+    speak(`Super ! 10 unités deviennent 1 dizaine. Tu as maintenant ${dizaines} dizaine${dizaines>1?'s':''} et ${unites} unité${unites!==1?'s':''}.`);
+  }
+}
+
+renderJetons();
+
+/* =====================================================
+   PANEL 3 — OPÉRATIONS
+===================================================== */
+let opsSteps = [];
+let opsCurrentStep = 0;
+
+function startOps() {
+  const a = clamp(parseInt(document.getElementById('ops-a').value, 10) || 0, 0, 20);
+  const b = clamp(parseInt(document.getElementById('ops-b').value, 10) || 0, 0, 20);
+  const op = document.getElementById('ops-op-select').value;
+
+  document.getElementById('ops-a').value = a;
+  document.getElementById('ops-b').value = b;
+
+  opsSteps = buildSteps(a, b, op);
+  opsCurrentStep = 0;
+
+  document.getElementById('ops-steps-area').innerHTML = '';
+  document.getElementById('ops-encourage').style.display = 'none';
+  document.getElementById('btn-next-step').style.display = 'inline-flex';
+
+  renderOpsStep();
+}
+
+function buildSteps(a, b, op) {
+  const steps = [];
+  const opSign = op === 'add' ? '+' : '−';
+  const result = op === 'add' ? a + b : a - b;
+
+  // Étape 0 : présentation
+  steps.push({
+    title: `🎯 On va calculer : ${a} ${opSign} ${b}`,
+    tokens: null,
+    text: op === 'add'
+      ? `On part de ${a}, puis on ajoute ${b}.`
+      : `On part de ${a}, puis on enlève ${b}.`,
+    speak: op === 'add'
+      ? `On calcule ${a} plus ${b}. On part de ${a}, puis on ajoute ${b}.`
+      : `On calcule ${a} moins ${b}. On part de ${a}, puis on enlève ${b}.`
+  });
+
+  // Étape 1 : afficher A
+  steps.push({
+    title: `1️⃣ Je montre ${a}`,
+    tokens: tokensHTML(a, 'blue', 0),
+    text: `Voici ${a} jeton${a!==1?'s':''}.`,
+    speak: `Je montre ${a} avec ${a} jeton${a!==1?'s':''}.`
+  });
+
+  // Étape 2 : ajouter/enlever B
+  if (op === 'add') {
+    steps.push({
+      title: `2️⃣ J'ajoute ${b}`,
+      tokens: tokensHTML(a, 'blue', 0) + tokensHTML(b, 'gold', a),
+      text: `J'ajoute ${b} jeton${b!==1?'s':''} (en or). Total provisoire : ${a} + ${b}.`,
+      speak: `J'ajoute ${b} jeton${b!==1?'s':''}. Maintenant je compte tout.`
+    });
+  } else {
+    const bSafe = Math.min(b, a);
+    steps.push({
+      title: `2️⃣ J'enlève ${bSafe}`,
+      tokens: tokensHTML(a - bSafe, 'blue', 0) + tokensStrike(bSafe),
+      text: `J'enlève ${bSafe} jeton${bSafe!==1?'s':''} (barrés). Il reste ${a - bSafe}.`,
+      speak: `J'enlève ${bSafe} jeton${bSafe!==1?'s':''}. Il reste ${a - bSafe}.`
+    });
+  }
+
+  // Étape 3 : résultat
+  steps.push({
+    title: `✅ Résultat : ${a} ${opSign} ${b} = ${result < 0 ? '(négatif !)' : result}`,
+    tokens: result >= 0 ? tokensHTML(result, 'blue', 0) : '',
+    text: result >= 0
+      ? `La réponse est ${result}.`
+      : `La soustraction donne un nombre négatif (${result}). On ne peut pas enlever plus qu'on n'a !`,
+    speak: result >= 0
+      ? `Bravo ! ${a} ${op === 'add' ? 'plus' : 'moins'} ${b} égale ${result}.`
+      : `Attention ! ${a} moins ${b} donne un résultat négatif. On ne peut pas enlever plus qu'on n'a.`,
+    result: result,
+    isLast: true
+  });
+
+  return steps;
+}
+
+function tokensHTML(n, color, offset) {
+  let html = '';
+  const style = color === 'gold'
+    ? 'width:22px;height:22px;border-radius:50%;background:var(--or);border:2px solid #d49a18;display:inline-block;flex-shrink:0;'
+    : 'width:22px;height:22px;border-radius:50%;background:var(--marine);display:inline-block;flex-shrink:0;';
+  for (let i = 0; i < n; i++) {
+    html += `<span style="${style}" aria-hidden="true"></span>`;
+  }
+  return html;
+}
+
+function tokensStrike(n) {
+  let html = '';
+  for (let i = 0; i < n; i++) {
+    html += `<span style="width:22px;height:22px;border-radius:50%;background:#ccc;border:2px dashed #999;display:inline-block;flex-shrink:0;position:relative;" aria-hidden="true"><span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#c00;font-size:14px;font-weight:900;line-height:1;">✕</span></span>`;
+  }
+  return html;
+}
+
+function renderOpsStep() {
+  if (opsCurrentStep >= opsSteps.length) return;
+  const step = opsSteps[opsCurrentStep];
+  const area = document.getElementById('ops-steps-area');
+
+  // Enlève le highlight précédent
+  area.querySelectorAll('.step-box').forEach(b => b.classList.remove('highlight'));
+
+  const box = document.createElement('div');
+  box.className = 'step-box highlight';
+  box.setAttribute('tabindex', '-1');
+  let inner = `<div class="step-title">${step.title}</div>`;
+  if (step.text) inner += `<p style="font-size:0.95rem;margin-bottom:8px;">${step.text}</p>`;
+  if (step.tokens !== null && step.tokens !== undefined) {
+    inner += `<div class="step-tokens">${step.tokens}</div>`;
+  }
+  if (step.result !== undefined && step.result >= 0) {
+    inner += `<div class="step-result">${step.result}</div>`;
+  }
+  box.innerHTML = inner;
+  area.appendChild(box);
+  setTimeout(() => box.focus(), 50);
+
+  speak(step.speak);
+
+  if (step.isLast) {
+    document.getElementById('btn-next-step').style.display = 'none';
+    const enc = document.getElementById('ops-encourage');
+    enc.style.display = 'block';
+    enc.textContent = '🌟 Super travail ! Tu peux recommencer avec d\'autres nombres.';
+  }
+}
+
+function nextOpsStep() {
+  opsCurrentStep++;
+  if (opsCurrentStep < opsSteps.length) {
+    renderOpsStep();
+  }
+}
+
+/* =====================================================
+   PANEL 4 — ARGENT
+===================================================== */
+let coins = [];
+
+function addCoin(val) {
+  coins.push(val);
+  updateArgent();
+  const names = {1:'un euro',2:'deux euros',5:'cinq euros',10:'dix euros',20:'vingt euros',50:'cinquante euros'};
+  announce(`${names[val] || val + ' euros'} ajouté${val>1?'s':''}. Total : ${coins.reduce((a,b)=>a+b,0)} euros.`);
+}
+
+function removeLastCoin() {
+  if (coins.length === 0) { announce("Le panier est vide."); return; }
+  const removed = coins.pop();
+  updateArgent();
+  announce(`${removed} euro${removed>1?'s':''} retiré${removed>1?'s':''}. Total : ${coins.reduce((a,b)=>a+b,0)} euros.`);
+}
+
+function clearCoins() {
+  coins = [];
+  updateArgent();
+  announce("Panier vidé. Total : 0 euro.");
+}
+
+function updateArgent() {
+  const total = coins.reduce((a, b) => a + b, 0);
+  document.getElementById('argent-total').textContent = `Total : ${total} €`;
+
+  const panier = document.getElementById('argent-panier');
+  panier.innerHTML = '';
+  if (coins.length === 0) {
+    const em = document.createElement('em');
+    em.style.color = '#888';
+    em.style.fontSize = '0.9rem';
+    em.textContent = 'Clique sur les pièces et billets ci-dessus.';
+    panier.appendChild(em);
+    return;
+  }
+
+  // Grouper par valeur pour l'affichage
+  const count = {};
+  coins.forEach(c => { count[c] = (count[c] || 0) + 1; });
+  [1,2,5,10,20,50].forEach(v => {
+    if (count[v]) {
+      const chip = document.createElement('span');
+      chip.className = 'argent-chip' + (v >= 20 ? ' billet-chip' : '');
+      chip.setAttribute('role', 'listitem');
+      chip.textContent = `${count[v]} × ${v}€`;
+      panier.appendChild(chip);
+    }
+  });
+}
+
+function speakTotal() {
+  const total = coins.reduce((a, b) => a + b, 0);
+  speak(`Total : ${total} euro${total!==1?'s':''}.`);
+}
+
+// Init panier vide
+updateArgent();
+</script>
+</body>
+</html>

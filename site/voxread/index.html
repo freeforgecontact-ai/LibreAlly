@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoxRead — Lecture vocale | LibreA11y</title>
+<meta name="description" content="Lecture vocale de documents et de textes. Démo hors-ligne, aucune donnée envoyée.">
+<style>
+/* ===== VARIABLES & RESET ===== */
+:root {
+  --marine:    #0F4C81;
+  --marine-dk: #0A3A63;
+  --or:        #F4B81C;
+  --or-lt:     #FFD45E;
+  --encre:     #16202E;
+  --fond:      #F7F9FC;
+  --surface:   #FFFFFF;
+  --border:    #D0D9E8;
+  --focus-ring: #F4B81C;
+  --radius:    12px;
+  --radius-sm: 8px;
+  --shadow:    0 2px 8px rgba(15,76,129,0.12);
+  --shadow-hv: 0 4px 16px rgba(15,76,129,0.22);
+  --tr:        0.15s ease;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--fond);
+  color: var(--encre);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* ===== SKIP LINK ===== */
+#skip-link {
+  position: absolute;
+  top: -999px;
+  left: 8px;
+  background: var(--or);
+  color: var(--encre);
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  z-index: 9999;
+  text-decoration: none;
+  font-size: 1rem;
+}
+#skip-link:focus {
+  top: 8px;
+}
+
+/* ===== FOCUS ===== */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* ===== HEADER ===== */
+#app-header {
+  background: var(--marine);
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(10,58,99,0.3);
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+#header-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+#back-link {
+  color: var(--or-lt);
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  transition: background var(--tr);
+  min-height: 40px;
+}
+#back-link:hover, #back-link:focus-visible { background: rgba(255,255,255,0.15); color: #fff; }
+#app-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.3px;
+}
+#header-notice {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.65);
+  text-align: right;
+  line-height: 1.4;
+}
+
+/* ===== LAYOUT ===== */
+#app-body {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 64px);
+}
+#app-main {
+  flex: 1;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ===== TABS NAV ===== */
+#tabs-nav {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0;
+  flex-wrap: wrap;
+}
+.tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #5a6e84;
+  cursor: pointer;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  min-height: 48px;
+  transition: color var(--tr), background var(--tr), border-color var(--tr);
+}
+.tab-btn:hover { background: rgba(15,76,129,0.06); color: var(--marine); }
+.tab-btn[aria-selected="true"] {
+  color: var(--marine);
+  border-bottom-color: var(--marine);
+  background: var(--surface);
+}
+
+/* ===== TAB PANELS ===== */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ===== CARDS ===== */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.card h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--marine);
+  margin: 0;
+}
+
+/* ===== TEXTAREA ===== */
+.text-input-wrap { display: flex; flex-direction: column; gap: 8px; }
+.text-input-wrap label { font-size: 0.9rem; font-weight: 600; color: var(--encre); }
+#text-input {
+  width: 100%;
+  min-height: 180px;
+  padding: 14px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  line-height: 1.6;
+  resize: vertical;
+  font-family: inherit;
+  color: var(--encre);
+  background: var(--fond);
+  transition: border-color var(--tr);
+}
+#text-input:focus {
+  border-color: var(--marine);
+  outline: none;
+  background: var(--surface);
+}
+#char-count {
+  font-size: 0.78rem;
+  color: #7a8a9a;
+  text-align: right;
+}
+
+/* ===== READING DISPLAY ===== */
+#reading-display {
+  display: none;
+  background: var(--fond);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  font-size: 1.05rem;
+  line-height: 1.8;
+  min-height: 80px;
+  word-break: break-word;
+}
+#reading-display.active { display: block; }
+.word-hl {
+  background: var(--or);
+  color: var(--encre);
+  border-radius: 3px;
+  padding: 1px 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .word-hl { transition: none; }
+}
+
+/* ===== SENTENCE HIGHLIGHT FALLBACK ===== */
+.sentence-hl {
+  background: #e8f0fb;
+  border-left: 4px solid var(--marine);
+  border-radius: 4px;
+  padding: 2px 6px;
+  display: inline;
+}
+
+/* ===== CONTROLS ===== */
+.controls-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 22px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 56px;
+  min-width: 56px;
+  transition: transform var(--tr), box-shadow var(--tr), background var(--tr), opacity var(--tr);
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+  text-align: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn { transition: none; }
+}
+.btn:active:not(:disabled) { transform: scale(0.96); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-primary { background: var(--marine); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--marine-dk); box-shadow: var(--shadow-hv); }
+
+.btn-accent  { background: var(--or); color: var(--encre); }
+.btn-accent:hover:not(:disabled)  { background: var(--or-lt); box-shadow: var(--shadow); }
+
+.btn-outline {
+  background: var(--surface);
+  color: var(--marine);
+  border: 2px solid var(--marine);
+}
+.btn-outline:hover:not(:disabled) { background: var(--marine); color: #fff; }
+
+.btn-ghost {
+  background: var(--surface);
+  color: var(--encre);
+  border: 2px solid var(--border);
+}
+.btn-ghost:hover:not(:disabled) { background: #fee2e2; border-color: #f87171; color: #b91c1c; }
+
+.btn-sm {
+  min-height: 44px;
+  font-size: 0.9rem;
+  padding: 0 16px;
+}
+
+/* ===== SPEED / VOICE SETTINGS ===== */
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+.setting-row { display: flex; flex-direction: column; gap: 6px; }
+.setting-row label { font-size: 0.85rem; font-weight: 600; color: var(--encre); }
+.setting-row select {
+  padding: 9px 12px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  background: var(--fond);
+  color: var(--encre);
+  cursor: pointer;
+  min-height: 44px;
+}
+.setting-row select:focus { border-color: var(--marine); outline: none; }
+.setting-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--marine);
+  cursor: pointer;
+  height: 6px;
+}
+.range-val {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--marine);
+}
+
+/* ===== FILE SECTION ===== */
+#file-drop-zone {
+  border: 3px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--tr), background var(--tr);
+  background: var(--fond);
+  position: relative;
+}
+#file-drop-zone:hover, #file-drop-zone.drag-over {
+  border-color: var(--marine);
+  background: #e8f0fb;
+}
+#file-drop-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+#file-drop-zone .drop-icon { font-size: 2.4rem; display: block; margin-bottom: 8px; }
+#file-drop-zone .drop-label { font-size: 1rem; font-weight: 600; color: var(--marine); }
+#file-drop-zone .drop-hint { font-size: 0.82rem; color: #7a8a9a; margin-top: 4px; }
+
+#file-info {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  background: #e8f0fb;
+  border: 2px solid var(--marine);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 0.9rem;
+}
+#file-info.visible { display: flex; }
+#file-info strong { color: var(--marine); }
+#file-info .file-size { color: #5a6e84; font-size: 0.8rem; }
+
+/* ===== LIMIT NOTICE ===== */
+#limit-notice {
+  background: #fffbeb;
+  border: 2px solid var(--or);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--encre);
+}
+#limit-notice h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #7d5000;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#limit-notice ul {
+  padding-left: 20px;
+  margin-top: 6px;
+}
+#limit-notice li { margin-bottom: 4px; }
+
+/* ===== CAMERA SECTION ===== */
+#camera-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: flex-start;
+}
+#btn-camera {
+  min-width: 220px;
+}
+#camera-limit-box {
+  background: #f0f4f8;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  max-width: 560px;
+}
+#camera-limit-box h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--marine);
+  margin-bottom: 8px;
+}
+#camera-limit-box ul {
+  padding-left: 20px;
+  margin-top: 6px;
+  color: #4a5a6a;
+}
+#camera-limit-box li { margin-bottom: 4px; }
+.badge-limit {
+  display: inline-block;
+  background: #e2e8f0;
+  color: #4a5a6a;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+
+/* ===== TTS WARNING ===== */
+#tts-warning {
+  background: #fff3cd;
+  color: #7d5000;
+  padding: 10px 20px;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #f4d56a;
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+#tts-warning.visible { display: flex; }
+
+/* ===== STATUS (aria-live) ===== */
+#status-msg {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--marine-dk);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-hv);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  z-index: 200;
+  max-width: 300px;
+}
+#status-msg.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  #status-msg { transition: none; }
+}
+
+/* ===== SPELL DISPLAY ===== */
+#spell-output {
+  display: none;
+  background: #e8f0fb;
+  border: 2px solid var(--marine);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--marine-dk);
+  font-family: monospace;
+  word-break: break-all;
+}
+#spell-output.visible { display: block; }
+
+/* ===== KEYBOARD SHORTCUTS ===== */
+#shortcuts-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 8px;
+}
+#shortcuts-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+}
+#shortcuts-list kbd {
+  background: var(--encre);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 0.78rem;
+  font-family: monospace;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  #app-main { padding: 16px 12px 32px; gap: 16px; }
+  .card { padding: 16px; }
+  .controls-row { gap: 8px; }
+  #status-msg { right: 12px; bottom: 12px; max-width: 220px; }
+}
+</style>
+</head>
+<body>
+
+<!-- LIEN D'ÉVITEMENT -->
+<a id="skip-link" href="#app-main">Aller au contenu principal</a>
+
+<!-- ANNONCES ARIA-LIVE -->
+<div id="status-msg" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="reading-status" aria-live="assertive" aria-atomic="true" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)"></div>
+
+<!-- EN-TÊTE -->
+<header id="app-header" role="banner">
+  <div id="header-left">
+    <a id="back-link" href="../index.html" aria-label="Retour à LibreA11y">← LibreA11y</a>
+    <h1 id="app-title">📖 VoxRead — démo</h1>
+  </div>
+  <div id="header-notice" aria-label="Informations sur la démo">
+    démo · 100% hors-ligne · aucune donnée envoyée
+  </div>
+</header>
+
+<!-- AVERTISSEMENT TTS -->
+<div id="tts-warning" role="alert"></div>
+
+<!-- CORPS -->
+<div id="app-body">
+<main id="app-main" tabindex="-1">
+
+  <!-- AVIS LIMITE HONNÊTE -->
+  <section id="limit-notice" aria-labelledby="limit-heading">
+    <h2 id="limit-heading">⚠️ Limites de cette démo</h2>
+    <p>Cette démo mono-fichier couvre la <strong>lecture vocale de texte saisi</strong> et de <strong>fichiers .txt</strong>. Elle fonctionne entièrement hors-ligne, sans serveur, sans données envoyées.</p>
+    <ul>
+      <li><strong>PDF / images / scan papier</strong> : nécessitent un moteur OCR embarqué (ex : Tesseract.js) — non inclus dans cette démo, disponible en production.</li>
+      <li><strong>Lecture par caméra (« lire le monde »)</strong> : requiert OCR en temps réel — voir onglet Caméra pour les détails.</li>
+    </ul>
+  </section>
+
+  <!-- NAVIGATION PAR ONGLETS -->
+  <nav id="tabs-nav" role="tablist" aria-label="Modes de lecture">
+    <button class="tab-btn" role="tab" aria-selected="true"  aria-controls="panel-text"   id="tab-text"   tabindex="0">✏️ Texte</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-file"   id="tab-file"   tabindex="-1">📄 Fichier</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-camera" id="tab-camera" tabindex="-1">📷 Caméra (OCR)</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-help"   id="tab-help"   tabindex="-1">⌨️ Raccourcis</button>
+  </nav>
+
+  <!-- PANNEAU TEXTE -->
+  <section class="tab-panel active" id="panel-text" role="tabpanel" aria-labelledby="tab-text">
+    <div class="card">
+      <h2>Saisir ou coller un texte</h2>
+
+      <div class="text-input-wrap">
+        <label for="text-input">Texte à lire :</label>
+        <textarea id="text-input"
+          placeholder="Saisissez ou collez votre texte ici…"
+          aria-describedby="char-count text-hint"
+          rows="7"
+        >VoxRead transforme n'importe quel texte en parole. Vous pouvez saisir ou coller votre contenu ici, charger un fichier texte, ou utiliser un exemple. Chaque mot peut être suivi en temps réel grâce au surlignage. Vous pouvez régler la vitesse et choisir la voix qui vous convient.</textarea>
+        <div id="char-count" aria-live="polite">0 caractère(s)</div>
+        <div id="text-hint" style="font-size:0.8rem;color:#7a8a9a;">Conseil : utilisez Tab pour quitter la zone de texte et accéder aux boutons.</div>
+      </div>
+
+      <!-- Zone de lecture avec surlignage -->
+      <div id="reading-display" aria-label="Texte en cours de lecture" aria-live="off"></div>
+
+      <!-- Contrôles lecture -->
+      <div class="controls-row" role="group" aria-label="Contrôles de lecture">
+        <button class="btn btn-primary" id="btn-read" type="button" aria-label="Lire le texte à voix haute">
+          🔊 Lire
+        </button>
+        <button class="btn btn-accent" id="btn-pause" type="button" aria-label="Pause ou reprise de la lecture" disabled>
+          ⏸ Pause
+        </button>
+        <button class="btn btn-ghost" id="btn-stop" type="button" aria-label="Arrêter la lecture" disabled>
+          ⏹ Stop
+        </button>
+        <button class="btn btn-outline btn-sm" id="btn-example" type="button" aria-label="Charger un texte d'exemple">
+          📝 Exemple
+        </button>
+        <button class="btn btn-ghost btn-sm" id="btn-clear-text" type="button" aria-label="Effacer le texte">
+          🗑 Effacer
+        </button>
+      </div>
+
+      <!-- Épeler le mot -->
+      <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">
+        <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:200px;">
+          <label for="spell-input" style="font-size:0.85rem;font-weight:600;">Mot à épeler :</label>
+          <div style="display:flex;gap:8px;">
+            <input id="spell-input" type="text"
+              placeholder="Ex : accessibilité"
+              style="flex:1;padding:10px 14px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:0.95rem;min-height:48px;font-family:inherit;"
+              aria-describedby="spell-output"
+              autocomplete="off">
+            <button class="btn btn-outline btn-sm" id="btn-spell" type="button" aria-label="Épeler le mot lettre par lettre">
+              🔡 Épeler
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="spell-output" aria-live="polite" aria-label="Résultat de l'épellation"></div>
+    </div>
+
+    <!-- Réglages voix -->
+    <div class="card">
+      <h2>Réglages de la voix</h2>
+      <div class="settings-grid">
+        <div class="setting-row">
+          <label for="voice-select">Voix :</label>
+          <select id="voice-select" aria-label="Choisir la voix de synthèse vocale">
+            <option>Chargement…</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <label for="rate-slider">
+            Vitesse : <span class="range-val" id="rate-label">1.00</span>×
+          </label>
+          <input type="range" id="rate-slider"
+            min="0.5" max="2.5" step="0.05" value="1"
+            aria-valuemin="0.5" aria-valuemax="2.5" aria-valuenow="1"
+            aria-label="Vitesse de lecture">
+        </div>
+        <div class="setting-row">
+          <label for="pitch-slider">
+            Hauteur : <span class="range-val" id="pitch-label">1.00</span>
+          </label>
+          <input type="range" id="pitch-slider"
+            min="0.5" max="2" step="0.05" value="1"
+            aria-valuemin="0.5" aria-valuemax="2" aria-valuenow="1"
+            aria-label="Hauteur de la voix">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PANNEAU FICHIER -->
+  <section class="tab-panel" id="panel-file" role="tabpanel" aria-labelledby="tab-file">
+    <div class="card">
+      <h2>Importer un fichier texte</h2>
+      <p style="font-size:0.9rem;color:#4a5a6a;">
+        Chargez un fichier <code>.txt</code> (ou <code>.md</code>) depuis votre appareil — il ne sera jamais envoyé sur un serveur.
+        PDF et images nécessiteraient un OCR embarqué, disponible en version production.
+      </p>
+
+      <div id="file-drop-zone"
+        role="button" tabindex="0"
+        aria-label="Zone de dépôt de fichier. Cliquez ou appuyez sur Entrée pour ouvrir le sélecteur de fichier, ou glissez-déposez un fichier .txt"
+        aria-describedby="file-drop-hint">
+        <input type="file" id="file-input" accept=".txt,.md,.text" aria-hidden="true" tabindex="-1">
+        <span class="drop-icon" aria-hidden="true">📂</span>
+        <span class="drop-label">Cliquer ou glisser-déposer un fichier .txt</span>
+        <span class="drop-hint" id="file-drop-hint">Formats acceptés : .txt · .md · .text (max recommandé : 500 Ko)</span>
+      </div>
+
+      <div id="file-info" role="status" aria-live="polite">
+        <span aria-hidden="true">📄</span>
+        <div>
+          <strong id="file-name"></strong>
+          <span class="file-size" id="file-size"></span>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="btn-clear-file" type="button" style="margin-left:auto;" aria-label="Retirer le fichier chargé">✕ Retirer</button>
+      </div>
+
+      <!-- Aperçu du fichier -->
+      <div id="file-preview-wrap" style="display:none;flex-direction:column;gap:8px;">
+        <label style="font-size:0.85rem;font-weight:600;color:var(--encre);">Aperçu du contenu :</label>
+        <div id="file-preview"
+          style="background:var(--fond);border:2px solid var(--border);border-radius:var(--radius-sm);padding:14px;font-size:0.88rem;line-height:1.7;max-height:220px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;"
+          aria-label="Aperçu du contenu du fichier"
+          tabindex="0"></div>
+      </div>
+
+      <!-- Surlignage lecture fichier -->
+      <div id="file-reading-display" aria-label="Texte du fichier en cours de lecture" aria-live="off"
+        style="display:none;background:var(--fond);border:2px solid var(--border);border-radius:var(--radius-sm);padding:16px;font-size:1rem;line-height:1.8;min-height:60px;word-break:break-word;"></div>
+
+      <div class="controls-row" role="group" aria-label="Contrôles de lecture du fichier">
+        <button class="btn btn-primary" id="btn-read-file" type="button" disabled aria-label="Lire le fichier à voix haute">
+          🔊 Lire le fichier
+        </button>
+        <button class="btn btn-accent" id="btn-pause-file" type="button" disabled aria-label="Pause ou reprise">
+          ⏸ Pause
+        </button>
+        <button class="btn btn-ghost" id="btn-stop-file" type="button" disabled aria-label="Arrêter la lecture">
+          ⏹ Stop
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PANNEAU CAMÉRA -->
+  <section class="tab-panel" id="panel-camera" role="tabpanel" aria-labelledby="tab-camera">
+    <div class="card">
+      <h2>Caméra — Lire le monde</h2>
+      <div id="camera-panel">
+        <button class="btn btn-outline" id="btn-camera" type="button" disabled
+          aria-label="Lire avec la caméra — fonctionnalité non disponible dans cette démo"
+          aria-describedby="camera-limit-box">
+          📷 Ouvrir la caméra <span class="badge-limit" aria-hidden="true">Démo limitée</span>
+        </button>
+        <div id="camera-limit-box" role="note">
+          <h2>Pourquoi ce bouton est désactivé ?</h2>
+          <p>La lecture par caméra (OCR en temps réel) est la fonctionnalité phare de VoxRead en production. Elle permet de pointer la caméra vers n'importe quel texte — étiquette, panneau, livre imprimé — et de l'entendre aussitôt.</p>
+          <ul>
+            <li>Elle nécessite un moteur de reconnaissance de caractères (OCR) embarqué, typiquement <strong>Tesseract.js</strong> (~7 Mo de données de modèle).</li>
+            <li>Ce fichier de démo est volontairement <strong>100% autonome et hors-ligne</strong>, sans aucune ressource externe, ce qui rend l'intégration d'un modèle OCR incompatible avec la contrainte d'un seul fichier HTML.</li>
+            <li>En production, la fonctionnalité est entièrement <strong>locale</strong> : aucune image n'est envoyée sur un serveur.</li>
+          </ul>
+          <p style="margin-top:10px;font-weight:600;color:var(--marine);">→ Cette démo couvre la lecture de texte saisi et de fichiers .txt — fonctionnalités pleinement opérationnelles ci-dessus.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PANNEAU RACCOURCIS -->
+  <section class="tab-panel" id="panel-help" role="tabpanel" aria-labelledby="tab-help">
+    <div class="card">
+      <h2>Raccourcis clavier</h2>
+      <p style="font-size:0.9rem;color:#4a5a6a;margin-bottom:4px;">L'application est entièrement pilotable au clavier. Les raccourcis fonctionnent depuis n'importe quel onglet.</p>
+      <ul id="shortcuts-list" role="list">
+        <li><kbd>Alt + L</kbd> <span>Lire le texte / fichier actif</span></li>
+        <li><kbd>Alt + P</kbd> <span>Pause / Reprendre</span></li>
+        <li><kbd>Alt + S</kbd> <span>Stop</span></li>
+        <li><kbd>Alt + E</kbd> <span>Épeler le mot</span></li>
+        <li><kbd>Alt + 1</kbd> <span>Aller à l'onglet Texte</span></li>
+        <li><kbd>Alt + 2</kbd> <span>Aller à l'onglet Fichier</span></li>
+        <li><kbd>Alt + 3</kbd> <span>Aller à l'onglet Caméra</span></li>
+        <li><kbd>Alt + 4</kbd> <span>Aller aux Raccourcis</span></li>
+        <li><kbd>Flèches ←→</kbd> <span>Naviguer entre les onglets</span></li>
+        <li><kbd>Échap</kbd> <span>Stop si lecture en cours</span></li>
+        <li><kbd>Tab</kbd> <span>Passer d'un contrôle au suivant</span></li>
+        <li><kbd>Entrée / Espace</kbd> <span>Activer un bouton</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>Navigation sans voir</h2>
+      <p style="font-size:0.9rem;line-height:1.7;color:var(--encre);">
+        VoxRead est conçu pour être utilisé <strong>sans regarder l'écran</strong> :<br>
+        toutes les actions sont vocalisées (annonces <code>aria-live</code>), les boutons ont des libellés <code>aria-label</code> explicites,
+        le focus est toujours visible (anneau de 3 px couleur or), et les cibles font au minimum 56 px.
+        Un lecteur d'écran tel que NVDA, JAWS ou VoiceOver fonctionne pleinement avec cette interface.
+      </p>
+    </div>
+  </section>
+
+</main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     ÉTAT
+  ============================================================ */
+  var hasTTS    = ('speechSynthesis' in window);
+  var voices    = [];
+  var voiceList = [];
+  var selVoice  = null;
+  var rate      = 1;
+  var pitch     = 1;
+  var isSpeaking = false;
+  var isPaused   = false;
+  var statusTimer = null;
+  var currentMode = 'text'; // 'text' | 'file'
+  var fileContent = '';
+
+  // Word boundary tracking
+  var wordSpans    = [];
+  var currentWordIdx = -1;
+  var useWordHL    = false; // will be set after first utterance
+
+  /* ============================================================
+     DOM REFS
+  ============================================================ */
+  var ttsWarning     = document.getElementById('tts-warning');
+  var statusMsg      = document.getElementById('status-msg');
+  var readingStatus  = document.getElementById('reading-status');
+
+  // Text tab
+  var textInput      = document.getElementById('text-input');
+  var charCount      = document.getElementById('char-count');
+  var readingDisplay = document.getElementById('reading-display');
+  var btnRead        = document.getElementById('btn-read');
+  var btnPause       = document.getElementById('btn-pause');
+  var btnStop        = document.getElementById('btn-stop');
+  var btnExample     = document.getElementById('btn-example');
+  var btnClearText   = document.getElementById('btn-clear-text');
+  var spellInput     = document.getElementById('spell-input');
+  var btnSpell       = document.getElementById('btn-spell');
+  var spellOutput    = document.getElementById('spell-output');
+
+  // Voice settings
+  var voiceSelect  = document.getElementById('voice-select');
+  var rateSlider   = document.getElementById('rate-slider');
+  var rateLabel    = document.getElementById('rate-label');
+  var pitchSlider  = document.getElementById('pitch-slider');
+  var pitchLabel   = document.getElementById('pitch-label');
+
+  // File tab
+  var fileDropZone       = document.getElementById('file-drop-zone');
+  var fileInput          = document.getElementById('file-input');
+  var fileInfo           = document.getElementById('file-info');
+  var fileNameEl         = document.getElementById('file-name');
+  var fileSizeEl         = document.getElementById('file-size');
+  var btnClearFile       = document.getElementById('btn-clear-file');
+  var filePreviewWrap    = document.getElementById('file-preview-wrap');
+  var filePreview        = document.getElementById('file-preview');
+  var fileReadingDisplay = document.getElementById('file-reading-display');
+  var btnReadFile        = document.getElementById('btn-read-file');
+  var btnPauseFile       = document.getElementById('btn-pause-file');
+  var btnStopFile        = document.getElementById('btn-stop-file');
+
+  // Tabs
+  var tabBtns   = document.querySelectorAll('[role="tab"]');
+  var tabPanels = document.querySelectorAll('.tab-panel');
+
+  /* ============================================================
+     UTILITIES
+  ============================================================ */
+  function escH(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function showStatus(msg) {
+    statusMsg.textContent = msg;
+    statusMsg.classList.add('show');
+    if (statusTimer) clearTimeout(statusTimer);
+    statusTimer = setTimeout(function () {
+      statusMsg.classList.remove('show');
+    }, 2400);
+  }
+
+  function announce(msg) {
+    readingStatus.textContent = '';
+    // Force reflow to re-trigger aria-live
+    void readingStatus.offsetWidth;
+    readingStatus.textContent = msg;
+  }
+
+  function setWarning(msg) {
+    ttsWarning.textContent = msg;
+    ttsWarning.classList.add('visible');
+  }
+
+  function fmtSize(bytes) {
+    if (bytes < 1024) return bytes + ' o';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' Ko';
+    return (bytes / 1048576).toFixed(1) + ' Mo';
+  }
+
+  /* ============================================================
+     VOICES / TTS INIT
+  ============================================================ */
+  if (!hasTTS) {
+    setWarning('⚠️ La synthèse vocale n\'est pas disponible dans ce navigateur. L\'interface reste utilisable.');
+    [btnRead, btnPause, btnStop, btnReadFile, btnPauseFile, btnStopFile, btnSpell].forEach(function (b) {
+      if (b) b.disabled = true;
+    });
+  }
+
+  function loadVoices() {
+    if (!hasTTS) return;
+    var v = window.speechSynthesis.getVoices();
+    if (!v || v.length === 0) return;
+    voices = v;
+    buildVoiceSelect();
+  }
+
+  function buildVoiceSelect() {
+    var frVoices = voices.filter(function (v) { return v.lang && v.lang.indexOf('fr') === 0; });
+    voiceList = frVoices.length > 0 ? frVoices : voices;
+
+    if (frVoices.length === 0 && voices.length > 0) {
+      setWarning('⚠️ Voix française indisponible sur cet appareil — voix par défaut utilisée.');
+    }
+
+    voiceSelect.innerHTML = '';
+    voiceList.forEach(function (v, i) {
+      var opt = document.createElement('option');
+      opt.value = String(i);
+      opt.textContent = v.name + ' (' + v.lang + ')';
+      voiceSelect.appendChild(opt);
+    });
+
+    // Prefer fr-FR
+    var best = -1;
+    for (var i = 0; i < voiceList.length; i++) {
+      var lang = voiceList[i].lang || '';
+      if (lang === 'fr-FR') { best = i; break; }
+      if (lang.indexOf('fr') === 0 && best === -1) { best = i; }
+    }
+    if (best >= 0) voiceSelect.selectedIndex = best;
+    selVoice = voiceList[voiceSelect.selectedIndex] || null;
+  }
+
+  if (hasTTS) {
+    loadVoices();
+    if (typeof window.speechSynthesis.onvoiceschanged !== 'undefined') {
+      window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
+    }
+    setTimeout(loadVoices, 250);
+    setTimeout(loadVoices, 900);
+  }
+
+  voiceSelect.addEventListener('change', function () {
+    selVoice = voiceList[parseInt(voiceSelect.value, 10)] || null;
+  });
+
+  /* ============================================================
+     CHAR COUNT
+  ============================================================ */
+  function updateCharCount() {
+    var n = textInput.value.length;
+    charCount.textContent = n + ' caractère' + (n > 1 ? 's' : '');
+  }
+  textInput.addEventListener('input', updateCharCount);
+  updateCharCount();
+
+  /* ============================================================
+     WORD HIGHLIGHTING
+  ============================================================ */
+  function buildWordSpans(text, container) {
+    container.innerHTML = '';
+    // Split preserving whitespace tokens
+    var tokens = text.split(/(\s+)/);
+    var wordIdx = 0;
+    wordSpans = [];
+    tokens.forEach(function (tok) {
+      if (/^\s+$/.test(tok)) {
+        container.appendChild(document.createTextNode(tok));
+      } else {
+        var span = document.createElement('span');
+        span.textContent = tok;
+        span.setAttribute('data-widx', String(wordIdx));
+        container.appendChild(span);
+        wordSpans.push(span);
+        wordIdx++;
+      }
+    });
+    currentWordIdx = -1;
+  }
+
+  function highlightWord(idx) {
+    if (currentWordIdx >= 0 && wordSpans[currentWordIdx]) {
+      wordSpans[currentWordIdx].classList.remove('word-hl');
+    }
+    currentWordIdx = idx;
+    if (idx >= 0 && wordSpans[idx]) {
+      wordSpans[idx].classList.add('word-hl');
+      // Scroll into view if needed
+      wordSpans[idx].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }
+
+  function clearHighlight() {
+    if (currentWordIdx >= 0 && wordSpans[currentWordIdx]) {
+      wordSpans[currentWordIdx].classList.remove('word-hl');
+    }
+    currentWordIdx = -1;
+  }
+
+  /* ============================================================
+     SENTENCE FALLBACK (no boundary event)
+  ============================================================ */
+  function splitSentences(text) {
+    // Split on sentence-ending punctuation followed by space/end
+    return text.split(/(?<=[.!?…])\s+/).filter(function (s) { return s.trim().length > 0; });
+  }
+
+  var sentenceTimer    = null;
+  var sentenceIndex    = 0;
+  var currentSentences = [];
+
+  function runSentenceFallback(sentences, container) {
+    currentSentences = sentences;
+    sentenceIndex = 0;
+    advanceSentence(container);
+  }
+
+  function advanceSentence(container) {
+    if (sentenceIndex >= currentSentences.length) return;
+    container.innerHTML = '';
+    var before = currentSentences.slice(0, sentenceIndex).join(' ');
+    var current = currentSentences[sentenceIndex];
+    var after = currentSentences.slice(sentenceIndex + 1).join(' ');
+    if (before) {
+      container.appendChild(document.createTextNode(before + ' '));
+    }
+    var mark = document.createElement('mark');
+    mark.className = 'sentence-hl';
+    mark.textContent = current;
+    container.appendChild(mark);
+    if (after) {
+      container.appendChild(document.createTextNode(' ' + after));
+    }
+    sentenceIndex++;
+  }
+
+  /* ============================================================
+     SPEAK CORE
+  ============================================================ */
+  function createUtt(text) {
+    var utt = new SpeechSynthesisUtterance(text);
+    utt.lang  = 'fr-FR';
+    utt.rate  = rate;
+    utt.pitch = pitch;
+    if (selVoice) utt.voice = selVoice;
+    return utt;
+  }
+
+  function getActiveDisplay() {
+    return currentMode === 'file' ? fileReadingDisplay : readingDisplay;
+  }
+
+  function setReadingButtons(speaking) {
+    isSpeaking = speaking;
+    isPaused   = false;
+    if (currentMode === 'text') {
+      btnRead.disabled   = speaking;
+      btnPause.disabled  = !speaking;
+      btnStop.disabled   = !speaking;
+    } else {
+      btnReadFile.disabled  = speaking || !fileContent;
+      btnPauseFile.disabled = !speaking;
+      btnStopFile.disabled  = !speaking;
+    }
+  }
+
+  function stopAll() {
+    if (hasTTS) window.speechSynthesis.cancel();
+    if (sentenceTimer) { clearInterval(sentenceTimer); sentenceTimer = null; }
+    clearHighlight();
+    setReadingButtons(false);
+    var disp = getActiveDisplay();
+    disp.classList.remove('active');
+    disp.style.display = 'none';
+    announce('Lecture arrêtée.');
+    showStatus('⏹ Lecture arrêtée');
+  }
+
+  function speakText(text, display) {
+    if (!hasTTS || !text || !text.trim()) return;
+    window.speechSynthesis.cancel();
+    if (sentenceTimer) { clearInterval(sentenceTimer); sentenceTimer = null; }
+
+    display.style.display = 'block';
+    display.classList.add('active');
+
+    var utt = createUtt(text);
+    var hasBoundary = false;
+
+    // Build word spans in display
+    buildWordSpans(text, display);
+
+    utt.onboundary = function (e) {
+      if (e.name !== 'word') return;
+      hasBoundary = true;
+      // Find which word index is at charIndex
+      var charIdx = e.charIndex;
+      // Count words before charIdx
+      var before = text.slice(0, charIdx);
+      var wIdx = before.split(/\s+/).filter(function(s){return s.length>0;}).length;
+      highlightWord(wIdx);
+    };
+
+    utt.onstart = function () {
+      setReadingButtons(true);
+      announce('Lecture en cours.');
+      showStatus('🔊 Lecture en cours…');
+    };
+
+    utt.onend = function () {
+      clearHighlight();
+      setReadingButtons(false);
+      display.classList.remove('active');
+      display.style.display = 'none';
+      announce('Lecture terminée.');
+      showStatus('✅ Lecture terminée');
+      if (!hasBoundary) {
+        // Fallback was not triggered in time — nothing to clean
+      }
+    };
+
+    utt.onerror = function (e) {
+      if (e.error === 'interrupted' || e.error === 'canceled') return;
+      clearHighlight();
+      setReadingButtons(false);
+      display.classList.remove('active');
+      display.style.display = 'none';
+      showStatus('⚠️ Erreur de synthèse');
+    };
+
+    // Sentence fallback scheduled: if no boundary fires after 800ms, switch to sentence mode
+    var boundaryCheck = setTimeout(function () {
+      if (!hasBoundary && isSpeaking) {
+        // Rebuild display with plain text, use sentence-highlight approach
+        var sentences = splitSentences(text);
+        if (sentences.length > 1) {
+          runSentenceFallback(sentences, display);
+          // Estimate avg sentence duration
+          var avgDuration = Math.max(1500, (text.length / 6) * (1000 / rate) / sentences.length);
+          sentenceTimer = setInterval(function () {
+            if (!isSpeaking) { clearInterval(sentenceTimer); return; }
+            advanceSentence(display);
+          }, avgDuration);
+        }
+      }
+    }, 800);
+
+    utt.onend = function () {
+      clearTimeout(boundaryCheck);
+      if (sentenceTimer) { clearInterval(sentenceTimer); sentenceTimer = null; }
+      clearHighlight();
+      setReadingButtons(false);
+      display.classList.remove('active');
+      display.style.display = 'none';
+      announce('Lecture terminée.');
+      showStatus('✅ Lecture terminée');
+    };
+
+    window.speechSynthesis.speak(utt);
+  }
+
+  /* ============================================================
+     TEXT TAB ACTIONS
+  ============================================================ */
+  btnRead.addEventListener('click', function () {
+    var text = textInput.value.trim();
+    if (!text) { showStatus('⚠️ Zone de texte vide'); announce('La zone de texte est vide.'); return; }
+    currentMode = 'text';
+    speakText(text, readingDisplay);
+  });
+
+  btnPause.addEventListener('click', function () {
+    if (!hasTTS) return;
+    if (isPaused) {
+      window.speechSynthesis.resume();
+      isPaused = false;
+      btnPause.textContent = '⏸ Pause';
+      announce('Lecture reprise.');
+      showStatus('▶ Lecture reprise');
+    } else {
+      window.speechSynthesis.pause();
+      isPaused = true;
+      btnPause.textContent = '▶ Reprendre';
+      announce('Lecture en pause.');
+      showStatus('⏸ Pause');
+    }
+  });
+
+  btnStop.addEventListener('click', function () {
+    currentMode = 'text';
+    stopAll();
+  });
+
+  btnExample.addEventListener('click', function () {
+    textInput.value = 'Bonjour ! VoxRead est un lecteur vocal accessible, entièrement hors-ligne. Il peut vous aider à lire des textes longs, des documents importants, ou simplement à reposer vos yeux. Chaque mot est surligné au fur et à mesure de la lecture. Vous pouvez régler la vitesse, la hauteur et choisir parmi les voix disponibles sur votre appareil. Ce logiciel est libre et gratuit, développé dans le cadre de la suite LibreA11y.';
+    updateCharCount();
+    textInput.focus();
+    showStatus('📝 Texte d\'exemple chargé');
+    announce('Texte d\'exemple chargé dans la zone de saisie.');
+  });
+
+  btnClearText.addEventListener('click', function () {
+    textInput.value = '';
+    updateCharCount();
+    readingDisplay.style.display = 'none';
+    readingDisplay.classList.remove('active');
+    textInput.focus();
+    showStatus('🗑 Texte effacé');
+    announce('Texte effacé.');
+  });
+
+  /* ============================================================
+     SPELL
+  ============================================================ */
+  function doSpell() {
+    var word = spellInput.value.trim();
+    if (!word) { showStatus('⚠️ Saisissez un mot à épeler'); return; }
+    var letters = word.split('').join(' - ');
+    spellOutput.textContent = word.toUpperCase().split('').join(' · ');
+    spellOutput.classList.add('visible');
+    if (hasTTS) {
+      window.speechSynthesis.cancel();
+      var utt = createUtt(letters);
+      utt.rate = Math.min(rate, 0.85); // slow down for spelling
+      window.speechSynthesis.speak(utt);
+    }
+    showStatus('🔡 Épellation : ' + word);
+    announce('Épellation du mot : ' + letters);
+  }
+
+  btnSpell.addEventListener('click', doSpell);
+  spellInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') doSpell();
+  });
+
+  /* ============================================================
+     VOICE SETTINGS
+  ============================================================ */
+  rateSlider.addEventListener('input', function () {
+    rate = parseFloat(rateSlider.value);
+    rateLabel.textContent = rate.toFixed(2);
+    rateSlider.setAttribute('aria-valuenow', rate.toFixed(2));
+  });
+
+  pitchSlider.addEventListener('input', function () {
+    pitch = parseFloat(pitchSlider.value);
+    pitchLabel.textContent = pitch.toFixed(2);
+    pitchSlider.setAttribute('aria-valuenow', pitch.toFixed(2));
+  });
+
+  /* ============================================================
+     FILE TAB
+  ============================================================ */
+  function loadFile(file) {
+    if (!file) return;
+    var ext = file.name.split('.').pop().toLowerCase();
+    if (!['txt', 'md', 'text'].includes(ext)) {
+      showStatus('⚠️ Format non supporté dans cette démo (.txt requis)');
+      announce('Format de fichier non supporté. Veuillez choisir un fichier .txt');
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      fileContent = e.target.result || '';
+      fileNameEl.textContent = file.name;
+      fileSizeEl.textContent = '— ' + fmtSize(file.size);
+      fileInfo.classList.add('visible');
+      // Preview (first 800 chars)
+      filePreview.textContent = fileContent.slice(0, 800) + (fileContent.length > 800 ? '\n…(suite tronquée dans l\'aperçu)' : '');
+      filePreviewWrap.style.display = 'flex';
+      btnReadFile.disabled = false;
+      showStatus('📄 Fichier chargé : ' + file.name);
+      announce('Fichier chargé : ' + file.name + ', ' + fmtSize(file.size) + '. Appuyez sur Lire le fichier pour démarrer.');
+    };
+    reader.onerror = function () {
+      showStatus('⚠️ Erreur de lecture du fichier');
+      announce('Erreur lors de la lecture du fichier.');
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  fileInput.addEventListener('change', function () {
+    if (fileInput.files && fileInput.files[0]) loadFile(fileInput.files[0]);
+  });
+
+  // Click on drop zone → open file picker
+  fileDropZone.addEventListener('click', function (e) {
+    if (e.target !== fileInput) fileInput.click();
+  });
+
+  fileDropZone.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      fileInput.click();
+    }
+  });
+
+  // Drag & drop
+  fileDropZone.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    fileDropZone.classList.add('drag-over');
+  });
+  fileDropZone.addEventListener('dragleave', function () {
+    fileDropZone.classList.remove('drag-over');
+  });
+  fileDropZone.addEventListener('drop', function (e) {
+    e.preventDefault();
+    fileDropZone.classList.remove('drag-over');
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) loadFile(f);
+  });
+
+  btnClearFile.addEventListener('click', function () {
+    fileContent = '';
+    fileInfo.classList.remove('visible');
+    filePreviewWrap.style.display = 'none';
+    filePreview.textContent = '';
+    fileReadingDisplay.style.display = 'none';
+    btnReadFile.disabled = true;
+    btnPauseFile.disabled = true;
+    btnStopFile.disabled = true;
+    fileInput.value = '';
+    fileDropZone.focus();
+    showStatus('✕ Fichier retiré');
+    announce('Fichier retiré.');
+  });
+
+  btnReadFile.addEventListener('click', function () {
+    if (!fileContent.trim()) return;
+    currentMode = 'file';
+    speakText(fileContent, fileReadingDisplay);
+  });
+
+  btnPauseFile.addEventListener('click', function () {
+    if (!hasTTS) return;
+    if (isPaused) {
+      window.speechSynthesis.resume();
+      isPaused = false;
+      btnPauseFile.textContent = '⏸ Pause';
+      announce('Lecture reprise.');
+      showStatus('▶ Lecture reprise');
+    } else {
+      window.speechSynthesis.pause();
+      isPaused = true;
+      btnPauseFile.textContent = '▶ Reprendre';
+      announce('Lecture en pause.');
+      showStatus('⏸ Pause');
+    }
+  });
+
+  btnStopFile.addEventListener('click', function () {
+    currentMode = 'file';
+    stopAll();
+  });
+
+  /* ============================================================
+     TAB NAVIGATION
+  ============================================================ */
+  var tabIds    = ['panel-text', 'panel-file', 'panel-camera', 'panel-help'];
+  var tabBtnArr = Array.prototype.slice.call(tabBtns);
+
+  function switchTab(idx) {
+    tabBtnArr.forEach(function (btn, i) {
+      btn.setAttribute('aria-selected', i === idx ? 'true' : 'false');
+      btn.setAttribute('tabindex', i === idx ? '0' : '-1');
+    });
+    tabPanels.forEach(function (panel, i) {
+      if (i === idx) {
+        panel.classList.add('active');
+      } else {
+        panel.classList.remove('active');
+      }
+    });
+  }
+
+  tabBtnArr.forEach(function (btn, i) {
+    btn.addEventListener('click', function () {
+      switchTab(i);
+      btn.focus();
+    });
+
+    btn.addEventListener('keydown', function (e) {
+      var next = i;
+      if (e.key === 'ArrowRight') next = (i + 1) % tabBtnArr.length;
+      else if (e.key === 'ArrowLeft') next = (i - 1 + tabBtnArr.length) % tabBtnArr.length;
+      else if (e.key === 'Home') next = 0;
+      else if (e.key === 'End') next = tabBtnArr.length - 1;
+      else return;
+      e.preventDefault();
+      switchTab(next);
+      tabBtnArr[next].focus();
+    });
+  });
+
+  /* ============================================================
+     KEYBOARD SHORTCUTS (global)
+  ============================================================ */
+  document.addEventListener('keydown', function (e) {
+    // Escape = stop
+    if (e.key === 'Escape') {
+      if (isSpeaking || isPaused) {
+        stopAll();
+      }
+      return;
+    }
+
+    if (!e.altKey) return;
+
+    switch (e.key) {
+      case '1': e.preventDefault(); switchTab(0); tabBtnArr[0].focus(); announce('Onglet Texte'); break;
+      case '2': e.preventDefault(); switchTab(1); tabBtnArr[1].focus(); announce('Onglet Fichier'); break;
+      case '3': e.preventDefault(); switchTab(2); tabBtnArr[2].focus(); announce('Onglet Caméra'); break;
+      case '4': e.preventDefault(); switchTab(3); tabBtnArr[3].focus(); announce('Onglet Raccourcis'); break;
+      case 'l': case 'L':
+        e.preventDefault();
+        if (currentMode === 'file' && fileContent.trim()) {
+          btnReadFile.click();
+        } else {
+          btnRead.click();
+        }
+        break;
+      case 'p': case 'P':
+        e.preventDefault();
+        if (currentMode === 'file') btnPauseFile.click();
+        else btnPause.click();
+        break;
+      case 's': case 'S':
+        e.preventDefault();
+        if (currentMode === 'file') btnStopFile.click();
+        else btnStop.click();
+        break;
+      case 'e': case 'E':
+        e.preventDefault();
+        doSpell();
+        break;
+    }
+  });
+
+  /* ============================================================
+     INITIAL ANNOUNCE
+  ============================================================ */
+  // Slight delay so screen readers are ready
+  setTimeout(function () {
+    announce('VoxRead chargé. Onglet Texte actif. Appuyez sur Alt+L pour lire, Alt+P pour pause, Alt+S pour stop.');
+  }, 600);
+
+})();
+</script>
+</body>
+</html>

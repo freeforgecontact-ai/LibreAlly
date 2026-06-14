@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoundWatch — Démo alertes sonores | LibreA11y</title>
+<meta name="description" content="Démo de reconnaissance de sons et d'alertes visuelles/vibrantes. 100% hors-ligne, aucune donnée envoyée.">
+<style>
+/* ===== VARIABLES & RESET ===== */
+:root {
+  --marine:    #0F4C81;
+  --marine-dk: #0A3A63;
+  --or:        #F4B81C;
+  --or-lt:     #FFD45E;
+  --encre:     #16202E;
+  --fond:      #F7F9FC;
+  --surface:   #FFFFFF;
+  --border:    #D0D9E8;
+  --focus-ring: #F4B81C;
+  --radius:    12px;
+  --radius-sm: 8px;
+  --shadow:    0 2px 8px rgba(15,76,129,0.12);
+  --shadow-hv: 0 4px 16px rgba(15,76,129,0.22);
+  --tr:        0.2s ease;
+  --tr-slow:   0.6s ease;
+  --alert-bg:  transparent;
+  --alert-opacity: 0;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--fond);
+  color: var(--encre);
+  font-size: 16px;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== SKIP LINK ===== */
+#skip-link {
+  position: absolute;
+  top: -100%;
+  left: 8px;
+  background: var(--or);
+  color: var(--encre);
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  z-index: 9999;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+#skip-link:focus { top: 0; }
+
+/* ===== FOCUS ===== */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* ===== ALERT OVERLAY ===== */
+#alert-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 500;
+  opacity: 0;
+  transition: opacity var(--tr-slow), background-color var(--tr-slow);
+  background-color: transparent;
+}
+#alert-overlay.active {
+  pointer-events: none;
+}
+
+/* ===== HEADER ===== */
+#app-header {
+  background: var(--marine);
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(10,58,99,0.3);
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+}
+#header-left { display: flex; align-items: center; gap: 16px; }
+#back-link {
+  color: var(--or-lt);
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  transition: background var(--tr);
+}
+#back-link:hover, #back-link:focus-visible { background: rgba(255,255,255,0.15); color: #fff; }
+#app-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.3px;
+}
+#header-notice {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.65);
+  text-align: right;
+  line-height: 1.4;
+}
+
+/* ===== MAIN LAYOUT ===== */
+#app-main {
+  flex: 1;
+  max-width: 860px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ===== SECTION CARDS ===== */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--marine);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ===== ENCART LIMITE HONNÊTE ===== */
+#honest-notice {
+  background: #EEF4FB;
+  border: 2px solid var(--marine);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+#honest-notice .notice-title {
+  font-weight: 700;
+  color: var(--marine-dk);
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#honest-notice p {
+  font-size: 0.88rem;
+  color: #2a3a50;
+  line-height: 1.55;
+}
+
+/* ===== CONTRÔLE MICRO ===== */
+#listen-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+#btn-listen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--marine);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0 28px;
+  height: 56px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--tr), transform var(--tr);
+  min-width: 220px;
+  align-self: flex-start;
+}
+#btn-listen:hover { background: var(--marine-dk); }
+#btn-listen:active { transform: scale(0.97); }
+#btn-listen.listening {
+  background: #c0392b;
+}
+#btn-listen.listening:hover { background: #a93226; }
+
+/* ===== VU-METRE ===== */
+#vu-wrapper {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+}
+#vu-wrapper.visible { display: flex; }
+#vu-label {
+  font-size: 0.85rem;
+  color: var(--marine);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+#vu-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--encre);
+}
+#vu-track {
+  width: 100%;
+  height: 20px;
+  background: var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+#vu-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #27ae60 0%, #f4b81c 65%, #e74c3c 90%);
+  border-radius: 10px;
+  transition: width 0.08s ease;
+}
+#vu-threshold-marker {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background: var(--marine-dk);
+  border-radius: 2px;
+  transition: left 0.1s ease;
+}
+
+/* ===== MICRO INDISPONIBLE ===== */
+#mic-error {
+  display: none;
+  background: #fff3cd;
+  border: 1px solid #f0c040;
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 0.87rem;
+  color: #7d5000;
+  line-height: 1.5;
+}
+#mic-error.visible { display: block; }
+
+/* ===== TESTS D'ALERTES ===== */
+#test-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+.btn-test {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 10px;
+  min-height: 80px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--encre);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--tr), background var(--tr), transform var(--tr);
+  text-align: center;
+  line-height: 1.3;
+}
+.btn-test:hover { border-color: var(--marine); background: #EEF4FB; }
+.btn-test:active { transform: scale(0.96); }
+.btn-test .test-icon { font-size: 1.8rem; line-height: 1; }
+.btn-test.btn-sonnette { border-color: #2980b9; }
+.btn-test.btn-sonnette:hover { background: #d6eaf8; border-color: #1a6fa8; }
+.btn-test.btn-alarme { border-color: #c0392b; }
+.btn-test.btn-alarme:hover { background: #fde8e8; border-color: #a93226; }
+.btn-test.btn-bebe { border-color: #8e44ad; }
+.btn-test.btn-bebe:hover { background: #f0e6f9; border-color: #7d3c98; }
+.btn-test.btn-prenom { border-color: var(--or); }
+.btn-test.btn-prenom:hover { background: #fffbe6; border-color: #d4a017; }
+
+/* ===== ZONE ALERTE ACTIVE ===== */
+#alert-display {
+  min-height: 100px;
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px;
+  transition: background-color var(--tr-slow), border-color var(--tr-slow), color var(--tr-slow);
+  background: var(--surface);
+  color: var(--encre);
+}
+#alert-display.no-alert {
+  color: #8899aa;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+#alert-display.alert-active {
+  border-color: transparent;
+}
+#alert-icon-display {
+  font-size: 2.8rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+#alert-text-display {
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+#alert-sub-display {
+  font-size: 0.85rem;
+  font-weight: 400;
+  margin-top: 4px;
+  opacity: 0.8;
+}
+
+/* ===== RÉGLAGES ===== */
+#settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 540px) { #settings-grid { grid-template-columns: 1fr; } }
+
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.setting-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--marine);
+}
+.setting-group input[type="range"] {
+  width: 100%;
+  accent-color: var(--marine);
+  height: 6px;
+  cursor: pointer;
+}
+.setting-group .range-val {
+  font-size: 0.82rem;
+  color: var(--encre);
+  font-variant-numeric: tabular-nums;
+}
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+/* Toggle switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 28px;
+  flex-shrink: 0;
+}
+.toggle-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: #ccd6e0;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background var(--tr);
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  transition: transform var(--tr);
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--marine); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+.toggle-switch input:focus-visible + .toggle-slider {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+.toggle-label-text { font-size: 0.9rem; }
+
+/* ===== MODE NUIT ===== */
+body.night-mode {
+  --fond: #101820;
+  --surface: #1a2535;
+  --border: #2a3a52;
+  --encre: #e0e8f5;
+  background: var(--fond);
+  color: var(--encre);
+}
+body.night-mode .card { background: var(--surface); border-color: var(--border); }
+body.night-mode #honest-notice { background: #1a2d45; border-color: #3a6ea8; }
+body.night-mode #honest-notice p { color: #9ab5d0; }
+body.night-mode #honest-notice .notice-title { color: #aac8e8; }
+body.night-mode .btn-test { background: var(--surface); border-color: var(--border); color: var(--encre); }
+body.night-mode .btn-test:hover { background: #243450; }
+body.night-mode #alert-display { background: var(--surface); border-color: var(--border); }
+body.night-mode #alert-display.no-alert { color: #556677; }
+body.night-mode #vu-track { background: #2a3a52; }
+body.night-mode #mic-error { background: #2d2510; border-color: #8a6c20; color: #d4a830; }
+
+/* ===== JOURNAL ===== */
+#log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+#btn-clear-log {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  color: var(--encre);
+  cursor: pointer;
+  min-height: 36px;
+  transition: background var(--tr), border-color var(--tr);
+}
+#btn-clear-log:hover { background: var(--fond); border-color: var(--marine); }
+
+#log-list {
+  list-style: none;
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#log-list:empty::after {
+  content: 'Aucune alerte pour le moment.';
+  color: #8899aa;
+  font-size: 0.87rem;
+  font-style: italic;
+  padding: 4px 0;
+  display: block;
+}
+.log-entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--fond);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+body.night-mode .log-entry { background: #111d2e; }
+.log-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--marine);
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.log-icon { font-size: 1.1rem; flex-shrink: 0; }
+.log-label { flex: 1; }
+
+/* ===== FOOTER ===== */
+footer {
+  background: var(--marine-dk);
+  color: rgba(255,255,255,0.6);
+  text-align: center;
+  padding: 12px 16px;
+  font-size: 0.78rem;
+  flex-shrink: 0;
+}
+footer a { color: var(--or-lt); }
+
+/* ===== ANIMATIONS RÉDUITES ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+  #alert-overlay {
+    transition: none !important;
+  }
+  #alert-display {
+    transition: none !important;
+  }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  #app-main { padding: 16px 12px 32px; gap: 14px; }
+  #app-title { font-size: 1.15rem; }
+  .card { padding: 16px 14px; }
+  #test-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Lien d'évitement -->
+<a href="#app-main" id="skip-link">Aller au contenu principal</a>
+
+<!-- Overlay alerte plein écran (couleur douce) -->
+<div id="alert-overlay" role="presentation" aria-hidden="true"></div>
+
+<!-- ===== EN-TÊTE ===== -->
+<header id="app-header" role="banner">
+  <div id="header-left">
+    <a href="../index.html" id="back-link" aria-label="Retour à LibreA11y">← LibreA11y</a>
+    <div id="app-title" aria-label="SoundWatch, démo LibreA11y">
+      <span aria-hidden="true">🔔</span>
+      SoundWatch — démo
+    </div>
+  </div>
+  <div id="header-notice" aria-label="Informations : démo, 100% hors-ligne, aucune donnée envoyée">
+    démo · 100% hors-ligne<br>aucune donnée envoyée
+  </div>
+</header>
+
+<!-- ===== MAIN ===== -->
+<main id="app-main" tabindex="-1">
+  <h1 class="visually-hidden">SoundWatch — Alertes visuelles et vibrantes pour sons importants</h1>
+
+  <!-- Encart limite honnête -->
+  <section id="honest-notice" aria-labelledby="notice-title">
+    <p class="notice-title" id="notice-title"><span aria-hidden="true">ℹ️</span> Ce que cette démo fait vraiment</p>
+    <p>Distinguer les sons (sonnette vs alarme vs bébé qui pleure) nécessite un <strong>modèle de classification audio</strong> entraîné — non disponible en local dans un navigateur. <strong>Cette démo détecte le niveau sonore</strong> (sons forts, claps) via l'API Web Audio du navigateur, et illustre le système d'alertes visuelles et vibrantes. Les boutons de test simulent chaque type d'alerte pour montrer l'expérience complète.</p>
+  </section>
+
+  <!-- Section écoute -->
+  <section class="card" aria-labelledby="listen-title">
+    <h2 class="card-title" id="listen-title"><span aria-hidden="true">🎤</span> Écoute en direct</h2>
+    <div id="listen-section">
+      <button id="btn-listen" aria-pressed="false" aria-describedby="listen-desc">
+        <span aria-hidden="true" id="btn-listen-icon">🎤</span>
+        <span id="btn-listen-label">Activer l'écoute</span>
+      </button>
+      <p id="listen-desc" style="font-size:0.84rem;color:#556677;line-height:1.5;">
+        Utilise le microphone pour mesurer le niveau sonore ambiant. Une alerte se déclenche si le niveau dépasse le seuil configuré ci-dessous.
+      </p>
+
+      <!-- Vu-mètre -->
+      <div id="vu-wrapper" role="group" aria-label="Indicateur de niveau sonore">
+        <div id="vu-label">
+          <span>Niveau sonore</span>
+          <span id="vu-value" aria-live="off" aria-atomic="true">0 %</span>
+        </div>
+        <div id="vu-track" role="meter" aria-label="Niveau sonore en cours" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div id="vu-bar"></div>
+          <div id="vu-threshold-marker" aria-hidden="true"></div>
+        </div>
+        <p style="font-size:0.78rem;color:#778899;margin-top:2px;">Le trait vertical indique le seuil de déclenchement.</p>
+      </div>
+
+      <!-- Erreur micro -->
+      <div id="mic-error" role="alert" aria-live="assertive">
+        <strong>Microphone indisponible.</strong> Votre navigateur ou appareil n'a pas pu accéder au microphone. Vérifiez les autorisations dans les paramètres du navigateur, ou utilisez les boutons « Tester » ci-dessous pour voir les alertes.
+      </div>
+    </div>
+  </section>
+
+  <!-- Zone alerte active -->
+  <section class="card" aria-labelledby="alert-zone-title">
+    <h2 class="card-title" id="alert-zone-title"><span aria-hidden="true">🚨</span> Alerte en cours</h2>
+    <div
+      id="alert-display"
+      class="no-alert"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      aria-label="Aucune alerte active"
+    >
+      <span id="alert-icon-display" aria-hidden="true">—</span>
+      <div>
+        <div id="alert-text-display">Aucune alerte</div>
+        <div id="alert-sub-display">En attente de détection…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Boutons test -->
+  <section class="card" aria-labelledby="test-title">
+    <h2 class="card-title" id="test-title"><span aria-hidden="true">🧪</span> Tester une alerte</h2>
+    <p style="font-size:0.85rem;color:#556677;margin-bottom:14px;line-height:1.5;">Ces boutons simulent chaque type d'alerte — pour voir l'expérience complète sans modèle de classification.</p>
+    <div id="test-grid" role="group" aria-label="Boutons de test d'alertes">
+      <button class="btn-test btn-sonnette" data-sound="sonnette" aria-label="Tester l'alerte Sonnette">
+        <span class="test-icon" aria-hidden="true">🔔</span>
+        Sonnette
+      </button>
+      <button class="btn-test btn-alarme" data-sound="alarme" aria-label="Tester l'alerte Alarme incendie">
+        <span class="test-icon" aria-hidden="true">🚨</span>
+        Alarme incendie
+      </button>
+      <button class="btn-test btn-bebe" data-sound="bebe" aria-label="Tester l'alerte Bébé qui pleure">
+        <span class="test-icon" aria-hidden="true">👶</span>
+        Bébé qui pleure
+      </button>
+      <button class="btn-test btn-prenom" data-sound="prenom" aria-label="Tester l'alerte Mon prénom">
+        <span class="test-icon" aria-hidden="true">🗣️</span>
+        Mon prénom
+      </button>
+    </div>
+  </section>
+
+  <!-- Réglages -->
+  <section class="card" aria-labelledby="settings-title">
+    <h2 class="card-title" id="settings-title"><span aria-hidden="true">⚙️</span> Réglages</h2>
+    <div id="settings-grid">
+
+      <!-- Seuil sensibilité -->
+      <div class="setting-group">
+        <label for="threshold-range">Seuil de détection</label>
+        <input
+          type="range"
+          id="threshold-range"
+          min="5"
+          max="90"
+          value="40"
+          step="5"
+          aria-label="Seuil de détection en pourcentage"
+          aria-valuetext="40%"
+        >
+        <span class="range-val" id="threshold-val">40 %</span>
+      </div>
+
+      <!-- Durée alerte -->
+      <div class="setting-group">
+        <label for="duration-range">Durée de l'alerte</label>
+        <input
+          type="range"
+          id="duration-range"
+          min="1"
+          max="10"
+          value="3"
+          step="1"
+          aria-label="Durée de l'alerte en secondes"
+          aria-valuetext="3 secondes"
+        >
+        <span class="range-val" id="duration-val">3 s</span>
+      </div>
+
+      <!-- Retour visuel -->
+      <div class="setting-group">
+        <label id="visual-lbl">Alerte visuelle (plein cadre)</label>
+        <div class="toggle-row">
+          <label class="toggle-switch" aria-labelledby="visual-lbl">
+            <input type="checkbox" id="toggle-visual" checked aria-checked="true">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label-text" aria-hidden="true" id="visual-state-lbl">Activée</span>
+        </div>
+      </div>
+
+      <!-- Vibration -->
+      <div class="setting-group">
+        <label id="vibra-lbl">Vibration (si disponible)</label>
+        <div class="toggle-row">
+          <label class="toggle-switch" aria-labelledby="vibra-lbl">
+            <input type="checkbox" id="toggle-vibra" checked aria-checked="true">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label-text" aria-hidden="true" id="vibra-state-lbl">Activée</span>
+        </div>
+      </div>
+
+      <!-- Mode nuit -->
+      <div class="setting-group">
+        <label id="night-lbl">Mode nuit (fond sombre)</label>
+        <div class="toggle-row">
+          <label class="toggle-switch" aria-labelledby="night-lbl">
+            <input type="checkbox" id="toggle-night" aria-checked="false">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label-text" aria-hidden="true" id="night-state-lbl">Désactivé</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Journal -->
+  <section class="card" aria-labelledby="log-title">
+    <div id="log-header">
+      <h2 class="card-title" id="log-title" style="margin-bottom:0"><span aria-hidden="true">📋</span> Journal des alertes</h2>
+      <button id="btn-clear-log" aria-label="Effacer le journal des alertes">Effacer</button>
+    </div>
+    <ul id="log-list" aria-label="Historique des alertes" aria-live="polite" aria-relevant="additions removals"></ul>
+  </section>
+
+</main>
+
+<footer role="contentinfo">
+  SoundWatch — Démo LibreA11y &nbsp;·&nbsp;
+  <a href="../index.html">Voir tous les outils</a> &nbsp;·&nbsp;
+  100% hors-ligne, aucune donnée collectée
+</footer>
+
+<style>
+/* visually-hidden utilitaire */
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+</style>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ===== CONFIG ALERTES ===== */
+  const ALERT_TYPES = {
+    sonnette: {
+      icon: '🔔',
+      label: 'Sonnette !',
+      sub: 'Quelqu\'un est à la porte',
+      bgColor: '#1a5fa8',        /* bleu */
+      textColor: '#fff',
+      vibPattern: [200, 100, 200],
+    },
+    alarme: {
+      icon: '🚨',
+      label: 'Alarme !',
+      sub: 'Alarme incendie ou urgence',
+      bgColor: '#c0392b',        /* rouge */
+      textColor: '#fff',
+      vibPattern: [400, 100, 400, 100, 400],
+    },
+    bebe: {
+      icon: '👶',
+      label: 'Bébé qui pleure',
+      sub: 'Attention requise',
+      bgColor: '#7d3c98',        /* violet */
+      textColor: '#fff',
+      vibPattern: [300, 150, 300, 150, 300],
+    },
+    prenom: {
+      icon: '🗣️',
+      label: 'On vous appelle !',
+      sub: 'Votre prénom a été prononcé',
+      bgColor: '#c68a00',        /* or foncé */
+      textColor: '#fff',
+      vibPattern: [150, 80, 150],
+    },
+    son: {
+      icon: '🔊',
+      label: 'Son fort détecté !',
+      sub: 'Niveau sonore élevé',
+      bgColor: '#1a5fa8',
+      textColor: '#fff',
+      vibPattern: [250, 100, 250],
+    },
+  };
+
+  /* ===== ÉTAT ===== */
+  let audioCtx = null;
+  let analyser = null;
+  let dataArray = null;
+  let animFrame = null;
+  let micStream = null;
+  let isListening = false;
+  let alertTimer = null;
+  let isAlertActive = false;
+  let prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ===== ÉLÉMENTS DOM ===== */
+  const btnListen      = document.getElementById('btn-listen');
+  const btnListenLabel = document.getElementById('btn-listen-label');
+  const btnListenIcon  = document.getElementById('btn-listen-icon');
+  const vuWrapper      = document.getElementById('vu-wrapper');
+  const vuBar          = document.getElementById('vu-bar');
+  const vuValue        = document.getElementById('vu-value');
+  const vuTrack        = document.getElementById('vu-track');
+  const vuThreshold    = document.getElementById('vu-threshold-marker');
+  const vuMeter        = document.getElementById('vu-track');
+  const micError       = document.getElementById('mic-error');
+  const alertOverlay   = document.getElementById('alert-overlay');
+  const alertDisplay   = document.getElementById('alert-display');
+  const alertIcon      = document.getElementById('alert-icon-display');
+  const alertText      = document.getElementById('alert-text-display');
+  const alertSub       = document.getElementById('alert-sub-display');
+  const thresholdRange = document.getElementById('threshold-range');
+  const thresholdVal   = document.getElementById('threshold-val');
+  const durationRange  = document.getElementById('duration-range');
+  const durationVal    = document.getElementById('duration-val');
+  const toggleVisual   = document.getElementById('toggle-visual');
+  const visualStateLbl = document.getElementById('visual-state-lbl');
+  const toggleVibra    = document.getElementById('toggle-vibra');
+  const vibraStateLbl  = document.getElementById('vibra-state-lbl');
+  const toggleNight    = document.getElementById('toggle-night');
+  const nightStateLbl  = document.getElementById('night-state-lbl');
+  const logList        = document.getElementById('log-list');
+  const btnClearLog    = document.getElementById('btn-clear-log');
+  const testButtons    = document.querySelectorAll('.btn-test');
+
+  /* ===== RÉGLAGES ===== */
+  function getThreshold() { return parseInt(thresholdRange.value, 10); }
+  function getDuration()  { return parseInt(durationRange.value, 10) * 1000; }
+  function wantVisual()   { return toggleVisual.checked; }
+  function wantVibra()    { return toggleVibra.checked; }
+
+  thresholdRange.addEventListener('input', function () {
+    thresholdVal.textContent = this.value + ' %';
+    this.setAttribute('aria-valuetext', this.value + '%');
+    updateThresholdMarker();
+  });
+  durationRange.addEventListener('input', function () {
+    durationVal.textContent = this.value + ' s';
+    this.setAttribute('aria-valuetext', this.value + ' secondes');
+  });
+
+  function updateThresholdMarker() {
+    const pct = getThreshold();
+    vuThreshold.style.left = pct + '%';
+  }
+  updateThresholdMarker();
+
+  /* Toggle helpers */
+  function setupToggle(input, stateEl, onLabel, offLabel, callback) {
+    function update() {
+      const on = input.checked;
+      stateEl.textContent = on ? onLabel : offLabel;
+      input.setAttribute('aria-checked', String(on));
+      if (callback) callback(on);
+    }
+    input.addEventListener('change', update);
+    update();
+  }
+
+  setupToggle(toggleVisual, visualStateLbl, 'Activée', 'Désactivée');
+  setupToggle(toggleVibra, vibraStateLbl, 'Activée', 'Désactivée');
+  setupToggle(toggleNight, nightStateLbl, 'Activé', 'Désactivé', function (on) {
+    document.body.classList.toggle('night-mode', on);
+  });
+
+  /* ===== BOUTON ÉCOUTE ===== */
+  btnListen.addEventListener('click', function () {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  });
+
+  async function startListening() {
+    micError.classList.remove('visible');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      micStream = stream;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioCtx.createMediaStreamSource(stream);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.4;
+      source.connect(analyser);
+      dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      isListening = true;
+      btnListen.setAttribute('aria-pressed', 'true');
+      btnListen.classList.add('listening');
+      btnListenLabel.textContent = 'Arrêter l\'écoute';
+      btnListenIcon.textContent = '⏹';
+      vuWrapper.classList.add('visible');
+
+      loopAnalyse();
+    } catch (err) {
+      console.warn('Microphone inaccessible :', err);
+      micError.classList.add('visible');
+    }
+  }
+
+  function stopListening() {
+    isListening = false;
+    if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+    if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+    if (audioCtx) { audioCtx.close().catch(() => {}); audioCtx = null; }
+    analyser = null;
+    dataArray = null;
+
+    btnListen.setAttribute('aria-pressed', 'false');
+    btnListen.classList.remove('listening');
+    btnListenLabel.textContent = 'Activer l\'écoute';
+    btnListenIcon.textContent = '🎤';
+    vuWrapper.classList.remove('visible');
+    setVuLevel(0);
+  }
+
+  /* ===== BOUCLE ANALYSE ===== */
+  let lastAlertTime = 0;
+
+  function loopAnalyse() {
+    if (!isListening || !analyser) return;
+    analyser.getByteFrequencyData(dataArray);
+
+    /* Moyenne RMS simplifié */
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) {
+      sum += dataArray[i] * dataArray[i];
+    }
+    const rms = Math.sqrt(sum / dataArray.length);
+    const pct = Math.min(100, Math.round((rms / 128) * 100));
+
+    setVuLevel(pct);
+
+    const now = Date.now();
+    if (pct >= getThreshold() && !isAlertActive && (now - lastAlertTime) > 2000) {
+      lastAlertTime = now;
+      triggerAlert('son');
+    }
+
+    animFrame = requestAnimationFrame(loopAnalyse);
+  }
+
+  function setVuLevel(pct) {
+    vuBar.style.width = pct + '%';
+    vuValue.textContent = pct + ' %';
+    vuMeter.setAttribute('aria-valuenow', pct);
+  }
+
+  /* ===== DÉCLENCHEMENT ALERTE ===== */
+  function triggerAlert(soundKey, source) {
+    const cfg = ALERT_TYPES[soundKey];
+    if (!cfg) return;
+
+    /* Annuler timer précédent */
+    if (alertTimer) { clearTimeout(alertTimer); alertTimer = null; }
+    isAlertActive = true;
+
+    /* --- Alerte visuelle zone --- */
+    alertDisplay.className = 'alert-active';
+    alertDisplay.style.backgroundColor = cfg.bgColor;
+    alertDisplay.style.color = cfg.textColor;
+    alertDisplay.style.borderColor = 'transparent';
+    alertIcon.textContent = cfg.icon;
+    alertText.textContent = cfg.label;
+    alertSub.textContent = cfg.sub;
+    alertDisplay.setAttribute('aria-label', cfg.label + ' — ' + cfg.sub);
+
+    /* --- Overlay plein cadre (couleur douce, jamais clignotant) --- */
+    if (wantVisual() && !prefersReducedMotion) {
+      alertOverlay.style.backgroundColor = cfg.bgColor;
+      alertOverlay.style.opacity = '0.18';
+    }
+
+    /* --- Vibration --- */
+    if (wantVibra() && 'vibrate' in navigator) {
+      navigator.vibrate(cfg.vibPattern);
+    }
+
+    /* --- Journal --- */
+    addLogEntry(cfg.icon, cfg.label, source || 'détecté');
+
+    /* --- Reset après durée --- */
+    alertTimer = setTimeout(function () {
+      resetAlert();
+    }, getDuration());
+  }
+
+  function resetAlert() {
+    isAlertActive = false;
+    alertTimer = null;
+
+    alertDisplay.className = 'no-alert';
+    alertDisplay.style.backgroundColor = '';
+    alertDisplay.style.color = '';
+    alertDisplay.style.borderColor = '';
+    alertIcon.textContent = '—';
+    alertText.textContent = 'Aucune alerte';
+    alertSub.textContent = 'En attente de détection…';
+    alertDisplay.setAttribute('aria-label', 'Aucune alerte active');
+
+    /* Fade overlay */
+    alertOverlay.style.opacity = '0';
+    setTimeout(function () {
+      alertOverlay.style.backgroundColor = 'transparent';
+    }, 700);
+  }
+
+  /* ===== BOUTONS TEST ===== */
+  testButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const sound = this.dataset.sound;
+      triggerAlert(sound, 'test');
+    });
+  });
+
+  /* ===== JOURNAL ===== */
+  function addLogEntry(icon, label, src) {
+    const now = new Date();
+    const hms = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const li = document.createElement('li');
+    li.className = 'log-entry';
+    li.innerHTML =
+      '<span class="log-time">' + hms + '</span>' +
+      '<span class="log-icon" aria-hidden="true">' + icon + '</span>' +
+      '<span class="log-label">' + escHtml(label) + (src ? ' <em style="opacity:.65;font-size:.82em;">(' + escHtml(src) + ')</em>' : '') + '</span>';
+    logList.insertBefore(li, logList.firstChild);
+    /* Limiter à 50 entrées */
+    while (logList.children.length > 50) {
+      logList.removeChild(logList.lastChild);
+    }
+  }
+
+  btnClearLog.addEventListener('click', function () {
+    while (logList.firstChild) logList.removeChild(logList.firstChild);
+    this.setAttribute('aria-label', 'Journal effacé');
+    setTimeout(() => this.setAttribute('aria-label', 'Effacer le journal des alertes'), 2000);
+  });
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /* ===== PREFERS REDUCED MOTION (live) ===== */
+  window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', function (e) {
+    prefersReducedMotion = e.matches;
+  });
+
+  /* ===== VIBRATION : indisponible → cacher toggle ===== */
+  if (!('vibrate' in navigator)) {
+    const vibraGroup = toggleVibra.closest('.setting-group');
+    if (vibraGroup) {
+      vibraGroup.innerHTML = '<span style="font-size:0.82rem;color:#8899aa;">Vibration non disponible sur cet appareil.</span>';
+    }
+  }
+
+})();
+</script>
+</body>
+</html>

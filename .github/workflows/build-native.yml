@@ -22,7 +22,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
 
       - name: Set up Java 17 (Temurin)
         uses: actions/setup-java@v4
@@ -40,16 +39,36 @@ jobs:
         continue-on-error: true
 
       # Patch AndroidManifest.xml : ajouter CAMERA + RECORD_AUDIO
-      # (nécessaires pour VoxRead OCR caméra et CaptiLive microphone)
+      # Script Node.js robuste et idempotent — évite les fragilités de sed
       - name: Patch AndroidManifest — CAMERA + RECORD_AUDIO
         run: |
-          MANIFEST="android/app/src/main/AndroidManifest.xml"
-          # Ajouter les permissions avant </manifest> si elles n'existent pas encore
-          if ! grep -q "CAMERA" "$MANIFEST"; then
-            sed -i 's|</manifest>|    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />\n</manifest>|' "$MANIFEST"
-          fi
-          echo "=== AndroidManifest.xml (extrait) ==="
-          grep -A2 "permission" "$MANIFEST" || true
+          node - <<'EOF'
+          const fs = require('fs');
+          const path = 'android/app/src/main/AndroidManifest.xml';
+          let xml = fs.readFileSync(path, 'utf8');
+
+          const permissions = [
+            '<uses-permission android:name="android.permission.CAMERA"/>',
+            '<uses-permission android:name="android.permission.RECORD_AUDIO"/>',
+            '<uses-feature android:name="android.hardware.camera" android:required="false"/>',
+            '<uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>',
+          ];
+
+          let changed = false;
+          for (const perm of permissions) {
+            // Idempotent : on détecte par le nom de permission/feature
+            const key = perm.match(/android:name="([^"]+)"/)[1];
+            if (!xml.includes(key)) {
+              xml = xml.replace('</manifest>', `    ${perm}\n</manifest>`);
+              changed = true;
+            }
+          }
+
+          fs.writeFileSync(path, xml, 'utf8');
+          console.log(changed ? 'Manifest patched.' : 'Manifest already up-to-date.');
+          EOF
+          echo "=== AndroidManifest.xml (permissions) ==="
+          grep -E "uses-permission|uses-feature" android/app/src/main/AndroidManifest.xml || true
 
       - name: Copy web assets to Android
         run: npx cap copy android
@@ -105,7 +124,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
 
       - name: Set up Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -121,31 +139,28 @@ jobs:
       - name: Install Linux system dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y \
+          sudo apt-get update && sudo apt-get install -y \
             libwebkit2gtk-4.1-dev \
-            librsvg2-dev \
-            libssl-dev \
-            libayatana-appindicator3-dev \
             libgtk-3-dev \
-            libglib2.0-dev \
-            patchelf
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libssl-dev \
+            build-essential \
+            curl \
+            wget \
+            file
 
       - name: Install npm dependencies
         run: npm install
 
-      # Générer les icônes PNG multi-résolutions depuis le SVG source
-      # (tauri icon prend un PNG 1024×1024 ou SVG et produit toutes les tailles)
-      - name: Generate icons from SVG
-        run: |
-          # Installe @tauri-apps/cli localement s'il n'est pas déjà présent
-          npx --yes @tauri-apps/cli@^2 icon src-tauri/icons/icon.svg
-        continue-on-error: true
-        # Si l'icône SVG ne peut pas être traitée (ex. manque de sharp natif),
-        # le build continuera mais les icônes seront absentes — voir BUILD.md.
+      # Générer les icônes multi-résolutions depuis le PNG source 1024×1024
+      # tauri icon produit : 32x32.png, 128x128.png, 128x128@2x.png, icon.icns, icon.ico
+      - name: Generate icons from PNG
+        run: npx @tauri-apps/cli@^2 icon src-tauri/icons/icon.png
 
       - name: Build Tauri app
-        run: npx @tauri-apps/cli@^2 build --no-bundle false
+        run: npx @tauri-apps/cli@^2 build
         env:
           # Désactive la signature de code (pas de secrets configurés)
           TAURI_SIGNING_PRIVATE_KEY: ""
